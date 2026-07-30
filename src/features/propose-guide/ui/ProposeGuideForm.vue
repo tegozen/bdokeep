@@ -229,15 +229,13 @@ import { submitGuideProposal } from '../api/submitProposal'
 import { skillCatalogBucket } from '../lib/skillBucket'
 
 type PickItem = { id: string; name_ru: string; icon_url: string | null }
-type BuffTabId = 'all' | 'camp' | 'cron' | 'balm' | 'elixir' | 'attack'
+type BuffTabId = 'camp' | 'cron' | 'balm' | 'elixir'
 
 const BUFF_TABS: { id: BuffTabId; label: string }[] = [
-  { id: 'all', label: 'Все' },
   { id: 'camp', label: 'Лагерь' },
   { id: 'cron', label: 'Блюдо Крон' },
   { id: 'balm', label: 'Бальзамы' },
   { id: 'elixir', label: 'Эликсиры' },
-  { id: 'attack', label: 'Атакующие зелья' },
 ]
 
 const props = withDefaults(
@@ -259,7 +257,7 @@ const text = ref('')
 const author = ref('')
 const query = ref('')
 const catalogTab = ref<'main' | 'spec'>('main')
-const buffTab = ref<BuffTabId>('all')
+const buffTab = ref<BuffTabId>('camp')
 const buffTabs = BUFF_TABS
 const picked = ref<PickItem[]>([])
 const skills = ref<Skill[]>([])
@@ -301,7 +299,7 @@ const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (isBuffs.value) {
     return buffs.value.filter((b) => {
-      if (buffTab.value !== 'all' && b.description !== buffTab.value) return false
+      if (b.description !== buffTab.value) return false
       if (!q) return true
       return b.name_ru.toLowerCase().includes(q)
     })
@@ -374,7 +372,7 @@ function reset() {
   honeypot.value = ''
   query.value = ''
   catalogTab.value = 'main'
-  buffTab.value = 'all'
+  buffTab.value = 'camp'
   picked.value = []
   formError.value = ''
   done.value = false
@@ -612,9 +610,9 @@ async function onSubmit() {
 }
 
 .catalog {
-  flex: 1 1 auto;
+  flex: none;
+  height: 16rem;
   margin: 0;
-  min-height: 10rem;
   overflow: auto;
   list-style: none;
   border: 1px solid var(--color-border);
