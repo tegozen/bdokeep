@@ -1,36 +1,49 @@
 <template>
   <div v-if="isSuperadmin" :class="[$style.banner, compact && $style.compact]">
-    <span>Суперадмин — правка опубликуется сразу</span>
+    <span>{{ compact ? 'Суперадмин' : 'Суперадмин — правка опубликуется сразу' }}</span>
     <button type="button" :class="$style.linkish" @click="onLogout">Выйти</button>
   </div>
-  <details v-else :class="[$style.box, compact && $style.compact]">
-    <summary>Войти как суперадмин</summary>
-    <div :class="$style.login">
-      <label :class="$style.label">
-        Пароль
-        <input
-          v-model="password"
-          type="password"
-          :class="$style.input"
-          autocomplete="current-password"
-          @keydown.enter.prevent="onLogin"
-        >
-      </label>
-      <button
-        type="button"
-        :class="$style.secondary"
-        :disabled="busy"
-        @click="onLogin"
+
+  <template v-else>
+    <button type="button" :class="[$style.trigger, !compact && $style.triggerWide]" @click="openLogin = true">
+      Войти как суперадмин
+    </button>
+
+    <Teleport to="body">
+      <div
+        v-if="openLogin"
+        :class="$style.backdrop"
+        @click.self="closeLogin"
       >
-        {{ busy ? '…' : 'Войти' }}
-      </button>
-      <p v-if="error" :class="$style.error">{{ error }}</p>
-    </div>
-  </details>
+        <div
+          :class="$style.modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Вход суперадмина"
+        >
+          <header :class="$style.head">
+            <h3 :class="$style.title">Войти как суперадмин</h3>
+            <button type="button" :class="$style.close" aria-label="Закрыть" @click="closeLogin">
+              ×
+            </button>
+          </header>
+          <div :class="$style.modalBody">
+            <LoginFields
+              v-model:password="password"
+              :busy="busy"
+              :error="error"
+              @login="onLogin"
+            />
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </template>
 </template>
 
 <script setup lang="ts">
 import { useSuperadmin } from '@/shared/lib'
+import LoginFields from './LoginFields.vue'
 
 withDefaults(defineProps<{ compact?: boolean }>(), {
   compact: false,
@@ -40,10 +53,17 @@ const { isSuperadmin, refresh, login, logout } = useSuperadmin()
 const password = ref('')
 const busy = ref(false)
 const error = ref('')
+const openLogin = ref(false)
 
 onMounted(() => {
   void refresh()
 })
+
+function closeLogin() {
+  openLogin.value = false
+  password.value = ''
+  error.value = ''
+}
 
 async function onLogin() {
   error.value = ''
@@ -51,6 +71,7 @@ async function onLogin() {
   try {
     await login(password.value)
     password.value = ''
+    openLogin.value = false
   } catch {
     error.value = 'Неверный пароль'
   } finally {
@@ -77,38 +98,31 @@ async function onLogout() {
   padding: 0.5rem 0.65rem;
 }
 
-.box {
+.compact.banner {
+  font-size: 0.82rem;
+  gap: 0.75rem;
+}
+
+.trigger {
   border: 1px solid var(--color-border);
-  background: rgba(10, 11, 16, 0.96);
-  font-size: 0.88rem;
+  background: transparent;
   color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
   padding: 0.35rem 0.65rem;
 }
 
-.box summary {
-  cursor: pointer;
-  list-style: none;
+.triggerWide {
+  width: 100%;
+  font-size: 0.88rem;
+  padding: 0.45rem 0.65rem;
+  text-align: left;
 }
 
-.box summary::-webkit-details-marker {
-  display: none;
-}
-
-.login {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-  padding-bottom: 0.35rem;
-}
-
-.compact.banner,
-.compact.box {
-  font-size: 0.82rem;
-  max-width: 18rem;
-}
-
-.compact .login {
-  margin-top: 0.5rem;
+.trigger:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-gold-soft);
 }
 
 .linkish {
@@ -121,38 +135,50 @@ async function onLogout() {
   text-decoration: underline;
 }
 
-.label {
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
   display: grid;
-  gap: 0.35rem;
-  font-size: 0.88rem;
-  color: var(--color-muted);
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.65);
 }
 
-.input {
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
+.modal {
+  width: min(100%, 22rem);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-elevated);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--color-ink);
-  font: inherit;
-  padding: 0.5rem 0.65rem;
 }
 
-.secondary {
-  border: 1px solid var(--color-border);
+.close {
+  border: 0;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
-  font: inherit;
-  padding: 0.45rem 0.9rem;
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
-.secondary:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.error {
-  margin: 0;
-  color: var(--color-danger);
-  font-size: 0.9rem;
+.modalBody {
+  padding: 1rem;
 }
 </style>
