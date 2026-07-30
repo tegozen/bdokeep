@@ -94,6 +94,52 @@ export default defineEventHandler(async (event) => {
     }
 
     payload = { buff_ids: buffIds }
+  } else if (isCrystalsSection(section)) {
+    const raw = body.payload?.crystals
+    if (!Array.isArray(raw) || raw.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
+    }
+    if (raw.length > MAX_CRYSTALS) {
+      throw createError({ statusCode: 400, statusMessage: `Максимум ${MAX_CRYSTALS} слотов` })
+    }
+
+    const crystals: Array<{ slot: string; item_id: string; sort_order: number }> = []
+    const usedSlots = new Set<string>()
+    for (let i = 0; i < raw.length; i++) {
+      const entry = raw[i] as { slot?: unknown; item_id?: unknown; sort_order?: unknown }
+      const slot = String(entry?.slot || '')
+      const itemId = String(entry?.item_id || '')
+      if (!isCrystalSlotId(slot)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный слот' })
+      }
+      if (usedSlots.has(slot)) {
+        throw createError({ statusCode: 400, statusMessage: 'Дубликат слота' })
+      }
+      usedSlots.add(slot)
+      if (!UUID_RE.test(itemId)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный crystal id' })
+      }
+      crystals.push({
+        slot,
+        item_id: itemId,
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const itemIds = crystals.map((c) => c.item_id)
+    const { data: items, error: itemsErr } = await rest
+      .from('items')
+      .select('id')
+      .eq('item_type', 'crystal')
+      .in('id', itemIds)
+
+    if (itemsErr) throw createError({ statusCode: 502, statusMessage: itemsErr.message })
+    const allowed = new Set((items ?? []).map((x: { id: string }) => x.id))
+    if (itemIds.some((id) => !allowed.has(id))) {
+      throw createError({ statusCode: 400, statusMessage: 'Неизвестный кристалл' })
+    }
+
+    payload = { crystals }
   } else {
     const text = String(body.payload?.text ?? '').trim()
     if (!text) {

@@ -84,6 +84,33 @@ export async function applyProposal(
 
     const { error: insErr } = await rest.from('guide_buffs').insert(rows)
     if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
+  } else if (isCrystalsSection(section)) {
+    const raw = Array.isArray(payload.crystals) ? payload.crystals : []
+    if (!raw.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный payload инкрустации' })
+    }
+
+    const rows: Array<{ guide_id: string; item_id: string; slot: string; sort_order: number }> = []
+    for (let i = 0; i < raw.length; i++) {
+      const entry = raw[i] as { slot?: unknown; item_id?: unknown; sort_order?: unknown }
+      const slot = String(entry?.slot || '')
+      const itemId = String(entry?.item_id || '')
+      if (!isCrystalSlotId(slot) || !UUID_RE.test(itemId)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный слот или кристалл' })
+      }
+      rows.push({
+        guide_id: guide.id,
+        item_id: itemId,
+        slot,
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const { error: delErr } = await rest.from('guide_crystals').delete().eq('guide_id', guide.id)
+    if (delErr) throw createError({ statusCode: 502, statusMessage: delErr.message })
+
+    const { error: insErr } = await rest.from('guide_crystals').insert(rows)
+    if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
   } else if (section === 'summary') {
     const text = String(payload.text || '').trim()
     if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })

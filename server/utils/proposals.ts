@@ -3,6 +3,7 @@ export const PROPOSAL_SECTIONS = [
   'buffs',
   'combo_awakening',
   'combo_succession',
+  'crystals',
 ] as const
 
 export type ProposalSection = (typeof PROPOSAL_SECTIONS)[number]
@@ -13,7 +14,34 @@ export const UUID_RE =
 export const MAX_TEXT_LEN = 8000
 export const MAX_COMBO_STEPS = 30
 export const MAX_BUFFS = 20
+export const MAX_CRYSTALS = 23
 export const MAX_AUTHOR_LEN = 80
+
+export const CRYSTAL_SLOT_IDS = [
+  'nw',
+  'n',
+  'ne',
+  'n_w',
+  'n_c',
+  'n_e',
+  'w',
+  'c_w',
+  'center',
+  'c_e',
+  'e',
+  's_w',
+  's_c',
+  's_e',
+  'sw',
+  's',
+  'se',
+  'dawn_0',
+  'dawn_1',
+  'dawn_2',
+  'dawn_3',
+  'dawn_4',
+  'dawn_5',
+] as const
 
 export function isComboSection(section: ProposalSection): boolean {
   return section === 'combo_awakening' || section === 'combo_succession'
@@ -23,6 +51,14 @@ export function isBuffsSection(section: ProposalSection): boolean {
   return section === 'buffs'
 }
 
+export function isCrystalsSection(section: ProposalSection): boolean {
+  return section === 'crystals'
+}
+
 export function comboModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
   return section === 'combo_succession' ? 'succession' : 'awakening'
+}
+
+export function isCrystalSlotId(id: string): boolean {
+  return (CRYSTAL_SLOT_IDS as readonly string[]).includes(id)
 }

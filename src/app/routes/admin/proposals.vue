@@ -74,6 +74,15 @@
               </li>
             </template>
           </ul>
+          <div v-else-if="isCrystals(item.section)" :class="$style.crystalPreview">
+            <p v-if="crystalPreview[item.id] === undefined" :class="$style.muted">
+              Загрузка кристаллов…
+            </p>
+            <p v-else-if="!Object.keys(crystalPreview[item.id] || {}).length" :class="$style.muted">
+              Нет кристаллов в payload
+            </p>
+            <CrystalBoard v-else :filled="crystalPreview[item.id]!" />
+          </div>
           <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
 
           <div v-if="item.status === 'pending'" :class="$style.actions">
@@ -105,6 +114,7 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { getSupabase } from '@/shared/api'
 import { ComboChain } from '@/widgets/combo-chain'
+import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import type { Buff, Skill } from '@/entities/class'
 
 useHead({ title: 'Админ — предложения | BDO Keep' })
@@ -114,7 +124,13 @@ type Proposal = {
   class_id: string
   class_slug: string
   section: string
-  payload: { text?: string; skill_ids?: string[]; buff_ids?: string[]; mode?: string }
+  payload: {
+    text?: string
+    skill_ids?: string[]
+    buff_ids?: string[]
+    mode?: string
+    crystals?: Array<{ slot: string; item_id: string }>
+  }
   author_label: string | null
   status: string
   created_at: string
@@ -136,6 +152,7 @@ const comboPreview = reactive<Record<string, Array<{ id: string; skills: Skill |
 const buffPreview = reactive<
   Record<string, Array<{ id: string; buffs: Buff | null }> | null>
 >({})
+const crystalPreview = reactive<Record<string, Record<string, CrystalFill> | null>>({})
 
 const statusOpts = [
   { value: 'pending', label: 'Pending' },
@@ -150,6 +167,8 @@ function sectionLabel(section: string) {
       return 'Суть'
     case 'buffs':
       return 'Забаф'
+    case 'crystals':
+      return 'Инкрустация'
     case 'combo_awakening':
       return 'Комба · пробуждение'
     case 'combo_succession':
@@ -165,6 +184,10 @@ function isCombo(section: string) {
 
 function isBuffs(section: string) {
   return section === 'buffs'
+}
+
+function isCrystals(section: string) {
+  return section === 'crystals'
 }
 
 function textOf(item: Proposal) {
@@ -216,7 +239,7 @@ async function load() {
       query: { status: status.value },
     })
     items.value = res.items ?? []
-    await Promise.all([hydrateComboPreviews(), hydrateBuffPreviews()])
+    await Promise.all([hydrateComboPreviews(), hydrateBuffPreviews(), hydrateCrystalPreviews()])
   } catch (e: unknown) {
     const code =
       e && typeof e === 'object' && 'statusCode' in e
@@ -286,6 +309,44 @@ async function hydrateBuffPreviews() {
         }))
       } catch {
         buffPreview[item.id] = []
+      }
+    }),
+  )
+}
+
+async function hydrateCrystalPreviews() {
+  for (const key of Object.keys(crystalPreview)) delete crystalPreview[key]
+  const list = items.value.filter((i) => isCrystals(i.section))
+  await Promise.all(
+    list.map(async (item) => {
+      const entries = item.payload?.crystals ?? []
+      if (!entries.length) {
+        crystalPreview[item.id] = {}
+        return
+      }
+      try {
+        const ids = entries.map((e) => e.item_id)
+        const supabase = getSupabase()
+        const { data, error } = await supabase
+          .from('items')
+          .select('id, name_ru, icon_url, item_type')
+          .eq('item_type', 'crystal')
+          .in('id', ids)
+        if (error) throw error
+        const byId = new Map(
+          (data ?? []).map((c) => [
+            c.id,
+            { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as CrystalFill,
+          ]),
+        )
+        const map: Record<string, CrystalFill> = {}
+        for (const entry of entries) {
+          const fill = byId.get(entry.item_id)
+          if (fill) map[entry.slot] = fill
+        }
+        crystalPreview[item.id] = map
+      } catch {
+        crystalPreview[item.id] = {}
       }
     }),
   )
@@ -476,6 +537,11 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.92rem;
+}
+
+.crystalPreview {
+  margin-bottom: 0.75rem;
+  max-width: 28rem;
 }
 
 .buffIcon {

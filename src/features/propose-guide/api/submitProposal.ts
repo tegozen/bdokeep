@@ -1,9 +1,15 @@
 import type { ProposalSection } from '@/entities/class'
 
-export type TextProposalInput = {
+export type SubmitProposalInput = {
   class_slug: string
   section: ProposalSection
-  payload: { text?: string; skill_ids?: string[]; mode?: string }
+  payload: {
+    text?: string
+    skill_ids?: string[]
+    buff_ids?: string[]
+    mode?: string
+    crystals?: Array<{ slot: string; item_id: string; sort_order?: number }>
+  }
   author_label?: string
   website?: string
 }

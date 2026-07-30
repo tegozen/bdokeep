@@ -3,13 +3,19 @@ export type {
   ClassGuide,
   ClassVideo,
   ClassGuideBundle,
-  GuideSkillRow,
   GuideComboStepRow,
   GuideBuffRow,
   GuideItemRow,
   Skill,
   Buff,
+  Item,
   ProposalSection,
 } from './model/types'
-export { fetchPublishedClasses, fetchClassGuideBySlug, fetchClassSkills, fetchBuffs } from './api/classApi'
+export {
+  fetchPublishedClasses,
+  fetchClassGuideBySlug,
+  fetchClassSkills,
+  fetchBuffs,
+  fetchCrystals,
+} from './api/classApi'
 export { default as ClassIcon } from './ui/ClassIcon.vue'

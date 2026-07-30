@@ -22,6 +22,9 @@ services:
       - ./supabase/migrations/006_drop_pvp_role.sql:/docker-entrypoint-initdb.d/60-drop-pvp-role.sql:ro
       - ./supabase/migrations/007_buffs_proposals.sql:/docker-entrypoint-initdb.d/70-buffs-proposals.sql:ro
       - ./supabase/migrations/008_seed_buffs.sql:/docker-entrypoint-initdb.d/80-seed-buffs.sql:ro
+      - ./supabase/migrations/009_drop_guide_skills.sql:/docker-entrypoint-initdb.d/90-drop-guide-skills.sql:ro
+      - ./supabase/migrations/010_seed_crystals.sql:/docker-entrypoint-initdb.d/91-seed-crystals.sql:ro
+      - ./supabase/migrations/011_crystals_proposals.sql:/docker-entrypoint-initdb.d/92-crystals-proposals.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s

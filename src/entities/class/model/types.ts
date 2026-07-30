@@ -49,15 +49,6 @@ export type Item = {
   item_type: string
 }
 
-export type GuideSkillRow = {
-  id: string
-  mode: string
-  priority: number
-  notes: string | null
-  sort_order: number
-  skills: Skill | null
-}
-
 export type GuideComboStepRow = {
   id: string
   mode: 'awakening' | 'succession' | string
@@ -87,7 +78,6 @@ export type ClassGuideBundle = {
   class: BdoClass
   guide: ClassGuide | null
   videos: ClassVideo[]
-  skills: GuideSkillRow[]
   comboSteps: GuideComboStepRow[]
   buffs: GuideBuffRow[]
   relics: GuideItemRow[]
@@ -96,4 +86,9 @@ export type ClassGuideBundle = {
   essence: GuideItemRow[]
 }
 
-export type ProposalSection = 'summary' | 'buffs' | 'combo_awakening' | 'combo_succession'
+export type ProposalSection =
+  | 'summary'
+  | 'buffs'
+  | 'combo_awakening'
+  | 'combo_succession'
+  | 'crystals'

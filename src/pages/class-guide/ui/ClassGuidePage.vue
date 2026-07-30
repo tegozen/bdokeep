@@ -57,26 +57,6 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
-      <GuideSection title="Скилгайд" anchor="skills">
-        <ul v-if="bundle.skills.length" :class="[$style.list, $style.fade]">
-          <li v-for="row in bundle.skills" :key="row.id" :class="$style.item">
-            <img
-              v-if="row.skills?.icon_url"
-              :src="row.skills.icon_url"
-              alt=""
-              :class="$style.icon"
-              loading="lazy"
-            >
-            <div>
-              <strong>{{ row.skills?.name_ru || 'Скилл' }}</strong>
-              <span :class="$style.muted"> · {{ modeLabel(row.mode) }} · приоритет {{ row.priority }}</span>
-              <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
-            </div>
-          </li>
-        </ul>
-        <ShowEmptyGuide v-else />
-      </GuideSection>
-
       <GuideSection title="Комба" anchor="combo">
         <template #beside>
           <div :class="$style.comboTabs" role="tablist" aria-label="Тип комбы">
@@ -118,8 +98,13 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
-      <GuideSection title="Инкра / эссенция" anchor="essence">
-        <GuideItemList v-if="bundle.essence.length" :rows="bundle.essence" />
+      <GuideSection title="Инкрустация" anchor="crystals">
+        <template #actions>
+          <ProposeCrystalForm :class-slug="bundle.class.slug" />
+        </template>
+        <div v-if="bundle.crystals.length" :class="[$style.crystalStage, $style.fade]">
+          <CrystalBoard :filled="crystalFilled" />
+        </div>
         <ShowEmptyGuide v-else />
       </GuideSection>
 
@@ -133,11 +118,6 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
-      <GuideSection title="Камни в ванах" anchor="crystals">
-        <GuideItemList v-if="bundle.crystals.length" :rows="bundle.crystals" />
-        <ShowEmptyGuide v-else />
-      </GuideSection>
-
       <GuideSection title="Видео" anchor="videos">
         <VideoList :videos="bundle.videos" />
       </GuideSection>
@@ -148,10 +128,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
-import { ProposeGuideForm } from '@/features/propose-guide'
+import { ProposeCrystalForm, ProposeGuideForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import { UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
+import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { GuideItemList } from '@/widgets/guide-item-list'
 import { GuideSection } from '@/widgets/guide-section'
 import { VideoList } from '@/widgets/video-list'
@@ -163,12 +144,6 @@ const props = defineProps<{
 }>()
 
 const comboTab = ref<'awakening' | 'succession'>('awakening')
-
-function modeLabel(mode: string) {
-  if (mode === 'succession') return 'Наследие'
-  if (mode === 'both') return 'Оба'
-  return 'Пробуждение'
-}
 
 const awakeningSteps = computed(
   () => props.bundle?.comboSteps.filter((s) => s.mode === 'awakening') ?? [],
@@ -182,6 +157,17 @@ const activeComboSteps = computed(() =>
 const comboSection = computed<ProposalSection>(() =>
   comboTab.value === 'succession' ? 'combo_succession' : 'combo_awakening',
 )
+
+const crystalFilled = computed(() => {
+  const map: Record<string, CrystalFill> = {}
+  for (const row of props.bundle?.crystals ?? []) {
+    const slot = row.slot
+    const item = row.items
+    if (!slot || !item) continue
+    map[slot] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
+  }
+  return map
+})
 </script>
 
 <style module>
@@ -266,5 +252,10 @@ const comboSection = computed<ProposalSection>(() =>
   border-color: var(--color-border-strong);
   background: var(--color-gold-dim);
   color: var(--color-gold);
+}
+
+.crystalStage {
+  width: min(100%, 32rem);
+  margin-inline: auto;
 }
 </style>
