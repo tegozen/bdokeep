@@ -21,16 +21,16 @@
 
     <template v-else>
       <GuideSection title="Суть" anchor="summary">
+        <template #actions>
+          <ProposeGuideForm :class-slug="bundle.class.slug" section="summary" />
+        </template>
         <p v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
           {{ bundle.guide.summary }}
         </p>
         <ShowEmptyGuide v-else />
-        <div :class="$style.proposeRow">
-          <ProposeGuideForm :class-slug="bundle.class.slug" section="summary" />
-        </div>
       </GuideSection>
 
-      <GuideSection title="Забаф" anchor="buffs" subtitle="Рекомендованный забаф гильдии">
+      <GuideSection title="Забаф" anchor="buffs">
         <ul v-if="bundle.buffs.length" :class="[$style.list, $style.fade]">
           <li v-for="row in bundle.buffs" :key="row.id" :class="$style.item">
             <img
@@ -131,7 +131,7 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
-      <GuideSection title="Видео" anchor="videos" subtitle="YouTube-гайды по классу">
+      <GuideSection title="Видео" anchor="videos">
         <VideoList :videos="bundle.videos" />
       </GuideSection>
     </template>
@@ -259,12 +259,5 @@ const comboSection = computed<ProposalSection>(() =>
   border-color: var(--color-border-strong);
   background: var(--color-gold-dim);
   color: var(--color-gold);
-}
-
-.proposeRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.85rem;
 }
 </style>
