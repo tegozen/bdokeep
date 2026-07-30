@@ -1,0 +1,52 @@
+const YT_HOSTS = new Set([
+  'youtube.com',
+  'www.youtube.com',
+  'm.youtube.com',
+  'youtu.be',
+  'www.youtu.be',
+  'youtube-nocookie.com',
+  'www.youtube-nocookie.com',
+])
+
+export function sanitizeYoutubeUrl(raw: string): string | null {
+  if (!raw || typeof raw !== 'string') return null
+
+  const trimmed = raw.trim()
+  if (!trimmed || /^\s*javascript:/i.test(trimmed)) return null
+
+  let url: URL
+  try {
+    url = new URL(trimmed)
+  } catch {
+    return null
+  }
+
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+  if (!YT_HOSTS.has(url.hostname.toLowerCase())) return null
+
+  return url.toString()
+}
+
+export function youtubeEmbedUrl(raw: string): string | null {
+  const safe = sanitizeYoutubeUrl(raw)
+  if (!safe) return null
+
+  const url = new URL(safe)
+  const host = url.hostname.toLowerCase()
+
+  let id: string | null = null
+
+  if (host === 'youtu.be' || host === 'www.youtu.be') {
+    id = url.pathname.replace(/^\//, '').split('/')[0] || null
+  } else if (url.pathname.startsWith('/embed/')) {
+    id = url.pathname.split('/')[2] || null
+  } else if (url.pathname.startsWith('/shorts/')) {
+    id = url.pathname.split('/')[2] || null
+  } else {
+    id = url.searchParams.get('v')
+  }
+
+  if (!id || !/^[\w-]{6,32}$/.test(id)) return null
+
+  return `https://www.youtube-nocookie.com/embed/${id}`
+}
