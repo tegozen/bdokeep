@@ -32,6 +32,7 @@ export default defineNuxtConfig({
     supabaseInternalUrl:
       process.env.NUXT_SUPABASE_INTERNAL_URL || process.env.SUPABASE_INTERNAL_URL || '',
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    adminPassword: process.env.ADMIN_PASSWORD || '',
     public: {
       // Browser / host → published API port
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:8000',

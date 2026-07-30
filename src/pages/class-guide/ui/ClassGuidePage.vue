@@ -35,6 +35,14 @@
           {{ bundle.guide.summary }}
         </p>
         <ShowEmptyGuide v-else />
+        <div :class="$style.proposeRow">
+          <ProposeGuideForm :class-slug="bundle.class.slug" section="summary" />
+          <ProposeGuideForm
+            :class-slug="bundle.class.slug"
+            section="pvp_role"
+            trigger-label="Предложить роль"
+          />
+        </div>
       </GuideSection>
 
       <GuideSection title="Забаф" anchor="buffs" subtitle="Рекомендованный забаф гильдии">
@@ -78,17 +86,29 @@
       </GuideSection>
 
       <GuideSection title="Комба" anchor="combo" subtitle="Цепочки для пробуждения и наследия">
-        <div v-if="hasCombo(bundle.guide)" :class="[$style.comboWrap, $style.fade]">
-          <div v-if="bundle.guide?.combo_awakening" :class="$style.comboBlock">
+        <div v-if="hasCombo" :class="[$style.comboWrap, $style.fade]">
+          <div v-if="awakeningSteps.length" :class="$style.comboBlock">
             <h3 :class="$style.comboTitle">Пробуждение</h3>
-            <p :class="$style.summary">{{ bundle.guide.combo_awakening }}</p>
+            <ComboChain :steps="awakeningSteps" label="Комба пробуждения" />
           </div>
-          <div v-if="bundle.guide?.combo_succession" :class="$style.comboBlock">
+          <div v-if="successionSteps.length" :class="$style.comboBlock">
             <h3 :class="$style.comboTitle">Наследие</h3>
-            <p :class="$style.summary">{{ bundle.guide.combo_succession }}</p>
+            <ComboChain :steps="successionSteps" label="Комба наследия" />
           </div>
         </div>
         <ShowEmptyGuide v-else />
+        <div :class="$style.proposeRow">
+          <ProposeGuideForm
+            :class-slug="bundle.class.slug"
+            section="combo_awakening"
+            trigger-label="Предложить комбу (пробуждение)"
+          />
+          <ProposeGuideForm
+            :class-slug="bundle.class.slug"
+            section="combo_succession"
+            trigger-label="Предложить комбу (наследие)"
+          />
+        </div>
       </GuideSection>
 
       <GuideSection title="Инкра / эссенция" anchor="essence">
@@ -119,15 +139,18 @@
 </template>
 
 <script setup lang="ts">
-import type { ClassGuide, ClassGuideBundle } from '@/entities/class'
+import { computed } from 'vue'
+import type { ClassGuideBundle } from '@/entities/class'
+import { ProposeGuideForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import { UiSkeleton } from '@/shared/ui'
 import { ClassHero } from '@/widgets/class-hero'
+import { ComboChain } from '@/widgets/combo-chain'
 import { GuideItemList } from '@/widgets/guide-item-list'
 import { GuideSection } from '@/widgets/guide-section'
 import { VideoList } from '@/widgets/video-list'
 
-defineProps<{
+const props = defineProps<{
   bundle: ClassGuideBundle | null
   pending: boolean
   error?: boolean
@@ -151,9 +174,15 @@ function modeLabel(mode: string) {
   return 'Пробуждение'
 }
 
-function hasCombo(guide: ClassGuide | null | undefined) {
-  return Boolean(guide?.combo_awakening?.trim() || guide?.combo_succession?.trim())
-}
+const awakeningSteps = computed(
+  () => props.bundle?.comboSteps.filter((s) => s.mode === 'awakening') ?? [],
+)
+const successionSteps = computed(
+  () => props.bundle?.comboSteps.filter((s) => s.mode === 'succession') ?? [],
+)
+const hasCombo = computed(
+  () => awakeningSteps.value.length > 0 || successionSteps.value.length > 0,
+)
 </script>
 
 <style module>
@@ -236,13 +265,16 @@ function hasCombo(guide: ClassGuide | null | undefined) {
 }
 
 .comboTitle {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.75rem;
   font-family: var(--font-display);
   font-size: 1.05rem;
   color: var(--color-gold-soft);
 }
 
-.comboBlock .summary {
-  margin: 0;
+.proposeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
 }
 </style>

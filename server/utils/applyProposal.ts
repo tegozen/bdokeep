@@ -1,0 +1,90 @@
+type ProposalRow = {
+  id: string
+  class_id: string
+  section: string
+  payload: Record<string, unknown> | null
+  status: string
+}
+
+/** Apply a pending proposal to live guide tables and mark approved. */
+export async function applyProposal(
+  proposal: ProposalRow,
+  opts?: { reviewNote?: string | null },
+) {
+  if (proposal.status !== 'pending') {
+    throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
+  }
+
+  const section = proposal.section as (typeof PROPOSAL_SECTIONS)[number]
+  const payload = (proposal.payload || {}) as Record<string, unknown>
+  const rest = getServiceRest()
+
+  let { data: guide, error: guideErr } = await rest
+    .from('class_guides')
+    .select('id')
+    .eq('class_id', proposal.class_id)
+    .maybeSingle()
+
+  if (guideErr) throw createError({ statusCode: 502, statusMessage: guideErr.message })
+
+  if (!guide) {
+    const { data: created, error: createErr } = await rest
+      .from('class_guides')
+      .insert({ class_id: proposal.class_id })
+      .select('id')
+      .single()
+    if (createErr) throw createError({ statusCode: 502, statusMessage: createErr.message })
+    guide = created
+  }
+
+  if (isComboSection(section)) {
+    const mode = comboModeFromSection(section)
+    const skillIds = Array.isArray(payload.skill_ids)
+      ? payload.skill_ids.map((x) => String(x))
+      : []
+
+    if (!skillIds.length || skillIds.some((sid) => !UUID_RE.test(sid))) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный payload комбы' })
+    }
+
+    const { error: delErr } = await rest
+      .from('guide_combo_steps')
+      .delete()
+      .eq('guide_id', guide.id)
+      .eq('mode', mode)
+
+    if (delErr) throw createError({ statusCode: 502, statusMessage: delErr.message })
+
+    const rows = skillIds.map((skill_id, i) => ({
+      guide_id: guide.id,
+      mode,
+      skill_id,
+      sort_order: i,
+    }))
+
+    const { error: insErr } = await rest.from('guide_combo_steps').insert(rows)
+    if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
+  } else {
+    const text = String(payload.text || '').trim()
+    if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
+
+    const patch =
+      section === 'summary'
+        ? { summary: text, updated_at: new Date().toISOString() }
+        : { pvp_role: text, updated_at: new Date().toISOString() }
+
+    const { error: updErr } = await rest.from('class_guides').update(patch).eq('id', guide.id)
+    if (updErr) throw createError({ statusCode: 502, statusMessage: updErr.message })
+  }
+
+  const { error: statusErr } = await rest
+    .from('guide_proposals')
+    .update({
+      status: 'approved',
+      reviewed_at: new Date().toISOString(),
+      review_note: opts?.reviewNote ?? null,
+    })
+    .eq('id', proposal.id)
+
+  if (statusErr) throw createError({ statusCode: 502, statusMessage: statusErr.message })
+}

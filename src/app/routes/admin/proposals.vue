@@ -1,0 +1,427 @@
+<template>
+  <div :class="['mx-auto w-[min(100%-2rem,960px)]', $style.page]">
+    <header :class="$style.header">
+      <h1 :class="$style.h1">Предложения гайдов</h1>
+      <button v-if="authed" type="button" :class="$style.ghost" @click="logout">Выйти</button>
+    </header>
+
+    <form v-if="!authed" :class="$style.login" @submit.prevent="login">
+      <label :class="$style.label">
+        Пароль админа
+        <input v-model="password" type="password" :class="$style.input" required autocomplete="current-password">
+      </label>
+      <p v-if="loginError" :class="$style.error">{{ loginError }}</p>
+      <button type="submit" :class="$style.primary" :disabled="busy">Войти</button>
+    </form>
+
+    <template v-else>
+      <div :class="$style.filters">
+        <button
+          v-for="opt in statusOpts"
+          :key="opt.value"
+          type="button"
+          :class="[$style.chip, status === opt.value && $style.chipOn]"
+          @click="setStatus(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+        <button type="button" :class="$style.ghost" :disabled="loading" @click="load">
+          Обновить
+        </button>
+      </div>
+
+      <p v-if="loading" :class="$style.muted">Загрузка…</p>
+      <p v-else-if="!items.length" :class="$style.muted">Нет предложений.</p>
+
+      <ul v-else :class="$style.list">
+        <li v-for="item in items" :key="item.id" :class="$style.card">
+          <div :class="$style.cardHead">
+            <strong>{{ item.class_slug }}</strong>
+            <span :class="$style.badge">{{ sectionLabel(item.section) }}</span>
+            <span :class="$style.muted">{{ formatDate(item.created_at) }}</span>
+            <span v-if="item.author_label" :class="$style.muted">· {{ item.author_label }}</span>
+            <span :class="$style.status">{{ item.status }}</span>
+          </div>
+
+          <div v-if="isCombo(item.section)" :class="$style.preview">
+            <ComboChain
+              v-if="comboPreview[item.id]?.length"
+              :steps="comboPreview[item.id]!"
+              label="Предложенная комба"
+            />
+            <p v-else-if="comboPreview[item.id] === undefined" :class="$style.muted">
+              Загрузка скиллов…
+            </p>
+            <p v-else :class="$style.muted">Нет скиллов в payload</p>
+          </div>
+          <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
+
+          <div v-if="item.status === 'pending'" :class="$style.actions">
+            <button
+              type="button"
+              :class="$style.primary"
+              :disabled="acting === item.id"
+              @click="approve(item.id)"
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              :class="$style.danger"
+              :disabled="acting === item.id"
+              @click="reject(item.id)"
+            >
+              Reject
+            </button>
+          </div>
+          <p v-if="item.review_note" :class="$style.muted">Заметка: {{ item.review_note }}</p>
+        </li>
+      </ul>
+    </template>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted, reactive, ref, watch } from 'vue'
+import { getSupabase } from '@/shared/api'
+import { ComboChain } from '@/widgets/combo-chain'
+import type { Skill } from '@/entities/class'
+
+useHead({ title: 'Админ — предложения | BDO Keep' })
+
+type Proposal = {
+  id: string
+  class_id: string
+  class_slug: string
+  section: string
+  payload: { text?: string; skill_ids?: string[]; mode?: string }
+  author_label: string | null
+  status: string
+  created_at: string
+  reviewed_at: string | null
+  review_note: string | null
+}
+
+const authed = ref(false)
+const password = ref('')
+const loginError = ref('')
+const busy = ref(false)
+const loading = ref(false)
+const items = ref<Proposal[]>([])
+const status = ref('pending')
+const acting = ref<string | null>(null)
+const comboPreview = reactive<Record<string, Array<{ id: string; skills: Skill | null }> | null>>(
+  {},
+)
+
+const statusOpts = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'all', label: 'Все' },
+]
+
+function sectionLabel(section: string) {
+  switch (section) {
+    case 'summary':
+      return 'Суть'
+    case 'pvp_role':
+      return 'Роль'
+    case 'combo_awakening':
+      return 'Комба · пробуждение'
+    case 'combo_succession':
+      return 'Комба · наследие'
+    default:
+      return section
+  }
+}
+
+function isCombo(section: string) {
+  return section === 'combo_awakening' || section === 'combo_succession'
+}
+
+function textOf(item: Proposal) {
+  return String(item.payload?.text || '')
+}
+
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleString('ru-RU')
+  } catch {
+    return iso
+  }
+}
+
+async function checkMe() {
+  try {
+    const res = await $fetch<{ ok: boolean }>('/api/admin/me')
+    authed.value = Boolean(res.ok)
+  } catch {
+    authed.value = false
+  }
+}
+
+async function login() {
+  loginError.value = ''
+  busy.value = true
+  try {
+    await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
+    password.value = ''
+    authed.value = true
+    await load()
+  } catch {
+    loginError.value = 'Неверный пароль'
+  } finally {
+    busy.value = false
+  }
+}
+
+async function logout() {
+  await $fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
+  authed.value = false
+  items.value = []
+}
+
+async function load() {
+  loading.value = true
+  try {
+    const res = await $fetch<{ items: Proposal[] }>('/api/admin/proposals', {
+      query: { status: status.value },
+    })
+    items.value = res.items ?? []
+    await hydrateComboPreviews()
+  } catch (e: unknown) {
+    const code =
+      e && typeof e === 'object' && 'statusCode' in e
+        ? Number((e as { statusCode?: number }).statusCode)
+        : 0
+    if (code === 401) authed.value = false
+    items.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+function setStatus(value: string) {
+  status.value = value
+}
+
+async function hydrateComboPreviews() {
+  for (const key of Object.keys(comboPreview)) delete comboPreview[key]
+  const combos = items.value.filter((i) => isCombo(i.section))
+  await Promise.all(
+    combos.map(async (item) => {
+      const ids = item.payload?.skill_ids ?? []
+      if (!ids.length) {
+        comboPreview[item.id] = []
+        return
+      }
+      try {
+        const supabase = getSupabase()
+        const { data, error } = await supabase
+          .from('skills')
+          .select('id, name_ru, icon_url, class_slug')
+          .in('id', ids)
+        if (error) throw error
+        const byId = new Map((data ?? []).map((s) => [s.id, s as Skill]))
+        comboPreview[item.id] = ids.map((id) => ({
+          id,
+          skills: byId.get(id) ?? null,
+        }))
+      } catch {
+        comboPreview[item.id] = []
+      }
+    }),
+  )
+}
+
+async function approve(id: string) {
+  acting.value = id
+  try {
+    await $fetch(`/api/admin/proposals/${id}/approve`, { method: 'POST' })
+    await load()
+  } catch (e: unknown) {
+    const msg =
+      e && typeof e === 'object' && 'data' in e
+        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
+        : ''
+    alert(msg || 'Ошибка approve')
+  } finally {
+    acting.value = null
+  }
+}
+
+async function reject(id: string) {
+  acting.value = id
+  try {
+    await $fetch(`/api/admin/proposals/${id}/reject`, { method: 'POST', body: {} })
+    await load()
+  } catch (e: unknown) {
+    const msg =
+      e && typeof e === 'object' && 'data' in e
+        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
+        : ''
+    alert(msg || 'Ошибка reject')
+  } finally {
+    acting.value = null
+  }
+}
+
+watch(status, () => {
+  if (authed.value) load()
+})
+
+onMounted(async () => {
+  await checkMe()
+  if (authed.value) await load()
+})
+</script>
+
+<style module>
+.page {
+  padding: 2rem 0 4rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.login {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 22rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+  padding: 1.25rem;
+}
+
+.label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.input {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.chip,
+.ghost,
+.primary,
+.danger {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.4rem 0.75rem;
+}
+
+.chipOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
+}
+
+.primary {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
+}
+
+.danger {
+  border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
+  color: var(--color-danger);
+}
+
+.ghost {
+  color: var(--color-muted);
+}
+
+.list {
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+  padding: 1rem;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.badge {
+  border: 1px solid var(--color-border);
+  color: var(--color-gold-soft);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.45rem;
+}
+
+.status {
+  margin-left: auto;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.text {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+  color: var(--color-ink);
+}
+
+.preview {
+  margin-bottom: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.9rem;
+}
+</style>

@@ -17,8 +17,6 @@ export type ClassGuide = {
   class_id: string
   summary: string | null
   pvp_role: string | null
-  combo_awakening: string | null
-  combo_succession: string | null
   updated_at: string
 }
 
@@ -35,6 +33,7 @@ export type Skill = {
   name_ru: string
   icon_url: string | null
   class_slug: string | null
+  skill_type?: string | null
 }
 
 export type Buff = {
@@ -60,6 +59,14 @@ export type GuideSkillRow = {
   skills: Skill | null
 }
 
+export type GuideComboStepRow = {
+  id: string
+  mode: 'awakening' | 'succession' | string
+  sort_order: number
+  notes: string | null
+  skills: Skill | null
+}
+
 export type GuideBuffRow = {
   id: string
   slot: string | null
@@ -82,9 +89,12 @@ export type ClassGuideBundle = {
   guide: ClassGuide | null
   videos: ClassVideo[]
   skills: GuideSkillRow[]
+  comboSteps: GuideComboStepRow[]
   buffs: GuideBuffRow[]
   relics: GuideItemRow[]
   lightstones: GuideItemRow[]
   crystals: GuideItemRow[]
   essence: GuideItemRow[]
 }
+
+export type ProposalSection = 'summary' | 'pvp_role' | 'combo_awakening' | 'combo_succession'

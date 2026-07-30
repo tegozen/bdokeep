@@ -4,8 +4,11 @@ export type {
   ClassVideo,
   ClassGuideBundle,
   GuideSkillRow,
+  GuideComboStepRow,
   GuideBuffRow,
   GuideItemRow,
+  Skill,
+  ProposalSection,
 } from './model/types'
-export { fetchPublishedClasses, fetchClassGuideBySlug } from './api/classApi'
+export { fetchPublishedClasses, fetchClassGuideBySlug, fetchClassSkills } from './api/classApi'
 export { default as ClassIcon } from './ui/ClassIcon.vue'

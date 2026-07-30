@@ -1,5 +1,5 @@
 import { getSupabase } from '@/shared/api'
-import type { BdoClass, ClassGuideBundle } from '../model/types'
+import type { BdoClass, ClassGuideBundle, Skill } from '../model/types'
 
 export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   const supabase = getSupabase()
@@ -11,14 +11,13 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
       class_guides(
         summary,
         pvp_role,
-        combo_awakening,
-        combo_succession,
         guide_skills(count),
         guide_buffs(count),
         guide_relics(count),
         guide_lightstones(count),
         guide_crystals(count),
-        guide_essence(count)
+        guide_essence(count),
+        guide_combo_steps(count)
       ),
       class_videos(count)
     `,
@@ -32,14 +31,13 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   type GuideEmbed = {
     summary: string | null
     pvp_role: string | null
-    combo_awakening: string | null
-    combo_succession: string | null
     guide_skills: CountRow[] | null
     guide_buffs: CountRow[] | null
     guide_relics: CountRow[] | null
     guide_lightstones: CountRow[] | null
     guide_crystals: CountRow[] | null
     guide_essence: CountRow[] | null
+    guide_combo_steps: CountRow[] | null
   }
   type Row = BdoClass & {
     class_guides: GuideEmbed | GuideEmbed[] | null
@@ -51,25 +49,21 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
 
   const mapped = ((data ?? []) as Row[]).map((row) => {
     const guide = Array.isArray(row.class_guides) ? row.class_guides[0] : row.class_guides
-    const has_content = Boolean(
-      guide &&
-        (textFilled(guide.summary) ||
-          textFilled(guide.pvp_role) ||
-          textFilled(guide.combo_awakening) ||
-          textFilled(guide.combo_succession) ||
-          countOf(guide.guide_skills) > 0 ||
-          countOf(guide.guide_buffs) > 0 ||
-          countOf(guide.guide_relics) > 0 ||
-          countOf(guide.guide_lightstones) > 0 ||
-          countOf(guide.guide_crystals) > 0 ||
-          countOf(guide.guide_essence) > 0),
-    ) || countOf(row.class_videos) > 0
+    const has_content =
+      Boolean(
+        guide &&
+          (textFilled(guide.summary) ||
+            textFilled(guide.pvp_role) ||
+            countOf(guide.guide_skills) > 0 ||
+            countOf(guide.guide_buffs) > 0 ||
+            countOf(guide.guide_relics) > 0 ||
+            countOf(guide.guide_lightstones) > 0 ||
+            countOf(guide.guide_crystals) > 0 ||
+            countOf(guide.guide_essence) > 0 ||
+            countOf(guide.guide_combo_steps) > 0),
+      ) || countOf(row.class_videos) > 0
 
-    const {
-      class_guides: _g,
-      class_videos: _v,
-      ...klass
-    } = row
+    const { class_guides: _g, class_videos: _v, ...klass } = row
 
     return { ...klass, has_content } as BdoClass
   })
@@ -83,9 +77,22 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   return mapped
 }
 
+export async function fetchClassSkills(classSlug: string): Promise<Skill[]> {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('skills')
+    .select('id, name_ru, icon_url, class_slug, skill_type')
+    .eq('class_slug', classSlug)
+    .order('name_ru', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as Skill[]
+}
+
 export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBundle | null> {
   const empty = {
     skills: [] as ClassGuideBundle['skills'],
+    comboSteps: [] as ClassGuideBundle['comboSteps'],
     buffs: [] as ClassGuideBundle['buffs'],
     relics: [] as ClassGuideBundle['relics'],
     lightstones: [] as ClassGuideBundle['lightstones'],
@@ -128,10 +135,15 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
 
   const guideId = guide.id
 
-  const [skills, buffs, relics, lightstones, crystals, essence] = await Promise.all([
+  const [skills, comboSteps, buffs, relics, lightstones, crystals, essence] = await Promise.all([
     supabase
       .from('guide_skills')
       .select('id, mode, priority, notes, sort_order, skills(id, name_ru, icon_url, class_slug)')
+      .eq('guide_id', guideId)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('guide_combo_steps')
+      .select('id, mode, notes, sort_order, skills(id, name_ru, icon_url, class_slug)')
       .eq('guide_id', guideId)
       .order('sort_order', { ascending: true }),
     supabase
@@ -161,7 +173,7 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
       .order('sort_order', { ascending: true }),
   ])
 
-  for (const res of [skills, buffs, relics, lightstones, crystals, essence]) {
+  for (const res of [skills, comboSteps, buffs, relics, lightstones, crystals, essence]) {
     if (res.error) throw res.error
   }
 
@@ -170,6 +182,7 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
     guide,
     videos: videos ?? [],
     skills: (skills.data ?? []) as ClassGuideBundle['skills'],
+    comboSteps: (comboSteps.data ?? []) as ClassGuideBundle['comboSteps'],
     buffs: (buffs.data ?? []) as ClassGuideBundle['buffs'],
     relics: (relics.data ?? []) as ClassGuideBundle['relics'],
     lightstones: (lightstones.data ?? []) as ClassGuideBundle['lightstones'],
