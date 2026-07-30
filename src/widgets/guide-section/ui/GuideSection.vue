@@ -1,7 +1,15 @@
 <template>
   <section :id="anchor" :class="$style.section">
     <header :class="$style.head">
-      <h2 :class="$style.title">{{ title }}</h2>
+      <div :class="$style.titleRow">
+        <h2 :class="$style.title">{{ title }}</h2>
+        <div v-if="$slots.beside" :class="$style.beside">
+          <slot name="beside" />
+        </div>
+        <div v-if="$slots.actions" :class="$style.actions">
+          <slot name="actions" />
+        </div>
+      </div>
       <p v-if="subtitle" :class="$style.subtitle">{{ subtitle }}</p>
     </header>
     <div>
@@ -30,9 +38,29 @@ defineProps<{
   padding-bottom: 0.625rem;
 }
 
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
 .title {
   margin: 0;
   font-size: 1.35rem;
+}
+
+.beside {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.actions {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .subtitle {

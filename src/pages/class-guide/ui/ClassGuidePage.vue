@@ -70,30 +70,45 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
-      <GuideSection title="Комба" anchor="combo" subtitle="Цепочки для пробуждения и наследия">
-        <div v-if="hasCombo" :class="[$style.comboWrap, $style.fade]">
-          <div v-if="awakeningSteps.length" :class="$style.comboBlock">
-            <h3 :class="$style.comboTitle">Пробуждение</h3>
-            <ComboChain :steps="awakeningSteps" label="Комба пробуждения" />
+      <GuideSection title="Комба" anchor="combo">
+        <template #beside>
+          <div :class="$style.comboTabs" role="tablist" aria-label="Тип комбы">
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="comboTab === 'awakening'"
+              :class="[$style.comboTab, comboTab === 'awakening' && $style.comboTabOn]"
+              @click="comboTab = 'awakening'"
+            >
+              Пробуждение
+            </button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="comboTab === 'succession'"
+              :class="[$style.comboTab, comboTab === 'succession' && $style.comboTabOn]"
+              @click="comboTab = 'succession'"
+            >
+              Наследие
+            </button>
           </div>
-          <div v-if="successionSteps.length" :class="$style.comboBlock">
-            <h3 :class="$style.comboTitle">Наследие</h3>
-            <ComboChain :steps="successionSteps" label="Комба наследия" />
-          </div>
+        </template>
+        <template #actions>
+          <ProposeGuideForm
+            :key="comboSection"
+            :class-slug="bundle.class.slug"
+            :section="comboSection"
+            trigger-label="Предложить комбу"
+          />
+        </template>
+
+        <div v-if="activeComboSteps.length" :class="[$style.comboBlock, $style.fade]">
+          <ComboChain
+            :steps="activeComboSteps"
+            :label="comboTab === 'succession' ? 'Комба наследия' : 'Комба пробуждения'"
+          />
         </div>
         <ShowEmptyGuide v-else />
-        <div :class="$style.proposeRow">
-          <ProposeGuideForm
-            :class-slug="bundle.class.slug"
-            section="combo_awakening"
-            trigger-label="Предложить комбу (пробуждение)"
-          />
-          <ProposeGuideForm
-            :class-slug="bundle.class.slug"
-            section="combo_succession"
-            trigger-label="Предложить комбу (наследие)"
-          />
-        </div>
       </GuideSection>
 
       <GuideSection title="Инкра / эссенция" anchor="essence">
@@ -124,8 +139,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { ClassGuideBundle } from '@/entities/class'
+import { computed, ref } from 'vue'
+import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
 import { ProposeGuideForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import { UiSkeleton } from '@/shared/ui'
@@ -140,6 +155,8 @@ const props = defineProps<{
   error?: boolean
 }>()
 
+const comboTab = ref<'awakening' | 'succession'>('awakening')
+
 function modeLabel(mode: string) {
   if (mode === 'succession') return 'Наследие'
   if (mode === 'both') return 'Оба'
@@ -152,8 +169,11 @@ const awakeningSteps = computed(
 const successionSteps = computed(
   () => props.bundle?.comboSteps.filter((s) => s.mode === 'succession') ?? [],
 )
-const hasCombo = computed(
-  () => awakeningSteps.value.length > 0 || successionSteps.value.length > 0,
+const activeComboSteps = computed(() =>
+  comboTab.value === 'succession' ? successionSteps.value : awakeningSteps.value,
+)
+const comboSection = computed<ProposalSection>(() =>
+  comboTab.value === 'succession' ? 'combo_succession' : 'combo_awakening',
 )
 </script>
 
@@ -214,22 +234,31 @@ const hasCombo = computed(
   color: var(--color-muted);
 }
 
-.comboWrap {
-  display: grid;
-  gap: 1.25rem;
-}
-
 .comboBlock {
   border: 1px solid var(--color-border);
   background: var(--color-bg-panel);
   padding: 1rem 1.15rem;
 }
 
-.comboTitle {
-  margin: 0 0 0.75rem;
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  color: var(--color-gold-soft);
+.comboTabs {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.comboTab {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.comboTabOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
 }
 
 .proposeRow {

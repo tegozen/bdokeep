@@ -12,7 +12,7 @@
     <Teleport to="body">
       <div
         v-if="openLogin"
-        :class="$style.backdrop"
+        :class="[$style.backdrop, obscured && $style.obscured]"
         @click.self="closeLogin"
       >
         <div
@@ -55,7 +55,7 @@ const busy = ref(false)
 const error = ref('')
 const openLogin = ref(false)
 
-useModalEscape(openLogin, closeLogin)
+const { obscured } = useModalEscape(openLogin, closeLogin)
 
 onMounted(() => {
   void refresh()
@@ -144,9 +144,16 @@ async function onLogout() {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  transition: filter 160ms ease;
+}
+
+.obscured {
+  filter: blur(10px);
+  pointer-events: none;
+  user-select: none;
 }
 
 .modal {

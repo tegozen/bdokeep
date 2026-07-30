@@ -77,4 +77,11 @@
   h3 {
     @apply mb-2 font-display font-bold tracking-wide text-gold;
   }
+
+  html.modal-open #__nuxt {
+    filter: blur(12px);
+    transform: translateZ(0);
+    pointer-events: none;
+    user-select: none;
+  }
 }

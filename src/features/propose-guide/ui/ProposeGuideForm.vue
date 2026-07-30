@@ -5,7 +5,11 @@
     </button>
 
     <Teleport to="body">
-      <div v-if="open" :class="$style.backdrop" @click.self="close">
+      <div
+        v-if="open"
+        :class="[$style.backdrop, obscured && $style.obscured]"
+        @click.self="close"
+      >
         <div
           :class="$style.modal"
           role="dialog"
@@ -210,7 +214,7 @@ const doneMessage = ref('')
 const dragFrom = ref<number | null>(null)
 const dragOver = ref<number | null>(null)
 
-useModalEscape(open, close)
+const { obscured } = useModalEscape(open, close)
 
 const isCombo = computed(
   () => props.section === 'combo_awakening' || props.section === 'combo_succession',
@@ -400,10 +404,17 @@ async function onSubmit() {
   z-index: 80;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.45);
   padding: 1rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  transition: filter 160ms ease;
+}
+
+.obscured {
+  filter: blur(10px);
+  pointer-events: none;
+  user-select: none;
 }
 
 .modal {

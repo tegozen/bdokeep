@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="request"
-      :class="$style.backdrop"
+      :class="[$style.backdrop, obscured && $style.obscured]"
       @click.self="settle(false)"
     >
       <div
@@ -44,7 +44,7 @@ const messageId = useId()
 const { request, settle } = useConfirm()
 const confirmOpen = computed(() => Boolean(request.value))
 
-useModalEscape(confirmOpen, () => settle(false))
+const { obscured } = useModalEscape(confirmOpen, () => settle(false))
 </script>
 
 <style module>
@@ -55,9 +55,16 @@ useModalEscape(confirmOpen, () => settle(false))
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  transition: filter 160ms ease;
+}
+
+.obscured {
+  filter: blur(10px);
+  pointer-events: none;
+  user-select: none;
 }
 
 .modal {
