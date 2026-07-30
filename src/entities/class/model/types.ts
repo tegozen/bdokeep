@@ -69,6 +69,8 @@ export type GuideBuffRow = {
 export type GuideItemRow = {
   id: string
   slot: string | null
+  /** Crystal preset: t1 / t2 / besp / sub (only on guide_crystals). */
+  preset?: string | null
   notes: string | null
   sort_order: number
   items: Item | null

@@ -99,27 +99,46 @@ export default defineEventHandler(async (event) => {
     if (!Array.isArray(raw) || raw.length === 0) {
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
-    if (raw.length > MAX_CRYSTALS) {
-      throw createError({ statusCode: 400, statusMessage: `Максимум ${MAX_CRYSTALS} слотов` })
+    if (raw.length > MAX_CRYSTALS_ALL_PRESETS) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Максимум ${MAX_CRYSTALS_ALL_PRESETS} слотов`,
+      })
     }
 
-    const crystals: Array<{ slot: string; item_id: string; sort_order: number }> = []
-    const usedSlots = new Set<string>()
+    const crystals: Array<{
+      preset: string
+      slot: string
+      item_id: string
+      sort_order: number
+    }> = []
+    const usedKeys = new Set<string>()
     for (let i = 0; i < raw.length; i++) {
-      const entry = raw[i] as { slot?: unknown; item_id?: unknown; sort_order?: unknown }
+      const entry = raw[i] as {
+        preset?: unknown
+        slot?: unknown
+        item_id?: unknown
+        sort_order?: unknown
+      }
+      const preset = String(entry?.preset || '')
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
+      if (!isCrystalPresetId(preset)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
+      }
       if (!isCrystalSlotId(slot)) {
         throw createError({ statusCode: 400, statusMessage: 'Некорректный слот' })
       }
-      if (usedSlots.has(slot)) {
-        throw createError({ statusCode: 400, statusMessage: 'Дубликат слота' })
+      const key = `${preset}:${slot}`
+      if (usedKeys.has(key)) {
+        throw createError({ statusCode: 400, statusMessage: 'Дубликат слота в пресете' })
       }
-      usedSlots.add(slot)
+      usedKeys.add(key)
       if (!UUID_RE.test(itemId)) {
         throw createError({ statusCode: 400, statusMessage: 'Некорректный crystal id' })
       }
       crystals.push({
+        preset,
         slot,
         item_id: itemId,
         sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,

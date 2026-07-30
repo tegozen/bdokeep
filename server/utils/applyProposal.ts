@@ -90,18 +90,31 @@ export async function applyProposal(
       throw createError({ statusCode: 400, statusMessage: 'Некорректный payload инкрустации' })
     }
 
-    const rows: Array<{ guide_id: string; item_id: string; slot: string; sort_order: number }> = []
+    const rows: Array<{
+      guide_id: string
+      item_id: string
+      slot: string
+      preset: string
+      sort_order: number
+    }> = []
     for (let i = 0; i < raw.length; i++) {
-      const entry = raw[i] as { slot?: unknown; item_id?: unknown; sort_order?: unknown }
+      const entry = raw[i] as {
+        preset?: unknown
+        slot?: unknown
+        item_id?: unknown
+        sort_order?: unknown
+      }
+      const preset = String(entry?.preset || '')
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
-      if (!isCrystalSlotId(slot) || !UUID_RE.test(itemId)) {
-        throw createError({ statusCode: 400, statusMessage: 'Некорректный слот или кристалл' })
+      if (!isCrystalPresetId(preset) || !isCrystalSlotId(slot) || !UUID_RE.test(itemId)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет, слот или кристалл' })
       }
       rows.push({
         guide_id: guide.id,
         item_id: itemId,
         slot,
+        preset,
         sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
       })
     }

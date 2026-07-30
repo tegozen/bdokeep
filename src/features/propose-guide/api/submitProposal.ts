@@ -8,7 +8,12 @@ export type SubmitProposalInput = {
     skill_ids?: string[]
     buff_ids?: string[]
     mode?: string
-    crystals?: Array<{ slot: string; item_id: string; sort_order?: number }>
+    crystals?: Array<{
+      preset: string
+      slot: string
+      item_id: string
+      sort_order?: number
+    }>
   }
   author_label?: string
   website?: string

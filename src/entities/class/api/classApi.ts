@@ -174,7 +174,7 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
       .order('sort_order', { ascending: true }),
     supabase
       .from('guide_crystals')
-      .select('id, slot, notes, sort_order, items(id, name_ru, icon_url, item_type)')
+      .select('id, slot, preset, notes, sort_order, items(id, name_ru, icon_url, item_type)')
       .eq('guide_id', guideId)
       .order('sort_order', { ascending: true }),
     supabase

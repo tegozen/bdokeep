@@ -18,6 +18,19 @@
         >
           <header :class="$style.head">
             <h3 :class="$style.title">Предложить инкрустацию</h3>
+            <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
+              <button
+                v-for="p in crystalPresets"
+                :key="p.id"
+                type="button"
+                role="tab"
+                :aria-selected="activePreset === p.id"
+                :class="[$style.presetTab, activePreset === p.id && $style.presetTabOn]"
+                @click="activePreset = p.id"
+              >
+                {{ p.label }}
+              </button>
+            </div>
             <button type="button" :class="$style.close" aria-label="Закрыть" @click="close">
               ×
             </button>
@@ -136,29 +149,41 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { fetchCrystals, type Item } from '@/entities/class'
+import { fetchCrystals, type GuideItemRow, type Item } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
+  CRYSTAL_PRESETS,
+  CRYSTAL_PRESET_IDS,
   CRYSTAL_TABS,
   crystalCatalogTab,
   isCenterSlotId,
+  isCrystalPresetId,
   isDawnCrystalName,
   isDawnSlotId,
   isSpiritCrystalName,
   useModalEscape,
   useSuperadmin,
+  type CrystalPresetId,
   type CrystalTabId,
 } from '@/shared/lib'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
 
+type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
+
+function emptyPresets(): PresetBoards {
+  return { t1: {}, t2: {}, besp: {}, sub: {} }
+}
+
 const props = withDefaults(
   defineProps<{
     classSlug: string
     triggerLabel?: string
+    initialCrystals?: GuideItemRow[]
   }>(),
   {
     triggerLabel: 'Предложить инкрустацию',
+    initialCrystals: () => [],
   },
 )
 
@@ -170,9 +195,10 @@ const author = ref('')
 const query = ref('')
 const crystalTab = ref<CrystalTabId>('basic')
 const crystalTabs = CRYSTAL_TABS
+const crystalPresets = CRYSTAL_PRESETS
+const activePreset = ref<CrystalPresetId>('t1')
 const activeSlot = ref<string | null>(null)
-/** slotId → crystal item */
-const slots = ref<Record<string, Item>>({})
+const presets = ref<PresetBoards>(emptyPresets())
 const crystals = ref<Item[]>([])
 const catalogPending = ref(false)
 const catalogError = ref(false)
@@ -186,10 +212,28 @@ let rightMainObserver: ResizeObserver | null = null
 
 const { obscured } = useModalEscape(open, close)
 
+function hydrateFromInitial() {
+  const next = emptyPresets()
+  for (const row of props.initialCrystals ?? []) {
+    const presetRaw = String(row.preset || 't1')
+    if (!isCrystalPresetId(presetRaw) || !row.slot || !row.items) continue
+    next[presetRaw][row.slot] = row.items
+  }
+  presets.value = next
+  activePreset.value = 't1'
+}
+
+function currentSlots(): Record<string, Item> {
+  return presets.value[activePreset.value]
+}
+
+function setCurrentSlots(next: Record<string, Item>) {
+  presets.value = { ...presets.value, [activePreset.value]: next }
+}
+
 function syncBoardWidth() {
   const h = rightMainEl.value?.getBoundingClientRect().height ?? 0
   if (h < 120) return
-  // Total board height ≈ W + gap(0.65rem) + dawn(~W/6 + pad) ≈ (7/6)W + 20px
   boardWidth.value = Math.max(220, Math.round((h - 20) * (6 / 7)))
 }
 
@@ -213,7 +257,7 @@ onBeforeUnmount(() => {
 
 const filledMap = computed(() => {
   const map: Record<string, CrystalFill> = {}
-  for (const [id, item] of Object.entries(slots.value)) {
+  for (const [id, item] of Object.entries(currentSlots())) {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
@@ -255,6 +299,7 @@ watch(open, async (v) => {
   }
   formError.value = ''
   done.value = false
+  hydrateFromInitial()
   await refreshAdmin()
   await nextTick()
   bindRightMainObserver()
@@ -309,15 +354,15 @@ function assignCrystal(item: Item) {
   }
 
   formError.value = ''
-  slots.value = { ...slots.value, [activeSlot.value]: item }
+  setCurrentSlots({ ...currentSlots(), [activeSlot.value]: item })
 }
 
 function clearSlot(slotId?: string) {
   const id = slotId || activeSlot.value
   if (!id) return
-  const next = { ...slots.value }
+  const next = { ...currentSlots() }
   delete next[id]
-  slots.value = next
+  setCurrentSlots(next)
 }
 
 function reset() {
@@ -325,7 +370,8 @@ function reset() {
   author.value = ''
   query.value = ''
   activeSlot.value = null
-  slots.value = {}
+  activePreset.value = 't1'
+  presets.value = emptyPresets()
   formError.value = ''
   done.value = false
   doneMessage.value = ''
@@ -339,8 +385,24 @@ function close() {
 
 async function onSubmit() {
   formError.value = ''
-  const entries = Object.entries(slots.value)
-  if (!entries.length) {
+  const crystalsPayload: Array<{
+    preset: CrystalPresetId
+    slot: string
+    item_id: string
+    sort_order: number
+  }> = []
+  let order = 0
+  for (const preset of CRYSTAL_PRESET_IDS) {
+    for (const [slot, item] of Object.entries(presets.value[preset])) {
+      crystalsPayload.push({
+        preset,
+        slot,
+        item_id: item.id,
+        sort_order: order++,
+      })
+    }
+  }
+  if (!crystalsPayload.length) {
     formError.value = 'Заполните хотя бы один слот'
     return
   }
@@ -350,13 +412,7 @@ async function onSubmit() {
     const res = await submitGuideProposal({
       class_slug: props.classSlug,
       section: 'crystals',
-      payload: {
-        crystals: entries.map(([slot, item], i) => ({
-          slot,
-          item_id: item.id,
-          sort_order: i,
-        })),
-      },
+      payload: { crystals: crystalsPayload },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
     })
@@ -435,15 +491,39 @@ async function onSubmit() {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: flex-start;
+  gap: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-border);
   padding: 0.85rem 1rem;
+  flex-wrap: wrap;
 }
 
 .title {
   margin: 0;
   font-size: 1.05rem;
+}
+
+.presetTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.presetTab {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.32rem 0.55rem;
+}
+
+.presetTabOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
 }
 
 .close {
@@ -453,6 +533,7 @@ async function onSubmit() {
   cursor: pointer;
   font-size: 1.5rem;
   line-height: 1;
+  margin-left: auto;
 }
 
 .form {

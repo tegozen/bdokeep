@@ -99,13 +99,30 @@
       </GuideSection>
 
       <GuideSection title="Инкрустация" anchor="crystals">
-        <template #actions>
-          <ProposeCrystalForm :class-slug="bundle.class.slug" />
+        <template #beside>
+          <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
+            <button
+              v-for="p in crystalPresets"
+              :key="p.id"
+              type="button"
+              role="tab"
+              :aria-selected="activeCrystalPreset === p.id"
+              :class="[$style.presetTab, activeCrystalPreset === p.id && $style.presetTabOn]"
+              @click="activeCrystalPreset = p.id"
+            >
+              {{ p.label }}
+            </button>
+          </div>
         </template>
-        <div v-if="bundle.crystals.length" :class="[$style.crystalStage, $style.fade]">
+        <template #actions>
+          <ProposeCrystalForm
+            :class-slug="bundle.class.slug"
+            :initial-crystals="bundle.crystals"
+          />
+        </template>
+        <div :class="[$style.crystalStage, $style.fade]">
           <CrystalBoard :filled="crystalFilled" />
         </div>
-        <ShowEmptyGuide v-else />
       </GuideSection>
 
       <GuideSection title="Релики" anchor="relics">
@@ -130,6 +147,7 @@ import { computed, ref } from 'vue'
 import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
 import { ProposeCrystalForm, ProposeGuideForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
+import { CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
 import { UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
@@ -144,6 +162,8 @@ const props = defineProps<{
 }>()
 
 const comboTab = ref<'awakening' | 'succession'>('awakening')
+const crystalPresets = CRYSTAL_PRESETS
+const activeCrystalPreset = ref<CrystalPresetId>('t1')
 
 const awakeningSteps = computed(
   () => props.bundle?.comboSteps.filter((s) => s.mode === 'awakening') ?? [],
@@ -161,6 +181,8 @@ const comboSection = computed<ProposalSection>(() =>
 const crystalFilled = computed(() => {
   const map: Record<string, CrystalFill> = {}
   for (const row of props.bundle?.crystals ?? []) {
+    const preset = (row.preset || 't1') as CrystalPresetId
+    if (preset !== activeCrystalPreset.value) continue
     const slot = row.slot
     const item = row.items
     if (!slot || !item) continue
@@ -249,6 +271,28 @@ const crystalFilled = computed(() => {
 }
 
 .comboTabOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
+}
+
+.presetTabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.presetTab {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.65rem;
+}
+
+.presetTabOn {
   border-color: var(--color-border-strong);
   background: var(--color-gold-dim);
   color: var(--color-gold);

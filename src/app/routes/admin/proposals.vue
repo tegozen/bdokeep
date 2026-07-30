@@ -78,10 +78,27 @@
             <p v-if="crystalPreview[item.id] === undefined" :class="$style.muted">
               Загрузка кристаллов…
             </p>
-            <p v-else-if="!Object.keys(crystalPreview[item.id] || {}).length" :class="$style.muted">
-              Нет кристаллов в payload
-            </p>
-            <CrystalBoard v-else :filled="crystalPreview[item.id]!" />
+            <template v-else>
+              <div :class="$style.presetTabs" role="tablist">
+                <button
+                  v-for="p in crystalPresetTabs"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :class="[$style.presetTab, previewPreset[item.id] === p.id && $style.presetTabOn]"
+                  @click="previewPreset[item.id] = p.id"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
+              <p
+                v-if="!Object.keys(crystalFilledFor(item.id)).length"
+                :class="$style.muted"
+              >
+                Нет кристаллов в этом пресете
+              </p>
+              <CrystalBoard v-else :filled="crystalFilledFor(item.id)" />
+            </template>
           </div>
           <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
 
@@ -113,6 +130,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
 import { getSupabase } from '@/shared/api'
+import { CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import type { Buff, Skill } from '@/entities/class'
@@ -129,7 +147,7 @@ type Proposal = {
     skill_ids?: string[]
     buff_ids?: string[]
     mode?: string
-    crystals?: Array<{ slot: string; item_id: string }>
+    crystals?: Array<{ preset?: string; slot: string; item_id: string }>
   }
   author_label: string | null
   status: string
@@ -138,6 +156,7 @@ type Proposal = {
   review_note: string | null
 }
 
+const crystalPresetTabs = CRYSTAL_PRESETS
 const authed = ref(false)
 const password = ref('')
 const loginError = ref('')
@@ -152,7 +171,10 @@ const comboPreview = reactive<Record<string, Array<{ id: string; skills: Skill |
 const buffPreview = reactive<
   Record<string, Array<{ id: string; buffs: Buff | null }> | null>
 >({})
-const crystalPreview = reactive<Record<string, Record<string, CrystalFill> | null>>({})
+const crystalPreview = reactive<
+  Record<string, Partial<Record<CrystalPresetId, Record<string, CrystalFill>>> | null>
+>({})
+const previewPreset = reactive<Record<string, CrystalPresetId>>({})
 
 const statusOpts = [
   { value: 'pending', label: 'Pending' },
@@ -192,6 +214,11 @@ function isCrystals(section: string) {
 
 function textOf(item: Proposal) {
   return String(item.payload?.text || '')
+}
+
+function crystalFilledFor(proposalId: string): Record<string, CrystalFill> {
+  const preset = previewPreset[proposalId] || 't1'
+  return crystalPreview[proposalId]?.[preset] || {}
 }
 
 function formatDate(iso: string) {
@@ -316,9 +343,11 @@ async function hydrateBuffPreviews() {
 
 async function hydrateCrystalPreviews() {
   for (const key of Object.keys(crystalPreview)) delete crystalPreview[key]
+  for (const key of Object.keys(previewPreset)) delete previewPreset[key]
   const list = items.value.filter((i) => isCrystals(i.section))
   await Promise.all(
     list.map(async (item) => {
+      previewPreset[item.id] = 't1'
       const entries = item.payload?.crystals ?? []
       if (!entries.length) {
         crystalPreview[item.id] = {}
@@ -339,12 +368,15 @@ async function hydrateCrystalPreviews() {
             { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as CrystalFill,
           ]),
         )
-        const map: Record<string, CrystalFill> = {}
+        const byPreset: Partial<Record<CrystalPresetId, Record<string, CrystalFill>>> = {}
         for (const entry of entries) {
           const fill = byId.get(entry.item_id)
-          if (fill) map[entry.slot] = fill
+          if (!fill) continue
+          const preset = (entry.preset || 't1') as CrystalPresetId
+          if (!byPreset[preset]) byPreset[preset] = {}
+          byPreset[preset]![entry.slot] = fill
         }
-        crystalPreview[item.id] = map
+        crystalPreview[item.id] = byPreset
       } catch {
         crystalPreview[item.id] = {}
       }
@@ -542,6 +574,31 @@ onMounted(async () => {
 .crystalPreview {
   margin-bottom: 0.75rem;
   max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.presetTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.presetTab {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.55rem;
+}
+
+.presetTabOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
 }
 
 .buffIcon {

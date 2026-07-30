@@ -15,7 +15,11 @@ export const MAX_TEXT_LEN = 8000
 export const MAX_COMBO_STEPS = 30
 export const MAX_BUFFS = 20
 export const MAX_CRYSTALS = 23
+export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
 export const MAX_AUTHOR_LEN = 80
+
+export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub'] as const
+export type CrystalPresetId = (typeof CRYSTAL_PRESET_IDS)[number]
 
 export const CRYSTAL_SLOT_IDS = [
   'nw',
@@ -61,4 +65,8 @@ export function comboModeFromSection(section: ProposalSection): 'awakening' | 's
 
 export function isCrystalSlotId(id: string): boolean {
   return (CRYSTAL_SLOT_IDS as readonly string[]).includes(id)
+}
+
+export function isCrystalPresetId(id: string): id is CrystalPresetId {
+  return (CRYSTAL_PRESET_IDS as readonly string[]).includes(id)
 }
