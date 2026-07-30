@@ -17,6 +17,8 @@ export type ClassGuide = {
   class_id: string
   summary: string | null
   pvp_role: string | null
+  combo_awakening: string | null
+  combo_succession: string | null
   updated_at: string
 }
 

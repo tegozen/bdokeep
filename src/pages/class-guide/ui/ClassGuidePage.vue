@@ -77,6 +77,20 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
+      <GuideSection title="Комба" anchor="combo" subtitle="Цепочки для пробуждения и наследия">
+        <div v-if="hasCombo(bundle.guide)" :class="[$style.comboWrap, $style.fade]">
+          <div v-if="bundle.guide?.combo_awakening" :class="$style.comboBlock">
+            <h3 :class="$style.comboTitle">Пробуждение</h3>
+            <p :class="$style.summary">{{ bundle.guide.combo_awakening }}</p>
+          </div>
+          <div v-if="bundle.guide?.combo_succession" :class="$style.comboBlock">
+            <h3 :class="$style.comboTitle">Наследие</h3>
+            <p :class="$style.summary">{{ bundle.guide.combo_succession }}</p>
+          </div>
+        </div>
+        <ShowEmptyGuide v-else />
+      </GuideSection>
+
       <GuideSection title="Инкра / эссенция" anchor="essence">
         <GuideItemList v-if="bundle.essence.length" :rows="bundle.essence" />
         <ShowEmptyGuide v-else />
@@ -105,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ClassGuideBundle } from '@/entities/class'
+import type { ClassGuide, ClassGuideBundle } from '@/entities/class'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import { UiSkeleton } from '@/shared/ui'
 import { ClassHero } from '@/widgets/class-hero'
@@ -123,6 +137,7 @@ const toc = [
   { id: 'summary', label: 'Суть' },
   { id: 'buffs', label: 'Забаф' },
   { id: 'skills', label: 'Скиллы' },
+  { id: 'combo', label: 'Комба' },
   { id: 'essence', label: 'Инкра' },
   { id: 'relics', label: 'Релики' },
   { id: 'lightstones', label: 'Камни' },
@@ -134,6 +149,10 @@ function modeLabel(mode: string) {
   if (mode === 'succession') return 'Наследие'
   if (mode === 'both') return 'Оба'
   return 'Пробуждение'
+}
+
+function hasCombo(guide: ClassGuide | null | undefined) {
+  return Boolean(guide?.combo_awakening?.trim() || guide?.combo_succession?.trim())
 }
 </script>
 
@@ -203,5 +222,27 @@ function modeLabel(mode: string) {
   margin: 0.375rem 0 0;
   font-size: 0.92rem;
   color: var(--color-muted);
+}
+
+.comboWrap {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.comboBlock {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+  padding: 1rem 1.15rem;
+}
+
+.comboTitle {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-gold-soft);
+}
+
+.comboBlock .summary {
+  margin: 0;
 }
 </style>

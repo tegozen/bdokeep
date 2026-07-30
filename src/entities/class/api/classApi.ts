@@ -11,6 +11,8 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
       class_guides(
         summary,
         pvp_role,
+        combo_awakening,
+        combo_succession,
         guide_skills(count),
         guide_buffs(count),
         guide_relics(count),
@@ -30,6 +32,8 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   type GuideEmbed = {
     summary: string | null
     pvp_role: string | null
+    combo_awakening: string | null
+    combo_succession: string | null
     guide_skills: CountRow[] | null
     guide_buffs: CountRow[] | null
     guide_relics: CountRow[] | null
@@ -51,6 +55,8 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
       guide &&
         (textFilled(guide.summary) ||
           textFilled(guide.pvp_role) ||
+          textFilled(guide.combo_awakening) ||
+          textFilled(guide.combo_succession) ||
           countOf(guide.guide_skills) > 0 ||
           countOf(guide.guide_buffs) > 0 ||
           countOf(guide.guide_relics) > 0 ||
