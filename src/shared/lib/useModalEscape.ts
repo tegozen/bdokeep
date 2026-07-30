@@ -2,30 +2,9 @@ import type { Ref } from 'vue'
 
 const stack = () => useState<symbol[]>('modalEscapeStack', () => [])
 
-let lockedScrollY = 0
-
 function syncPageLock(openCount: number) {
   if (!import.meta.client) return
-
-  const open = openCount > 0
-  const wasOpen = document.documentElement.classList.contains('modal-open')
-  document.documentElement.classList.toggle('modal-open', open)
-
-  if (open && !wasOpen) {
-    lockedScrollY = window.scrollY
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${lockedScrollY}px`
-    document.body.style.left = '0'
-    document.body.style.right = '0'
-    document.body.style.width = '100%'
-  } else if (!open && wasOpen) {
-    document.body.style.position = ''
-    document.body.style.top = ''
-    document.body.style.left = ''
-    document.body.style.right = ''
-    document.body.style.width = ''
-    window.scrollTo(0, lockedScrollY)
-  }
+  document.documentElement.classList.toggle('modal-open', openCount > 0)
 }
 
 /**

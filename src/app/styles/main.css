@@ -48,6 +48,7 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
+    scrollbar-gutter: stable;
     color-scheme: dark;
   }
 
@@ -78,13 +79,11 @@
     @apply mb-2 font-display font-bold tracking-wide text-gold;
   }
 
-  html.modal-open {
-    overflow: hidden;
-  }
-
+  html.modal-open,
   html.modal-open body {
     overflow: hidden;
     overscroll-behavior: none;
+    touch-action: none;
   }
 
   html.modal-open #__nuxt {
@@ -92,5 +91,44 @@
     transform: translateZ(0);
     pointer-events: none;
     user-select: none;
+  }
+
+  /* Custom scrollbars — Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 98, 0.45) rgba(10, 11, 16, 0.85);
+  }
+
+  /* Custom scrollbars — Chromium / Safari */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: rgba(10, 11, 16, 0.85);
+    border: 1px solid rgba(201, 162, 86, 0.12);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      rgba(212, 175, 98, 0.55),
+      rgba(201, 162, 86, 0.35)
+    );
+    border: 2px solid rgba(10, 11, 16, 0.85);
+    border-radius: 0;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      rgba(212, 175, 98, 0.8),
+      rgba(212, 175, 98, 0.5)
+    );
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: rgba(10, 11, 16, 0.85);
   }
 }
