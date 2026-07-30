@@ -2,14 +2,35 @@ import type { Ref } from 'vue'
 
 const stack = () => useState<symbol[]>('modalEscapeStack', () => [])
 
-function syncPageBlur(openCount: number) {
+let lockedScrollY = 0
+
+function syncPageLock(openCount: number) {
   if (!import.meta.client) return
-  document.documentElement.classList.toggle('modal-open', openCount > 0)
+
+  const open = openCount > 0
+  const wasOpen = document.documentElement.classList.contains('modal-open')
+  document.documentElement.classList.toggle('modal-open', open)
+
+  if (open && !wasOpen) {
+    lockedScrollY = window.scrollY
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${lockedScrollY}px`
+    document.body.style.left = '0'
+    document.body.style.right = '0'
+    document.body.style.width = '100%'
+  } else if (!open && wasOpen) {
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.left = ''
+    document.body.style.right = ''
+    document.body.style.width = ''
+    window.scrollTo(0, lockedScrollY)
+  }
 }
 
 /**
  * Closes the topmost registered modal on Escape.
- * While any modal is open, blurs page content under `#__nuxt`.
+ * While any modal is open, locks page scroll and blurs `#__nuxt`.
  * Returns `obscured` — true when this modal is open but not on top (blur it).
  */
 export function useModalEscape(active: Ref<boolean>, onClose: () => void) {
@@ -24,7 +45,7 @@ export function useModalEscape(active: Ref<boolean>, onClose: () => void) {
   function sync(isActive: boolean) {
     const next = layers.value.filter((x) => x !== id)
     layers.value = isActive ? [...next, id] : next
-    syncPageBlur(layers.value.length)
+    syncPageLock(layers.value.length)
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -45,7 +66,7 @@ export function useModalEscape(active: Ref<boolean>, onClose: () => void) {
 
   onMounted(() => {
     window.addEventListener('keydown', onKeydown)
-    syncPageBlur(layers.value.length)
+    syncPageLock(layers.value.length)
   })
 
   onBeforeUnmount(() => {

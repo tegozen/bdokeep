@@ -78,6 +78,15 @@
     @apply mb-2 font-display font-bold tracking-wide text-gold;
   }
 
+  html.modal-open {
+    overflow: hidden;
+  }
+
+  html.modal-open body {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   html.modal-open #__nuxt {
     filter: blur(12px);
     transform: translateZ(0);
