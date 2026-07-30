@@ -1,5 +1,8 @@
+import { useConfirm } from './useConfirm'
+
 export function useSuperadmin() {
   const isSuperadmin = useState('superadmin', () => false)
+  const { confirm } = useConfirm()
 
   async function refresh() {
     try {
@@ -19,7 +22,13 @@ export function useSuperadmin() {
   }
 
   async function logout() {
-    if (!confirm('Выйти из режима суперадмина?')) return false
+    const ok = await confirm({
+      title: 'Выход',
+      message: 'Выйти из режима суперадмина?',
+      confirmLabel: 'Выйти',
+      cancelLabel: 'Отмена',
+    })
+    if (!ok) return false
     await $fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
     isSuperadmin.value = false
     return true

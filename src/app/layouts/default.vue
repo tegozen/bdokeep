@@ -16,6 +16,13 @@
             />
             <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
           </div>
+          <nav
+            v-if="headerToc?.length"
+            :class="$style.toc"
+            aria-label="Разделы гайда"
+          >
+            <a v-for="item in headerToc" :key="item.id" :href="`#${item.id}`">{{ item.label }}</a>
+          </nav>
         </div>
         <div :class="$style.auth">
           <SuperadminAuth compact />
@@ -35,15 +42,19 @@
         </p>
       </div>
     </footer>
+
+    <UiConfirm />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ClassIcon } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
-import { useHeaderClass } from '@/shared/lib'
+import { useHeaderClass, useHeaderToc } from '@/shared/lib'
+import { UiConfirm } from '@/shared/ui'
 
 const headerClass = useHeaderClass()
+const headerToc = useHeaderToc()
 </script>
 
 <style module>
@@ -70,8 +81,27 @@ const headerClass = useHeaderClass()
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 1rem 1.25rem;
   min-width: 0;
+  flex: 1;
+}
+
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.9rem;
+  row-gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.toc a {
+  color: var(--color-gold-soft);
+  white-space: nowrap;
+}
+
+.toc a:hover {
+  color: var(--color-gold);
 }
 
 .auth {

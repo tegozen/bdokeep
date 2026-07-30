@@ -8,7 +8,7 @@ export type BdoClass = {
   succession_name: string | null
   sort_order: number
   published: boolean
-  /** Guide has any filled content (summary / role / sections / videos) */
+  /** Guide has any filled content (summary / sections / videos) */
   has_content?: boolean
 }
 
@@ -16,7 +16,6 @@ export type ClassGuide = {
   id: string
   class_id: string
   summary: string | null
-  pvp_role: string | null
   updated_at: string
 }
 
@@ -97,4 +96,4 @@ export type ClassGuideBundle = {
   essence: GuideItemRow[]
 }
 
-export type ProposalSection = 'summary' | 'pvp_role' | 'combo_awakening' | 'combo_succession'
+export type ProposalSection = 'summary' | 'combo_awakening' | 'combo_succession'

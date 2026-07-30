@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSuperadmin } from '@/shared/lib'
+import { useModalEscape, useSuperadmin } from '@/shared/lib'
 import LoginFields from './LoginFields.vue'
 
 withDefaults(defineProps<{ compact?: boolean }>(), {
@@ -54,6 +54,8 @@ const password = ref('')
 const busy = ref(false)
 const error = ref('')
 const openLogin = ref(false)
+
+useModalEscape(openLogin, closeLogin)
 
 onMounted(() => {
   void refresh()
@@ -142,7 +144,9 @@ async function onLogout() {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .modal {

@@ -125,8 +125,6 @@ function sectionLabel(section: string) {
   switch (section) {
     case 'summary':
       return 'Суть'
-    case 'pvp_role':
-      return 'Роль'
     case 'combo_awakening':
       return 'Комба · пробуждение'
     case 'combo_succession':

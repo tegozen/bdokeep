@@ -4,10 +4,6 @@
       Не удалось загрузить гайд. Проверьте API (PostgREST) и обновите страницу.
     </div>
 
-    <nav v-if="!pending && !error && bundle" :class="$style.toc" aria-label="Разделы гайда">
-      <a v-for="item in toc" :key="item.id" :href="`#${item.id}`">{{ item.label }}</a>
-    </nav>
-
     <template v-if="pending">
       <div v-for="n in 5" :key="n" :class="$style.skel">
         <UiSkeleton variant="text" width="30%" height="1.4rem" />
@@ -24,18 +20,13 @@
     </template>
 
     <template v-else>
-      <GuideSection title="Суть / роль в PvP" anchor="summary">
+      <GuideSection title="Суть" anchor="summary">
         <p v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
           {{ bundle.guide.summary }}
         </p>
         <ShowEmptyGuide v-else />
         <div :class="$style.proposeRow">
           <ProposeGuideForm :class-slug="bundle.class.slug" section="summary" />
-          <ProposeGuideForm
-            :class-slug="bundle.class.slug"
-            section="pvp_role"
-            trigger-label="Предложить роль"
-          />
         </div>
       </GuideSection>
 
@@ -149,18 +140,6 @@ const props = defineProps<{
   error?: boolean
 }>()
 
-const toc = [
-  { id: 'summary', label: 'Суть' },
-  { id: 'buffs', label: 'Забаф' },
-  { id: 'skills', label: 'Скиллы' },
-  { id: 'combo', label: 'Комба' },
-  { id: 'essence', label: 'Инкра' },
-  { id: 'relics', label: 'Релики' },
-  { id: 'lightstones', label: 'Камни' },
-  { id: 'crystals', label: 'Ваны' },
-  { id: 'videos', label: 'Видео' },
-]
-
 function modeLabel(mode: string) {
   if (mode === 'succession') return 'Наследие'
   if (mode === 'both') return 'Оба'
@@ -185,17 +164,6 @@ const hasCombo = computed(
   background: color-mix(in srgb, var(--color-danger) 10%, transparent);
   padding: 1rem 1.25rem;
   color: var(--color-danger);
-}
-
-.toc {
-  margin-bottom: 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 1rem;
-  row-gap: 0.5rem;
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.75rem 0;
-  font-size: 0.92rem;
 }
 
 .skel {

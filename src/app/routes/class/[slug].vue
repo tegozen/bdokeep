@@ -9,11 +9,12 @@
 <script setup lang="ts">
 import { fetchClassGuideBySlug } from '@/entities/class'
 import { ClassGuidePage } from '@/pages/class-guide'
-import { useHeaderClass } from '@/shared/lib'
+import { CLASS_GUIDE_TOC, useHeaderClass, useHeaderToc } from '@/shared/lib'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
 const headerClass = useHeaderClass()
+const headerToc = useHeaderToc()
 
 const { data: bundle, pending, error } = await useAsyncData(
   () => `class-${slug.value}`,
@@ -30,19 +31,24 @@ const { data: bundle, pending, error } = await useAsyncData(
 watch(
   bundle,
   (b) => {
-    headerClass.value = b?.class
-      ? {
-          slug: b.class.slug,
-          name_ru: b.class.name_ru,
-          icon_url: b.class.icon_url,
-        }
-      : null
+    if (b?.class) {
+      headerClass.value = {
+        slug: b.class.slug,
+        name_ru: b.class.name_ru,
+        icon_url: b.class.icon_url,
+      }
+      headerToc.value = CLASS_GUIDE_TOC
+    } else {
+      headerClass.value = null
+      headerToc.value = null
+    }
   },
   { immediate: true },
 )
 
 onBeforeUnmount(() => {
   headerClass.value = null
+  headerToc.value = null
 })
 
 useSeoMeta({

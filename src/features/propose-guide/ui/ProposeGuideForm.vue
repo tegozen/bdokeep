@@ -176,7 +176,7 @@
 import { computed, ref, watch } from 'vue'
 import { fetchClassSkills, type ProposalSection, type Skill } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
-import { useSuperadmin } from '@/shared/lib'
+import { useModalEscape, useSuperadmin } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
 import { skillCatalogBucket } from '../lib/skillBucket'
 
@@ -210,6 +210,8 @@ const doneMessage = ref('')
 const dragFrom = ref<number | null>(null)
 const dragOver = ref<number | null>(null)
 
+useModalEscape(open, close)
+
 const isCombo = computed(
   () => props.section === 'combo_awakening' || props.section === 'combo_succession',
 )
@@ -218,9 +220,7 @@ const isSuccessionCombo = computed(() => props.section === 'combo_succession')
 const title = computed(() => {
   switch (props.section) {
     case 'summary':
-      return 'Предложить суть / роль'
-    case 'pvp_role':
-      return 'Предложить роль в PvP'
+      return 'Предложить суть'
     case 'combo_awakening':
       return 'Комба: пробуждение'
     case 'combo_succession':
@@ -400,8 +400,10 @@ async function onSubmit() {
   z-index: 80;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(0, 0, 0, 0.55);
   padding: 1rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .modal {

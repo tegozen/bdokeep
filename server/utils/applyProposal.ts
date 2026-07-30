@@ -67,13 +67,14 @@ export async function applyProposal(
   } else {
     const text = String(payload.text || '').trim()
     if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
+    if (section !== 'summary') {
+      throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
+    }
 
-    const patch =
-      section === 'summary'
-        ? { summary: text, updated_at: new Date().toISOString() }
-        : { pvp_role: text, updated_at: new Date().toISOString() }
-
-    const { error: updErr } = await rest.from('class_guides').update(patch).eq('id', guide.id)
+    const { error: updErr } = await rest
+      .from('class_guides')
+      .update({ summary: text, updated_at: new Date().toISOString() })
+      .eq('id', guide.id)
     if (updErr) throw createError({ statusCode: 502, statusMessage: updErr.message })
   }
 

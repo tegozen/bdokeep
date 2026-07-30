@@ -1,6 +1,5 @@
 export const PROPOSAL_SECTIONS = [
   'summary',
-  'pvp_role',
   'combo_awakening',
   'combo_succession',
 ] as const
