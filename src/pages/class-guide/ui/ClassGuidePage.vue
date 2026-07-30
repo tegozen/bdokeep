@@ -120,8 +120,26 @@
             :initial-crystals="bundle.crystals"
           />
         </template>
-        <div :class="[$style.crystalStage, $style.fade]">
-          <CrystalBoard :filled="crystalFilled" />
+        <div :class="[$style.crystalLayout, $style.fade]">
+          <div :class="$style.picked">
+            <p v-if="!crystalPickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
+            <ul v-else :class="$style.pickedList">
+              <li v-for="row in crystalPickedList" :key="row.id" :class="$style.pickedItem">
+                <img
+                  v-if="row.icon_url"
+                  :src="row.icon_url"
+                  alt=""
+                  :class="$style.pickedIcon"
+                  loading="lazy"
+                >
+                <span :class="$style.pickedName">{{ row.name_ru }}</span>
+                <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+              </li>
+            </ul>
+          </div>
+          <div :class="$style.crystalStage">
+            <CrystalBoard :filled="crystalFilled" />
+          </div>
         </div>
       </GuideSection>
 
@@ -147,7 +165,7 @@ import { computed, ref } from 'vue'
 import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
 import { ProposeCrystalForm, ProposeGuideForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
-import { CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
+import { CRYSTAL_ALL_SLOTS, CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
 import { UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
@@ -189,6 +207,30 @@ const crystalFilled = computed(() => {
     map[slot] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
+})
+
+const crystalPickedList = computed(() => {
+  const filled = crystalFilled.value
+  const counts = new Map<
+    string,
+    { id: string; name_ru: string; icon_url: string | null; count: number }
+  >()
+  for (const slot of CRYSTAL_ALL_SLOTS) {
+    const item = filled[slot.id]
+    if (!item) continue
+    const prev = counts.get(item.id)
+    if (prev) {
+      prev.count += 1
+    } else {
+      counts.set(item.id, {
+        id: item.id,
+        name_ru: item.name_ru,
+        icon_url: item.icon_url,
+        count: 1,
+      })
+    }
+  }
+  return [...counts.values()]
 })
 </script>
 
@@ -298,8 +340,86 @@ const crystalFilled = computed(() => {
   color: var(--color-gold);
 }
 
+.crystalLayout {
+  display: grid;
+  grid-template-columns: minmax(14.5rem, 18rem) minmax(0, 32rem);
+  gap: 1rem;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.picked {
+  height: 0;
+  min-height: 100%;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+}
+
+.pickedEmpty {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.pickedList {
+  margin: 0;
+  list-style: none;
+  padding: 0;
+}
+
+.pickedItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.4rem 0.5rem;
+}
+
+.pickedIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  background: #000;
+  object-fit: contain;
+}
+
+.pickedName {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+
+.pickedCount {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--color-gold);
+}
+
 .crystalStage {
-  width: min(100%, 32rem);
-  margin-inline: auto;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .crystalLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .picked {
+    height: auto;
+    min-height: 0;
+    max-height: 12rem;
+  }
+
+  .crystalStage {
+    width: min(100%, 32rem);
+    margin-inline: auto;
+  }
 }
 </style>

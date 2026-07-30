@@ -48,16 +48,35 @@
             >
 
             <div :class="$style.workspace">
-              <div :class="$style.left">
-                <CrystalBoard
-                  :filled="filledMap"
-                  :selected-id="activeSlot"
-                  interactive
-                  fill
-                  :fill-width="boardWidth"
-                  @select="onSelectSlot"
-                  @clear="clearSlot"
-                />
+              <div :class="$style.boardSide">
+                <div :class="$style.picked">
+                  <p v-if="!pickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
+                  <ul v-else :class="$style.pickedList">
+                    <li v-for="row in pickedList" :key="row.id" :class="$style.pickedItem">
+                      <img
+                        v-if="row.icon_url"
+                        :src="row.icon_url"
+                        alt=""
+                        :class="$style.pickedIcon"
+                        loading="lazy"
+                      >
+                      <span :class="$style.pickedName">{{ row.name_ru }}</span>
+                      <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div :class="$style.left">
+                  <CrystalBoard
+                    :filled="filledMap"
+                    :selected-id="activeSlot"
+                    interactive
+                    fill
+                    :fill-width="boardWidth"
+                    @select="onSelectSlot"
+                    @clear="clearSlot"
+                  />
+                </div>
               </div>
 
               <div ref="rightMainEl" :class="$style.rightMain">
@@ -152,6 +171,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { fetchCrystals, type GuideItemRow, type Item } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
+  CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
   CRYSTAL_PRESET_IDS,
   CRYSTAL_TABS,
@@ -261,6 +281,26 @@ const filledMap = computed(() => {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
+})
+
+const pickedList = computed(() => {
+  const counts = new Map<string, { id: string; name_ru: string; icon_url: string | null; count: number }>()
+  for (const slot of CRYSTAL_ALL_SLOTS) {
+    const item = currentSlots()[slot.id]
+    if (!item) continue
+    const prev = counts.get(item.id)
+    if (prev) {
+      prev.count += 1
+    } else {
+      counts.set(item.id, {
+        id: item.id,
+        name_ru: item.name_ru,
+        icon_url: item.icon_url,
+        count: 1,
+      })
+    }
+  }
+  return [...counts.values()]
 })
 
 const tabsEnabled = computed(() => {
@@ -479,7 +519,7 @@ async function onSubmit() {
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(100%, 68rem);
+  width: min(100%, 84rem);
   max-height: min(94vh, 58rem);
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -564,9 +604,71 @@ async function onSubmit() {
   flex: 1;
 }
 
-.left {
+.boardSide {
   grid-column: 1;
   grid-row: 1;
+  display: grid;
+  grid-template-columns: minmax(14.5rem, 18rem) auto;
+  gap: 1rem;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.picked {
+  /* Height follows the board column; do not expand the row. */
+  height: 0;
+  min-height: 100%;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.pickedEmpty {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.pickedList {
+  margin: 0;
+  list-style: none;
+  padding: 0;
+}
+
+.pickedItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.4rem 0.5rem;
+}
+
+.pickedIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  background: #000;
+  object-fit: contain;
+}
+
+.pickedName {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+
+.pickedCount {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--color-gold);
+}
+
+.left {
   min-width: 0;
   justify-self: start;
 }
@@ -729,13 +831,33 @@ async function onSubmit() {
   font-size: 0.9rem;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .modal {
-    width: min(100%, 34rem);
+    width: min(100%, 42rem);
   }
 
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .boardSide,
+  .rightMain,
+  .actions {
+    grid-column: 1;
+  }
+
+  .boardSide {
+    grid-template-columns: 1fr;
+  }
+
+  .picked {
+    height: auto;
+    min-height: 0;
+    max-height: 10rem;
+  }
+
+  .left {
+    justify-self: center;
   }
 
   .catalog {
