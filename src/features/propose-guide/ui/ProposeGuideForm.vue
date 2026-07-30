@@ -30,33 +30,7 @@
               aria-hidden="true"
             >
 
-            <div v-if="isSuperadmin" :class="$style.adminBanner">
-              Суперадмин — правка опубликуется сразу
-              <button type="button" :class="$style.linkish" @click="logoutAdmin">Выйти</button>
-            </div>
-            <details v-else :class="$style.adminBox">
-              <summary>Войти как суперадмин</summary>
-              <div :class="$style.adminLogin">
-                <label :class="$style.label">
-                  Пароль
-                  <input
-                    v-model="adminPassword"
-                    type="password"
-                    :class="$style.input"
-                    autocomplete="current-password"
-                  >
-                </label>
-                <button
-                  type="button"
-                  :class="$style.secondary"
-                  :disabled="adminBusy"
-                  @click="loginAdmin"
-                >
-                  {{ adminBusy ? '…' : 'Войти' }}
-                </button>
-                <p v-if="adminError" :class="$style.error">{{ adminError }}</p>
-              </div>
-            </details>
+            <SuperadminAuth />
 
             <template v-if="isCombo">
               <p :class="$style.hint">
@@ -201,6 +175,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { fetchClassSkills, type ProposalSection, type Skill } from '@/entities/class'
+import { SuperadminAuth } from '@/features/superadmin-auth'
+import { useSuperadmin } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
 import { skillCatalogBucket } from '../lib/skillBucket'
 
@@ -214,6 +190,8 @@ const props = withDefaults(
     triggerLabel: 'Предложить',
   },
 )
+
+const { isSuperadmin, refresh: refreshAdmin } = useSuperadmin()
 
 const open = ref(false)
 const honeypot = ref('')
@@ -229,10 +207,6 @@ const submitting = ref(false)
 const formError = ref('')
 const done = ref(false)
 const doneMessage = ref('')
-const isSuperadmin = ref(false)
-const adminPassword = ref('')
-const adminBusy = ref(false)
-const adminError = ref('')
 const dragFrom = ref<number | null>(null)
 const dragOver = ref<number | null>(null)
 
@@ -265,37 +239,6 @@ const filteredSkills = computed(() => {
     return s.name_ru.toLowerCase().includes(q)
   })
 })
-
-async function refreshAdmin() {
-  try {
-    const res = await $fetch<{ ok: boolean }>('/api/admin/me')
-    isSuperadmin.value = Boolean(res.ok)
-  } catch {
-    isSuperadmin.value = false
-  }
-}
-
-async function loginAdmin() {
-  adminError.value = ''
-  adminBusy.value = true
-  try {
-    await $fetch('/api/admin/login', {
-      method: 'POST',
-      body: { password: adminPassword.value },
-    })
-    adminPassword.value = ''
-    isSuperadmin.value = true
-  } catch {
-    adminError.value = 'Неверный пароль'
-  } finally {
-    adminBusy.value = false
-  }
-}
-
-async function logoutAdmin() {
-  await $fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
-  isSuperadmin.value = false
-}
 
 watch(catalogTab, () => {
   formError.value = ''
@@ -362,8 +305,6 @@ function reset() {
   done.value = false
   doneMessage.value = ''
   submitting.value = false
-  adminPassword.value = ''
-  adminError.value = ''
   dragFrom.value = null
   dragOver.value = null
 }
@@ -507,47 +448,6 @@ async function onSubmit() {
   height: 0;
   width: 0;
   opacity: 0;
-}
-
-.adminBanner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold-soft);
-  font-size: 0.88rem;
-  padding: 0.5rem 0.65rem;
-}
-
-.adminBox {
-  border: 1px solid var(--color-border);
-  font-size: 0.88rem;
-  color: var(--color-muted);
-  padding: 0.35rem 0.65rem;
-}
-
-.adminBox summary {
-  cursor: pointer;
-}
-
-.adminLogin {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-  padding-bottom: 0.35rem;
-}
-
-.linkish {
-  border: 0;
-  background: transparent;
-  color: var(--color-gold);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
-  text-decoration: underline;
 }
 
 .label {

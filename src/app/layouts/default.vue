@@ -2,18 +2,23 @@
   <div :class="$style.root">
     <header :class="$style.header">
       <div :class="['mx-auto flex w-[min(100%-2rem,1920px)] flex-wrap items-center gap-x-4 gap-y-2 py-4', $style.headerInner]">
-        <NuxtLink to="/" :class="$style.brand">
-          <span :class="$style.brandMark">BDO</span>
-          <span :class="$style.brandName">Keep</span>
-        </NuxtLink>
-        <div v-if="headerClass" :class="$style.classMeta">
-          <ClassIcon
-            :slug="headerClass.slug"
-            :icon-url="headerClass.icon_url"
-            :label="headerClass.name_ru"
-            size="sm"
-          />
-          <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
+        <div :class="$style.left">
+          <NuxtLink to="/" :class="$style.brand">
+            <span :class="$style.brandMark">BDO</span>
+            <span :class="$style.brandName">Keep</span>
+          </NuxtLink>
+          <div v-if="headerClass" :class="$style.classMeta">
+            <ClassIcon
+              :slug="headerClass.slug"
+              :icon-url="headerClass.icon_url"
+              :label="headerClass.name_ru"
+              size="sm"
+            />
+            <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
+          </div>
+        </div>
+        <div :class="$style.auth">
+          <SuperadminAuth compact />
         </div>
       </div>
     </header>
@@ -35,6 +40,7 @@
 
 <script setup lang="ts">
 import { ClassIcon } from '@/entities/class'
+import { SuperadminAuth } from '@/features/superadmin-auth'
 import { useHeaderClass } from '@/shared/lib'
 
 const headerClass = useHeaderClass()
@@ -57,6 +63,20 @@ const headerClass = useHeaderClass()
 }
 
 .headerInner {
+  justify-content: space-between;
+}
+
+.left {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.auth {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .brand {
