@@ -73,3 +73,30 @@ export function isSpiritCrystalName(name: string): boolean {
     name === 'Камень духов [Крит. удар]' || name === 'Камень духов [Скорость]'
   )
 }
+
+/** Catalog tabs for standard (non-dawn / non-center) slots. */
+export type CrystalTabId =
+  | 'basic'
+  | 'ancient'
+  | 'infinite'
+  | 'dark'
+  | 'upgraded'
+  | 'special'
+
+export const CRYSTAL_TABS: ReadonlyArray<{ id: CrystalTabId; label: string }> = [
+  { id: 'basic', label: 'Обычные' },
+  { id: 'ancient', label: 'Древние' },
+  { id: 'infinite', label: 'Бесконеч.' },
+  { id: 'dark', label: 'Тьма' },
+  { id: 'upgraded', label: 'Улучш.' },
+  { id: 'special', label: 'Особые' },
+]
+
+export function crystalCatalogTab(name: string): CrystalTabId {
+  if (/^(Абсолют|Исток|Суть|Мощь|Предел):/i.test(name)) return 'upgraded'
+  if (/Древний магический/i.test(name)) return 'ancient'
+  if (/бесконечности/i.test(name)) return 'infinite'
+  if (/тьмы/i.test(name)) return 'dark'
+  if (/^Магический кристалл/i.test(name)) return 'basic'
+  return 'special'
+}

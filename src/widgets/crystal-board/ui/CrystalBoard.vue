@@ -1,23 +1,65 @@
 <template>
-  <div :class="[$style.wrap, interactive && $style.interactive]">
-    <div :class="$style.canvas">
-      <div :class="$style.sigil" aria-hidden="true" />
-      <div :class="$style.board" role="list">
+  <div
+    :class="[$style.wrap, interactive && $style.interactive, fill && $style.fill]"
+    :style="fillStyle"
+  >
+    <div :class="$style.stack">
+      <div :class="$style.canvas">
+        <div :class="$style.sigil" aria-hidden="true" />
+        <div :class="$style.board" role="list">
+          <button
+            v-for="slot in boardSlots"
+            :key="slot.id"
+            type="button"
+            role="listitem"
+            :class="[
+              $style.cell,
+              $style[`kind_${slot.kind}`],
+              selectedId === slot.id && $style.selected,
+              filled[slot.id] && $style.filled,
+            ]"
+            :style="{ gridRow: slot.row!, gridColumn: slot.col! }"
+            :disabled="!interactive"
+            :title="filled[slot.id]?.name_ru || slot.label"
+            :aria-label="filled[slot.id]?.name_ru || `Слот ${slot.label}`"
+            @click="onSlotClick(slot.id)"
+          >
+            <img
+              v-if="filled[slot.id]?.icon_url"
+              :src="filled[slot.id]!.icon_url!"
+              alt=""
+              :class="$style.icon"
+              draggable="false"
+              loading="lazy"
+            >
+            <span
+              v-if="interactive && filled[slot.id]"
+              :class="$style.clear"
+              role="presentation"
+              aria-hidden="true"
+              title="Очистить"
+              @click.stop="onClear(slot.id)"
+            >×</span>
+            <span v-else-if="interactive" :class="$style.plus">+</span>
+          </button>
+        </div>
+      </div>
+
+      <div :class="$style.dawnCanvas" role="list" aria-label="Слоты рассвета">
         <button
-          v-for="slot in boardSlots"
+          v-for="slot in dawnSlots"
           :key="slot.id"
           type="button"
           role="listitem"
           :class="[
             $style.cell,
-            $style[`kind_${slot.kind}`],
+            $style.kind_dawn,
             selectedId === slot.id && $style.selected,
             filled[slot.id] && $style.filled,
           ]"
-          :style="{ gridRow: slot.row!, gridColumn: slot.col! }"
           :disabled="!interactive"
           :title="filled[slot.id]?.name_ru || slot.label"
-          :aria-label="filled[slot.id]?.name_ru || `Слот ${slot.label}`"
+          :aria-label="filled[slot.id]?.name_ru || slot.label"
           @click="onSlotClick(slot.id)"
         >
           <img
@@ -28,43 +70,23 @@
             draggable="false"
             loading="lazy"
           >
+          <span
+            v-if="interactive && filled[slot.id]"
+            :class="$style.clear"
+            role="presentation"
+            aria-hidden="true"
+            title="Очистить"
+            @click.stop="onClear(slot.id)"
+          >×</span>
           <span v-else-if="interactive" :class="$style.plus">+</span>
         </button>
       </div>
-    </div>
-
-    <div :class="$style.dawnCanvas" role="list" aria-label="Слоты рассвета">
-      <button
-        v-for="slot in dawnSlots"
-        :key="slot.id"
-        type="button"
-        role="listitem"
-        :class="[
-          $style.cell,
-          $style.kind_dawn,
-          selectedId === slot.id && $style.selected,
-          filled[slot.id] && $style.filled,
-        ]"
-        :disabled="!interactive"
-        :title="filled[slot.id]?.name_ru || slot.label"
-        :aria-label="filled[slot.id]?.name_ru || slot.label"
-        @click="onSlotClick(slot.id)"
-      >
-        <img
-          v-if="filled[slot.id]?.icon_url"
-          :src="filled[slot.id]!.icon_url!"
-          alt=""
-          :class="$style.icon"
-          draggable="false"
-          loading="lazy"
-        >
-        <span v-else-if="interactive" :class="$style.plus">+</span>
-      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   CRYSTAL_BOARD_SLOTS,
   CRYSTAL_DAWN_SLOTS,
@@ -82,24 +104,41 @@ const props = withDefaults(
     filled?: Record<string, CrystalFill | null | undefined>
     selectedId?: string | null
     interactive?: boolean
+    /** Stretch board to a fixed pixel width (propose modal). */
+    fill?: boolean
+    /** Board canvas width in px when `fill` is on. */
+    fillWidth?: number | null
   }>(),
   {
     filled: () => ({}),
     selectedId: null,
     interactive: false,
+    fill: false,
+    fillWidth: null,
   },
 )
 
 const emit = defineEmits<{
   select: [slotId: string]
+  clear: [slotId: string]
 }>()
 
 const boardSlots = CRYSTAL_BOARD_SLOTS
 const dawnSlots = CRYSTAL_DAWN_SLOTS
 
+const fillStyle = computed(() => {
+  if (!props.fill || !props.fillWidth) return undefined
+  return { width: `${props.fillWidth}px` }
+})
+
 function onSlotClick(id: string) {
   if (!props.interactive) return
   emit('select', id)
+}
+
+function onClear(id: string) {
+  if (!props.interactive) return
+  emit('clear', id)
 }
 </script>
 
@@ -112,10 +151,23 @@ function onSlotClick(id: string) {
   min-width: 0;
 }
 
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.fill {
+  flex: none;
+}
+
 .canvas {
   position: relative;
   aspect-ratio: 1 / 1;
   width: 100%;
+  flex: 0 0 auto;
   border: 1px solid rgba(201, 168, 76, 0.28);
   background:
     radial-gradient(ellipse at 50% 42%, rgba(40, 55, 95, 0.55), transparent 60%),
@@ -270,5 +322,36 @@ function onSlotClick(id: string) {
   font-size: clamp(0.75rem, 28%, 1.35rem);
   line-height: 1;
   color: rgba(201, 168, 76, 0.55);
+}
+
+.clear {
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 28%;
+  height: 28%;
+  min-width: 1.1rem;
+  min-height: 1.1rem;
+  max-width: 1.75rem;
+  max-height: 1.75rem;
+  border: 0;
+  border-radius: 2px;
+  background: rgba(8, 10, 14, 0.88);
+  color: #e8c970;
+  cursor: pointer;
+  font-size: clamp(0.95rem, 55%, 1.35rem);
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.interactive .filled:hover .clear,
+.interactive .selected .clear {
+  opacity: 1;
+  pointer-events: auto;
 }
 </style>

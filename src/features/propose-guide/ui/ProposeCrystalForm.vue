@@ -40,11 +40,34 @@
                   :filled="filledMap"
                   :selected-id="activeSlot"
                   interactive
+                  fill
+                  :fill-width="boardWidth"
                   @select="onSelectSlot"
+                  @clear="clearSlot"
                 />
               </div>
 
-              <div :class="$style.right">
+              <div ref="rightMainEl" :class="$style.rightMain">
+                <div
+                  :class="[$style.tabs, !tabsEnabled && $style.tabsOff]"
+                  role="tablist"
+                  aria-label="Категория кристаллов"
+                >
+                  <button
+                    v-for="tab in crystalTabs"
+                    :key="tab.id"
+                    type="button"
+                    role="tab"
+                    :aria-selected="crystalTab === tab.id"
+                    :aria-disabled="!tabsEnabled"
+                    :disabled="!tabsEnabled"
+                    :class="[$style.tab, crystalTab === tab.id && $style.tabOn]"
+                    @click="crystalTab = tab.id"
+                  >
+                    {{ tab.label }}
+                  </button>
+                </div>
+
                 <input
                   v-model="query"
                   type="search"
@@ -57,12 +80,6 @@
                 <div v-if="catalogPending" :class="$style.muted">Загрузка кристаллов…</div>
                 <div v-else-if="catalogError" :class="$style.error">Не удалось загрузить кристаллы.</div>
                 <ul v-else :class="[$style.catalog, !activeSlot && $style.catalogOff]">
-                  <li v-if="activeSlot">
-                    <button type="button" :class="$style.catalogBtn" @click="clearSlot">
-                      <span :class="$style.clearIcon">∅</span>
-                      <span>Очистить слот</span>
-                    </button>
-                  </li>
                   <li v-for="item in filteredCatalog" :key="item.id">
                     <button type="button" :class="$style.catalogBtn" @click="assignCrystal(item)">
                       <img
@@ -99,15 +116,15 @@
 
                 <p v-if="formError" :class="$style.error">{{ formError }}</p>
                 <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
+              </div>
 
-                <div :class="$style.actions">
-                  <button type="button" :class="$style.secondary" @click="close">Отмена</button>
-                  <button type="submit" :class="$style.primary" :disabled="submitting || done">
-                    {{
-                      submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
-                    }}
-                  </button>
-                </div>
+              <div :class="$style.actions">
+                <button type="button" :class="$style.secondary" @click="close">Отмена</button>
+                <button type="submit" :class="$style.primary" :disabled="submitting || done">
+                  {{
+                    submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
+                  }}
+                </button>
               </div>
             </div>
           </form>
@@ -118,16 +135,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { fetchCrystals, type Item } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
+  CRYSTAL_TABS,
+  crystalCatalogTab,
   isCenterSlotId,
   isDawnCrystalName,
   isDawnSlotId,
   isSpiritCrystalName,
   useModalEscape,
   useSuperadmin,
+  type CrystalTabId,
 } from '@/shared/lib'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
@@ -148,6 +168,8 @@ const open = ref(false)
 const honeypot = ref('')
 const author = ref('')
 const query = ref('')
+const crystalTab = ref<CrystalTabId>('basic')
+const crystalTabs = CRYSTAL_TABS
 const activeSlot = ref<string | null>(null)
 /** slotId → crystal item */
 const slots = ref<Record<string, Item>>({})
@@ -158,8 +180,36 @@ const submitting = ref(false)
 const formError = ref('')
 const done = ref(false)
 const doneMessage = ref('')
+const rightMainEl = ref<HTMLElement | null>(null)
+const boardWidth = ref(360)
+let rightMainObserver: ResizeObserver | null = null
 
 const { obscured } = useModalEscape(open, close)
+
+function syncBoardWidth() {
+  const h = rightMainEl.value?.getBoundingClientRect().height ?? 0
+  if (h < 120) return
+  // Total board height ≈ W + gap(0.65rem) + dawn(~W/6 + pad) ≈ (7/6)W + 20px
+  boardWidth.value = Math.max(220, Math.round((h - 20) * (6 / 7)))
+}
+
+function bindRightMainObserver() {
+  rightMainObserver?.disconnect()
+  rightMainObserver = null
+  const el = rightMainEl.value
+  if (!el || typeof ResizeObserver === 'undefined') {
+    syncBoardWidth()
+    return
+  }
+  rightMainObserver = new ResizeObserver(() => syncBoardWidth())
+  rightMainObserver.observe(el)
+  syncBoardWidth()
+}
+
+onBeforeUnmount(() => {
+  rightMainObserver?.disconnect()
+  rightMainObserver = null
+})
 
 const filledMap = computed(() => {
   const map: Record<string, CrystalFill> = {}
@@ -167,6 +217,12 @@ const filledMap = computed(() => {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
+})
+
+const tabsEnabled = computed(() => {
+  const slot = activeSlot.value
+  if (!slot) return true
+  return !isDawnSlotId(slot) && !isCenterSlotId(slot)
 })
 
 const filteredCatalog = computed(() => {
@@ -183,6 +239,8 @@ const filteredCatalog = computed(() => {
       if (!isSpirit) return false
     } else if (isDawn || isSpirit) {
       return false
+    } else if (crystalCatalogTab(c.name_ru) !== crystalTab.value) {
+      return false
     }
     if (!q) return true
     return c.name_ru.toLowerCase().includes(q)
@@ -190,10 +248,16 @@ const filteredCatalog = computed(() => {
 })
 
 watch(open, async (v) => {
-  if (!v) return
+  if (!v) {
+    rightMainObserver?.disconnect()
+    rightMainObserver = null
+    return
+  }
   formError.value = ''
   done.value = false
   await refreshAdmin()
+  await nextTick()
+  bindRightMainObserver()
   if (!crystals.value.length) {
     catalogPending.value = true
     catalogError.value = false
@@ -203,8 +267,16 @@ watch(open, async (v) => {
       catalogError.value = true
     } finally {
       catalogPending.value = false
+      await nextTick()
+      syncBoardWidth()
     }
   }
+})
+
+watch([isSuperadmin, catalogPending], async () => {
+  if (!open.value) return
+  await nextTick()
+  syncBoardWidth()
 })
 
 function onSelectSlot(id: string) {
@@ -240,10 +312,11 @@ function assignCrystal(item: Item) {
   slots.value = { ...slots.value, [activeSlot.value]: item }
 }
 
-function clearSlot() {
-  if (!activeSlot.value) return
+function clearSlot(slotId?: string) {
+  const id = slotId || activeSlot.value
+  if (!id) return
   const next = { ...slots.value }
-  delete next[activeSlot.value]
+  delete next[id]
   slots.value = next
 }
 
@@ -350,7 +423,7 @@ async function onSubmit() {
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(100%, 64rem);
+  width: min(100%, 68rem);
   max-height: min(94vh, 58rem);
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -402,26 +475,65 @@ async function onSubmit() {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(22rem, 1.15fr) minmax(16rem, 0.95fr);
-  gap: 1rem;
+  grid-template-columns: auto minmax(16rem, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0.75rem 1rem;
   align-items: start;
   min-height: 0;
   flex: 1;
 }
 
 .left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
+  grid-column: 1;
+  grid-row: 1;
   min-width: 0;
+  justify-self: start;
 }
 
-.right {
+.rightMain {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
   min-width: 0;
   min-height: 0;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.3rem;
+}
+
+.tab {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.38rem 0.25rem;
+}
+
+.tabOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
+}
+
+.tabsOff {
+  opacity: 0.4;
+}
+
+.tabsOff .tab {
+  cursor: not-allowed;
+}
+
+.tabsOff .tabOn {
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
 }
 
 .label {
@@ -478,14 +590,6 @@ async function onSubmit() {
   color: var(--color-gold);
 }
 
-.clearIcon {
-  display: grid;
-  width: 1.6rem;
-  height: 1.6rem;
-  place-items: center;
-  color: var(--color-muted);
-}
-
 .icon {
   width: 1.6rem;
   height: 1.6rem;
@@ -495,10 +599,11 @@ async function onSubmit() {
 }
 
 .actions {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 0.25rem;
 }
 
 .primary,

@@ -9,7 +9,9 @@ export {
   CRYSTAL_BOARD_SLOTS,
   CRYSTAL_DAWN_SLOTS,
   CRYSTAL_SLOT_IDS,
+  CRYSTAL_TABS,
   MAX_CRYSTALS,
+  crystalCatalogTab,
   isCenterSlotId,
   isCrystalSlotId,
   isDawnCrystalName,
@@ -17,4 +19,5 @@ export {
   isSpiritCrystalName,
   type CrystalSlotDef,
   type CrystalSlotKind,
+  type CrystalTabId,
 } from './crystalSlots'
