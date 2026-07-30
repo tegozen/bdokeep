@@ -18,7 +18,7 @@
         v-for="klass in classes"
         :key="klass.id"
         :to="`/class/${klass.slug}`"
-        :class="$style.card"
+        :class="[$style.card, !klass.has_content && $style.cardEmpty]"
       >
         <div :class="$style.media">
           <img
@@ -88,6 +88,14 @@ defineProps<{
   border-color: var(--color-border-strong);
   box-shadow: var(--shadow-glow);
   color: var(--color-ink);
+}
+
+.cardEmpty {
+  opacity: 0.42;
+}
+
+.cardEmpty:hover {
+  opacity: 0.72;
 }
 
 .media {

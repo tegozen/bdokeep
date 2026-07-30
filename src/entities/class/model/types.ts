@@ -8,6 +8,8 @@ export type BdoClass = {
   succession_name: string | null
   sort_order: number
   published: boolean
+  /** Guide has any filled content (summary / role / sections / videos) */
+  has_content?: boolean
 }
 
 export type ClassGuide = {

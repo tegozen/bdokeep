@@ -5,12 +5,76 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   const supabase = getSupabase()
   const { data, error } = await supabase
     .from('classes')
-    .select('*')
+    .select(
+      `
+      *,
+      class_guides(
+        summary,
+        pvp_role,
+        guide_skills(count),
+        guide_buffs(count),
+        guide_relics(count),
+        guide_lightstones(count),
+        guide_crystals(count),
+        guide_essence(count)
+      ),
+      class_videos(count)
+    `,
+    )
     .eq('published', true)
     .order('sort_order', { ascending: true })
 
   if (error) throw error
-  return (data ?? []) as BdoClass[]
+
+  type CountRow = { count: number }
+  type GuideEmbed = {
+    summary: string | null
+    pvp_role: string | null
+    guide_skills: CountRow[] | null
+    guide_buffs: CountRow[] | null
+    guide_relics: CountRow[] | null
+    guide_lightstones: CountRow[] | null
+    guide_crystals: CountRow[] | null
+    guide_essence: CountRow[] | null
+  }
+  type Row = BdoClass & {
+    class_guides: GuideEmbed | GuideEmbed[] | null
+    class_videos: CountRow[] | null
+  }
+
+  const countOf = (rows: CountRow[] | null | undefined) => rows?.[0]?.count ?? 0
+  const textFilled = (v: string | null | undefined) => Boolean(v && v.trim())
+
+  const mapped = ((data ?? []) as Row[]).map((row) => {
+    const guide = Array.isArray(row.class_guides) ? row.class_guides[0] : row.class_guides
+    const has_content = Boolean(
+      guide &&
+        (textFilled(guide.summary) ||
+          textFilled(guide.pvp_role) ||
+          countOf(guide.guide_skills) > 0 ||
+          countOf(guide.guide_buffs) > 0 ||
+          countOf(guide.guide_relics) > 0 ||
+          countOf(guide.guide_lightstones) > 0 ||
+          countOf(guide.guide_crystals) > 0 ||
+          countOf(guide.guide_essence) > 0),
+    ) || countOf(row.class_videos) > 0
+
+    const {
+      class_guides: _g,
+      class_videos: _v,
+      ...klass
+    } = row
+
+    return { ...klass, has_content } as BdoClass
+  })
+
+  mapped.sort((a, b) => {
+    const byContent = Number(Boolean(b.has_content)) - Number(Boolean(a.has_content))
+    if (byContent !== 0) return byContent
+    return a.sort_order - b.sort_order
+  })
+
+  return mapped
 }
 
 export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBundle | null> {
