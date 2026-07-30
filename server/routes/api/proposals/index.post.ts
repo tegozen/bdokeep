@@ -73,6 +73,27 @@ export default defineEventHandler(async (event) => {
     }
 
     payload = { mode, skill_ids: skillIds }
+  } else if (isBuffsSection(section)) {
+    const rawIds = body.payload?.buff_ids
+    if (!Array.isArray(rawIds) || rawIds.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один баф' })
+    }
+    if (rawIds.length > MAX_BUFFS) {
+      throw createError({ statusCode: 400, statusMessage: `Максимум ${MAX_BUFFS} бафов` })
+    }
+    const buffIds = rawIds.map((id) => String(id))
+    if (buffIds.some((id) => !UUID_RE.test(id))) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный buff id' })
+    }
+
+    const { data: buffs, error: buffsErr } = await rest.from('buffs').select('id').in('id', buffIds)
+    if (buffsErr) throw createError({ statusCode: 502, statusMessage: buffsErr.message })
+    const allowed = new Set((buffs ?? []).map((b: { id: string }) => b.id))
+    if (buffIds.some((id) => !allowed.has(id))) {
+      throw createError({ statusCode: 400, statusMessage: 'Неизвестный баф' })
+    }
+
+    payload = { buff_ids: buffIds }
   } else {
     const text = String(body.payload?.text ?? '').trim()
     if (!text) {

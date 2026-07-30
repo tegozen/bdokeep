@@ -8,7 +8,8 @@ export type {
   GuideBuffRow,
   GuideItemRow,
   Skill,
+  Buff,
   ProposalSection,
 } from './model/types'
-export { fetchPublishedClasses, fetchClassGuideBySlug, fetchClassSkills } from './api/classApi'
+export { fetchPublishedClasses, fetchClassGuideBySlug, fetchClassSkills, fetchBuffs } from './api/classApi'
 export { default as ClassIcon } from './ui/ClassIcon.vue'

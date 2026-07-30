@@ -64,18 +64,37 @@ export async function applyProposal(
 
     const { error: insErr } = await rest.from('guide_combo_steps').insert(rows)
     if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
-  } else {
+  } else if (isBuffsSection(section)) {
+    const buffIds = Array.isArray(payload.buff_ids)
+      ? payload.buff_ids.map((x) => String(x))
+      : []
+
+    if (!buffIds.length || buffIds.some((bid) => !UUID_RE.test(bid))) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный payload забафа' })
+    }
+
+    const { error: delErr } = await rest.from('guide_buffs').delete().eq('guide_id', guide.id)
+    if (delErr) throw createError({ statusCode: 502, statusMessage: delErr.message })
+
+    const rows = buffIds.map((buff_id, i) => ({
+      guide_id: guide.id,
+      buff_id,
+      sort_order: i,
+    }))
+
+    const { error: insErr } = await rest.from('guide_buffs').insert(rows)
+    if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
+  } else if (section === 'summary') {
     const text = String(payload.text || '').trim()
     if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
-    if (section !== 'summary') {
-      throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
-    }
 
     const { error: updErr } = await rest
       .from('class_guides')
       .update({ summary: text, updated_at: new Date().toISOString() })
       .eq('id', guide.id)
     if (updErr) throw createError({ statusCode: 502, statusMessage: updErr.message })
+  } else {
+    throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
   }
 
   const { error: statusErr } = await rest

@@ -1,5 +1,6 @@
 export const PROPOSAL_SECTIONS = [
   'summary',
+  'buffs',
   'combo_awakening',
   'combo_succession',
 ] as const
@@ -11,10 +12,15 @@ export const UUID_RE =
 
 export const MAX_TEXT_LEN = 8000
 export const MAX_COMBO_STEPS = 30
+export const MAX_BUFFS = 20
 export const MAX_AUTHOR_LEN = 80
 
 export function isComboSection(section: ProposalSection): boolean {
   return section === 'combo_awakening' || section === 'combo_succession'
+}
+
+export function isBuffsSection(section: ProposalSection): boolean {
+  return section === 'buffs'
 }
 
 export function comboModeFromSection(section: ProposalSection): 'awakening' | 'succession' {

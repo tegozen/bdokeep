@@ -31,6 +31,13 @@
       </GuideSection>
 
       <GuideSection title="Забаф" anchor="buffs">
+        <template #actions>
+          <ProposeGuideForm
+            :class-slug="bundle.class.slug"
+            section="buffs"
+            trigger-label="Предложить забаф"
+          />
+        </template>
         <ul v-if="bundle.buffs.length" :class="[$style.list, $style.fade]">
           <li v-for="row in bundle.buffs" :key="row.id" :class="$style.item">
             <img

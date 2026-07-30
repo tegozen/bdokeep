@@ -96,4 +96,4 @@ export type ClassGuideBundle = {
   essence: GuideItemRow[]
 }
 
-export type ProposalSection = 'summary' | 'combo_awakening' | 'combo_succession'
+export type ProposalSection = 'summary' | 'buffs' | 'combo_awakening' | 'combo_succession'

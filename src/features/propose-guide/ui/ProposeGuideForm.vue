@@ -36,11 +36,20 @@
 
             <SuperadminAuth />
 
-            <template v-if="isCombo">
+            <template v-if="isCombo || isBuffs">
               <p :class="$style.hint">
-                Комба {{ isSuccessionCombo ? 'наследия' : 'пробуждения' }} — выберите скиллы по порядку.
+                <template v-if="isBuffs">Выберите бафы для забафа класса.</template>
+                <template v-else>
+                  Комба {{ isSuccessionCombo ? 'наследия' : 'пробуждения' }} — выберите скиллы по
+                  порядку.
+                </template>
               </p>
-              <div :class="$style.tabs" role="tablist" aria-label="Тип скиллов">
+              <div
+                v-if="isCombo"
+                :class="$style.tabs"
+                role="tablist"
+                aria-label="Тип скиллов"
+              >
                 <button
                   type="button"
                   role="tab"
@@ -60,40 +69,67 @@
                   {{ isSuccessionCombo ? 'Наследие' : 'Пробуждение' }}
                 </button>
               </div>
+              <div
+                v-else-if="isBuffs"
+                :class="[$style.tabs, $style.tabsBuff]"
+                role="tablist"
+                aria-label="Категория бафов"
+              >
+                <button
+                  v-for="tab in buffTabs"
+                  :key="tab.id"
+                  type="button"
+                  role="tab"
+                  :aria-selected="buffTab === tab.id"
+                  :class="[$style.tab, buffTab === tab.id && $style.tabOn]"
+                  @click="buffTab = tab.id"
+                >
+                  {{ tab.label }}
+                </button>
+              </div>
               <label :class="$style.label">
                 Поиск
-                <input v-model="query" type="search" :class="$style.input" placeholder="Название скилла">
+                <input
+                  v-model="query"
+                  type="search"
+                  :class="$style.input"
+                  :placeholder="isBuffs ? 'Название бафа' : 'Название скилла'"
+                >
               </label>
 
-              <div v-if="skillsPending" :class="$style.muted">Загрузка скиллов…</div>
-              <div v-else-if="skillsError" :class="$style.error">Не удалось загрузить скиллы.</div>
+              <div v-if="catalogPending" :class="$style.muted">
+                {{ isBuffs ? 'Загрузка бафов…' : 'Загрузка скиллов…' }}
+              </div>
+              <div v-else-if="catalogError" :class="$style.error">
+                {{ isBuffs ? 'Не удалось загрузить бафы.' : 'Не удалось загрузить скиллы.' }}
+              </div>
               <ul v-else :class="$style.catalog">
-                <li v-for="skill in filteredSkills" :key="skill.id">
-                  <button type="button" :class="$style.catalogBtn" @click="addSkill(skill)">
+                <li v-for="item in filteredCatalog" :key="item.id">
+                  <button type="button" :class="$style.catalogBtn" @click="addItem(item)">
                     <img
-                      v-if="skill.icon_url"
-                      :src="skill.icon_url"
+                      v-if="item.icon_url"
+                      :src="item.icon_url"
                       alt=""
                       :class="$style.icon"
                       loading="lazy"
                     >
-                    <span>{{ skill.name_ru }}</span>
+                    <span>{{ item.name_ru }}</span>
                     <span :class="$style.add">+</span>
                   </button>
                 </li>
               </ul>
-              <p v-if="!skillsPending && !skillsError && !filteredSkills.length" :class="$style.muted">
-                Нет скиллов в этой вкладке{{ query ? ' по поиску' : '' }}.
+              <p v-if="!catalogPending && !catalogError && !filteredCatalog.length" :class="$style.muted">
+                Нет {{ isBuffs ? 'бафов' : 'скиллов' }}{{ query ? ' по поиску' : ' в этой вкладке' }}.
               </p>
 
               <div :class="$style.pickedHead">
-                Цепочка ({{ picked.length }}/30)
+                {{ isBuffs ? `Забаф (${picked.length}/${maxPicked})` : `Цепочка (${picked.length}/${maxPicked})` }}
                 <span v-if="picked.length" :class="$style.dragHint">перетащите, чтобы поменять местами</span>
               </div>
               <ol v-if="picked.length" :class="$style.picked">
                 <li
-                  v-for="(skill, i) in picked"
-                  :key="`${skill.id}-${i}`"
+                  v-for="(item, i) in picked"
+                  :key="`${item.id}-${i}`"
                   :class="$style.step"
                 >
                   <span v-if="i > 0" :class="$style.arrow" aria-hidden="true">→</span>
@@ -104,26 +140,26 @@
                       dragOver === i && dragFrom !== i && $style.tileOver,
                     ]"
                     draggable="true"
-                    :title="skill.name_ru"
+                    :title="item.name_ru"
                     @dragstart="onDragStart(i, $event)"
                     @dragend="onDragEnd"
                     @dragover.prevent="onDragOver(i)"
                     @drop.prevent="onDrop(i)"
                   >
                     <img
-                      v-if="skill.icon_url"
-                      :src="skill.icon_url"
+                      v-if="item.icon_url"
+                      :src="item.icon_url"
                       alt=""
                       :class="$style.tileIcon"
                       draggable="false"
                       loading="lazy"
                     >
                     <span v-else :class="$style.tileFallback">?</span>
-                    <span :class="$style.tileName">{{ skill.name_ru }}</span>
+                    <span :class="$style.tileName">{{ item.name_ru }}</span>
                     <button
                       type="button"
                       :class="$style.tileRemove"
-                      :aria-label="`Убрать ${skill.name_ru}`"
+                      :aria-label="`Убрать ${item.name_ru}`"
                       @click.stop="removeAt(i)"
                       @mousedown.stop
                     >
@@ -132,7 +168,9 @@
                   </div>
                 </li>
               </ol>
-              <p v-else :class="$style.muted">Пока пусто — нажмите скилл в списке выше.</p>
+              <p v-else :class="$style.muted">
+                Пока пусто — нажмите {{ isBuffs ? 'баф' : 'скилл' }} в списке выше.
+              </p>
             </template>
 
             <template v-else>
@@ -178,11 +216,29 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { fetchClassSkills, type ProposalSection, type Skill } from '@/entities/class'
+import {
+  fetchBuffs,
+  fetchClassSkills,
+  type Buff,
+  type ProposalSection,
+  type Skill,
+} from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import { useModalEscape, useSuperadmin } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
 import { skillCatalogBucket } from '../lib/skillBucket'
+
+type PickItem = { id: string; name_ru: string; icon_url: string | null }
+type BuffTabId = 'all' | 'camp' | 'cron' | 'balm' | 'elixir' | 'attack'
+
+const BUFF_TABS: { id: BuffTabId; label: string }[] = [
+  { id: 'all', label: 'Все' },
+  { id: 'camp', label: 'Лагерь' },
+  { id: 'cron', label: 'Блюдо Крон' },
+  { id: 'balm', label: 'Бальзамы' },
+  { id: 'elixir', label: 'Эликсиры' },
+  { id: 'attack', label: 'Атакующие зелья' },
+]
 
 const props = withDefaults(
   defineProps<{
@@ -203,10 +259,13 @@ const text = ref('')
 const author = ref('')
 const query = ref('')
 const catalogTab = ref<'main' | 'spec'>('main')
-const picked = ref<Skill[]>([])
+const buffTab = ref<BuffTabId>('all')
+const buffTabs = BUFF_TABS
+const picked = ref<PickItem[]>([])
 const skills = ref<Skill[]>([])
-const skillsPending = ref(false)
-const skillsError = ref(false)
+const buffs = ref<Buff[]>([])
+const catalogPending = ref(false)
+const catalogError = ref(false)
 const submitting = ref(false)
 const formError = ref('')
 const done = ref(false)
@@ -219,12 +278,16 @@ const { obscured } = useModalEscape(open, close)
 const isCombo = computed(
   () => props.section === 'combo_awakening' || props.section === 'combo_succession',
 )
+const isBuffs = computed(() => props.section === 'buffs')
 const isSuccessionCombo = computed(() => props.section === 'combo_succession')
+const maxPicked = computed(() => (isBuffs.value ? 20 : 30))
 
 const title = computed(() => {
   switch (props.section) {
     case 'summary':
       return 'Предложить суть'
+    case 'buffs':
+      return 'Предложить забаф'
     case 'combo_awakening':
       return 'Комба: пробуждение'
     case 'combo_succession':
@@ -234,9 +297,16 @@ const title = computed(() => {
   }
 })
 
-const filteredSkills = computed(() => {
-  const want = catalogTab.value === 'main' ? 'main' : isSuccessionCombo.value ? 'succession' : 'awakening'
+const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
+  if (isBuffs.value) {
+    return buffs.value.filter((b) => {
+      if (buffTab.value !== 'all' && b.description !== buffTab.value) return false
+      if (!q) return true
+      return b.name_ru.toLowerCase().includes(q)
+    })
+  }
+  const want = catalogTab.value === 'main' ? 'main' : isSuccessionCombo.value ? 'succession' : 'awakening'
   return skills.value.filter((s) => {
     if (skillCatalogBucket(s) !== want) return false
     if (!q) return true
@@ -244,17 +314,17 @@ const filteredSkills = computed(() => {
   })
 })
 
-watch(catalogTab, () => {
+watch([catalogTab, buffTab], () => {
   formError.value = ''
 })
 
-function addSkill(skill: Skill) {
-  if (picked.value.length >= 30) {
-    formError.value = 'Максимум 30 шагов'
+function addItem(item: PickItem) {
+  if (picked.value.length >= maxPicked.value) {
+    formError.value = isBuffs.value ? `Максимум ${maxPicked.value} бафов` : 'Максимум 30 шагов'
     return
   }
   formError.value = ''
-  picked.value = [...picked.value, skill]
+  picked.value = [...picked.value, item]
 }
 
 function removeAt(i: number) {
@@ -304,6 +374,7 @@ function reset() {
   honeypot.value = ''
   query.value = ''
   catalogTab.value = 'main'
+  buffTab.value = 'all'
   picked.value = []
   formError.value = ''
   done.value = false
@@ -320,14 +391,24 @@ watch(open, async (v) => {
     doneMessage.value = ''
     await refreshAdmin()
     if (isCombo.value && !skills.value.length) {
-      skillsPending.value = true
-      skillsError.value = false
+      catalogPending.value = true
+      catalogError.value = false
       try {
         skills.value = await fetchClassSkills(props.classSlug)
       } catch {
-        skillsError.value = true
+        catalogError.value = true
       } finally {
-        skillsPending.value = false
+        catalogPending.value = false
+      }
+    } else if (isBuffs.value && !buffs.value.length) {
+      catalogPending.value = true
+      catalogError.value = false
+      try {
+        buffs.value = await fetchBuffs()
+      } catch {
+        catalogError.value = true
+      } finally {
+        catalogPending.value = false
       }
     }
   } else {
@@ -339,17 +420,19 @@ async function onSubmit() {
   formError.value = ''
   submitting.value = true
   try {
+    if ((isCombo.value || isBuffs.value) && !picked.value.length) {
+      formError.value = isBuffs.value ? 'Добавьте хотя бы один баф' : 'Добавьте хотя бы один скилл'
+      return
+    }
+
     const payload = isCombo.value
       ? {
           mode: isSuccessionCombo.value ? 'succession' : 'awakening',
           skill_ids: picked.value.map((s) => s.id),
         }
-      : { text: text.value.trim() }
-
-    if (isCombo.value && !picked.value.length) {
-      formError.value = 'Добавьте хотя бы один скилл'
-      return
-    }
+      : isBuffs.value
+        ? { buff_ids: picked.value.map((b) => b.id) }
+        : { text: text.value.trim() }
 
     const res = await submitGuideProposal({
       class_slug: props.classSlug,
@@ -418,9 +501,11 @@ async function onSubmit() {
 }
 
 .modal {
-  width: min(100%, 34rem);
-  max-height: min(90vh, 44rem);
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 36rem);
+  max-height: min(94vh, 56rem);
+  overflow: hidden;
   border: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
   box-shadow: var(--shadow-glow);
@@ -428,6 +513,7 @@ async function onSubmit() {
 
 .head {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -450,8 +536,12 @@ async function onSubmit() {
 }
 
 .form {
-  display: grid;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 0.85rem;
+  min-height: 0;
+  overflow: auto;
   padding: 1rem;
 }
 
@@ -496,6 +586,15 @@ async function onSubmit() {
   gap: 0.35rem;
 }
 
+.tabsBuff {
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+}
+
+.tabsBuff .tab {
+  font-size: 0.78rem;
+  padding: 0.4rem 0.35rem;
+}
+
 .tab {
   border: 1px solid var(--color-border);
   background: transparent;
@@ -513,8 +612,9 @@ async function onSubmit() {
 }
 
 .catalog {
+  flex: 1 1 auto;
   margin: 0;
-  max-height: 10rem;
+  min-height: 10rem;
   overflow: auto;
   list-style: none;
   border: 1px solid var(--color-border);

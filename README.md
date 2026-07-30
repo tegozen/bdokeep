@@ -30,7 +30,7 @@ Adminer: система `PostgreSQL`, сервер `db`, пользовател�
 
 ## Модерация предложений
 
-Посетители могут предложить правки (суть, роль, комба из скиллов класса) с страницы класса.
+Посетители могут предложить правки (суть, забаф из каталога, комба из скиллов класса) со страницы класса.
 
 Модерация: [`/admin/proposals`](http://127.0.0.1:3000/admin/proposals) — пароль из `ADMIN_PASSWORD` в `.env`.
 
@@ -40,6 +40,7 @@ Adminer: система `PostgreSQL`, сервер `db`, пользовател�
 
 - классы + пустые гайды
 - скиллы из `supabase/migrations/002_seed_skills.sql` (в git)
+- бафы из `supabase/migrations/008_seed_buffs.sql` (в git)
 
 Картинки: `public/classes/<slug>/{portrait.png,icon.svg}`.
 

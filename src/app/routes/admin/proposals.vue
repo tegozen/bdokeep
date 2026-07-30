@@ -54,6 +54,26 @@
             </p>
             <p v-else :class="$style.muted">Нет скиллов в payload</p>
           </div>
+          <ul v-else-if="isBuffs(item.section)" :class="$style.buffList">
+            <template v-if="buffPreview[item.id] === undefined">
+              <li :class="$style.muted">Загрузка бафов…</li>
+            </template>
+            <template v-else-if="!buffPreview[item.id]?.length">
+              <li :class="$style.muted">Нет бафов в payload</li>
+            </template>
+            <template v-else>
+              <li v-for="row in buffPreview[item.id]!" :key="row.id" :class="$style.buffItem">
+                <img
+                  v-if="row.buffs?.icon_url"
+                  :src="row.buffs.icon_url"
+                  alt=""
+                  :class="$style.buffIcon"
+                  loading="lazy"
+                >
+                <span>{{ row.buffs?.name_ru || 'Баф' }}</span>
+              </li>
+            </template>
+          </ul>
           <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
 
           <div v-if="item.status === 'pending'" :class="$style.actions">
@@ -85,7 +105,7 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { getSupabase } from '@/shared/api'
 import { ComboChain } from '@/widgets/combo-chain'
-import type { Skill } from '@/entities/class'
+import type { Buff, Skill } from '@/entities/class'
 
 useHead({ title: 'Админ — предложения | BDO Keep' })
 
@@ -94,7 +114,7 @@ type Proposal = {
   class_id: string
   class_slug: string
   section: string
-  payload: { text?: string; skill_ids?: string[]; mode?: string }
+  payload: { text?: string; skill_ids?: string[]; buff_ids?: string[]; mode?: string }
   author_label: string | null
   status: string
   created_at: string
@@ -113,6 +133,9 @@ const acting = ref<string | null>(null)
 const comboPreview = reactive<Record<string, Array<{ id: string; skills: Skill | null }> | null>>(
   {},
 )
+const buffPreview = reactive<
+  Record<string, Array<{ id: string; buffs: Buff | null }> | null>
+>({})
 
 const statusOpts = [
   { value: 'pending', label: 'Pending' },
@@ -125,6 +148,8 @@ function sectionLabel(section: string) {
   switch (section) {
     case 'summary':
       return 'Суть'
+    case 'buffs':
+      return 'Забаф'
     case 'combo_awakening':
       return 'Комба · пробуждение'
     case 'combo_succession':
@@ -136,6 +161,10 @@ function sectionLabel(section: string) {
 
 function isCombo(section: string) {
   return section === 'combo_awakening' || section === 'combo_succession'
+}
+
+function isBuffs(section: string) {
+  return section === 'buffs'
 }
 
 function textOf(item: Proposal) {
@@ -187,7 +216,7 @@ async function load() {
       query: { status: status.value },
     })
     items.value = res.items ?? []
-    await hydrateComboPreviews()
+    await Promise.all([hydrateComboPreviews(), hydrateBuffPreviews()])
   } catch (e: unknown) {
     const code =
       e && typeof e === 'object' && 'statusCode' in e
@@ -228,6 +257,35 @@ async function hydrateComboPreviews() {
         }))
       } catch {
         comboPreview[item.id] = []
+      }
+    }),
+  )
+}
+
+async function hydrateBuffPreviews() {
+  for (const key of Object.keys(buffPreview)) delete buffPreview[key]
+  const list = items.value.filter((i) => isBuffs(i.section))
+  await Promise.all(
+    list.map(async (item) => {
+      const ids = item.payload?.buff_ids ?? []
+      if (!ids.length) {
+        buffPreview[item.id] = []
+        return
+      }
+      try {
+        const supabase = getSupabase()
+        const { data, error } = await supabase
+          .from('buffs')
+          .select('id, name_ru, icon_url, description')
+          .in('id', ids)
+        if (error) throw error
+        const byId = new Map((data ?? []).map((b) => [b.id, b as Buff]))
+        buffPreview[item.id] = ids.map((id) => ({
+          id,
+          buffs: byId.get(id) ?? null,
+        }))
+      } catch {
+        buffPreview[item.id] = []
       }
     }),
   )
@@ -403,6 +461,29 @@ onMounted(async () => {
 
 .preview {
   margin-bottom: 0.5rem;
+}
+
+.buffList {
+  margin: 0 0 0.5rem;
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+}
+
+.buffItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+}
+
+.buffIcon {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  background: #000;
+  object-fit: contain;
 }
 
 .actions {

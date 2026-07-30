@@ -7,7 +7,12 @@
             <span :class="$style.brandMark">BDO</span>
             <span :class="$style.brandName">Keep</span>
           </NuxtLink>
-          <div v-if="headerClass" :class="$style.classMeta">
+          <a
+            v-if="headerClass"
+            href="#summary"
+            :class="$style.classMeta"
+            :aria-label="`${headerClass.name_ru} — суть`"
+          >
             <ClassIcon
               :slug="headerClass.slug"
               :icon-url="headerClass.icon_url"
@@ -15,7 +20,7 @@
               size="sm"
             />
             <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
-          </div>
+          </a>
           <nav
             v-if="headerToc?.length"
             :class="$style.toc"
@@ -138,6 +143,12 @@ const headerToc = useHeaderToc()
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.classMeta:hover .className {
+  color: var(--color-gold-soft);
 }
 
 .className {

@@ -1,5 +1,5 @@
 import { getSupabase } from '@/shared/api'
-import type { BdoClass, ClassGuideBundle, Skill } from '../model/types'
+import type { BdoClass, Buff, ClassGuideBundle, Skill } from '../model/types'
 
 export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   const supabase = getSupabase()
@@ -84,6 +84,17 @@ export async function fetchClassSkills(classSlug: string): Promise<Skill[]> {
 
   if (error) throw error
   return (data ?? []) as Skill[]
+}
+
+export async function fetchBuffs(): Promise<Buff[]> {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('buffs')
+    .select('id, name_ru, icon_url, description')
+    .order('name_ru', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as Buff[]
 }
 
 export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBundle | null> {
