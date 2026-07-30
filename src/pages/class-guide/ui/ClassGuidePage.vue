@@ -1,11 +1,5 @@
 <template>
   <div :class="['mx-auto w-[min(100%-2rem,1920px)]', $style.page]">
-    <ClassHero
-      :klass="bundle?.class"
-      :pvp-role="bundle?.guide?.pvp_role"
-      :pending="pending"
-    />
-
     <div v-if="error && !pending" :class="$style.error">
       Не удалось загрузить гайд. Проверьте API (PostgREST) и обновите страницу.
     </div>
@@ -144,7 +138,6 @@ import type { ClassGuideBundle } from '@/entities/class'
 import { ProposeGuideForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import { UiSkeleton } from '@/shared/ui'
-import { ClassHero } from '@/widgets/class-hero'
 import { ComboChain } from '@/widgets/combo-chain'
 import { GuideItemList } from '@/widgets/guide-item-list'
 import { GuideSection } from '@/widgets/guide-section'

@@ -1,12 +1,20 @@
 <template>
   <div :class="$style.root">
     <header :class="$style.header">
-      <div :class="['mx-auto flex w-[min(100%-2rem,1920px)] flex-wrap items-baseline gap-4 py-4', $style.headerInner]">
+      <div :class="['mx-auto flex w-[min(100%-2rem,1920px)] flex-wrap items-center gap-x-4 gap-y-2 py-4', $style.headerInner]">
         <NuxtLink to="/" :class="$style.brand">
           <span :class="$style.brandMark">BDO</span>
           <span :class="$style.brandName">Keep</span>
         </NuxtLink>
-        <p :class="$style.tag">Гильдейские PvP-гайды</p>
+        <div v-if="headerClass" :class="$style.classMeta">
+          <ClassIcon
+            :slug="headerClass.slug"
+            :icon-url="headerClass.icon_url"
+            :label="headerClass.name_ru"
+            size="sm"
+          />
+          <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
+        </div>
       </div>
     </header>
 
@@ -24,6 +32,13 @@
     </footer>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ClassIcon } from '@/entities/class'
+import { useHeaderClass } from '@/shared/lib'
+
+const headerClass = useHeaderClass()
+</script>
 
 <style module>
 .root {
@@ -69,10 +84,19 @@
   letter-spacing: 0.05em;
 }
 
-.tag {
+.classMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.className {
   margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-muted);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-gold);
 }
 
 .main {
