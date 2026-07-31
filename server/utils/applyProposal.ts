@@ -124,6 +124,84 @@ export async function applyProposal(
 
     const { error: insErr } = await rest.from('guide_crystals').insert(rows)
     if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
+  } else if (isRelicsSection(section)) {
+    const rawRelics = Array.isArray(payload.relics) ? payload.relics : []
+    const rawLights = Array.isArray(payload.lightstones) ? payload.lightstones : []
+    if (!rawRelics.length && !rawLights.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный payload реликвий' })
+    }
+
+    const relicRows: Array<{
+      guide_id: string
+      item_id: string
+      slot: string
+      preset: string
+      sort_order: number
+    }> = []
+    for (let i = 0; i < rawRelics.length; i++) {
+      const entry = rawRelics[i] as {
+        preset?: unknown
+        slot?: unknown
+        item_id?: unknown
+        sort_order?: unknown
+      }
+      const preset = String(entry?.preset || '')
+      const slot = String(entry?.slot || '')
+      const itemId = String(entry?.item_id || '')
+      if (!isCrystalPresetId(preset) || !isRelicSlotId(slot) || !UUID_RE.test(itemId)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректная реликвия' })
+      }
+      relicRows.push({
+        guide_id: guide.id,
+        item_id: itemId,
+        slot,
+        preset,
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const lightRows: Array<{
+      guide_id: string
+      item_id: string
+      slot: string
+      preset: string
+      sort_order: number
+    }> = []
+    for (let i = 0; i < rawLights.length; i++) {
+      const entry = rawLights[i] as {
+        preset?: unknown
+        slot?: unknown
+        item_id?: unknown
+        sort_order?: unknown
+      }
+      const preset = String(entry?.preset || '')
+      const slot = String(entry?.slot || '')
+      const itemId = String(entry?.item_id || '')
+      if (!isCrystalPresetId(preset) || !isLightstoneSlotId(slot) || !UUID_RE.test(itemId)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный светящийся камень' })
+      }
+      lightRows.push({
+        guide_id: guide.id,
+        item_id: itemId,
+        slot,
+        preset,
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const { error: delR } = await rest.from('guide_relics').delete().eq('guide_id', guide.id)
+    if (delR) throw createError({ statusCode: 502, statusMessage: delR.message })
+    const { error: delL } = await rest.from('guide_lightstones').delete().eq('guide_id', guide.id)
+    if (delL) throw createError({ statusCode: 502, statusMessage: delL.message })
+
+    if (relicRows.length) {
+      const { error: insR } = await rest.from('guide_relics').insert(relicRows)
+      if (insR) throw createError({ statusCode: 502, statusMessage: insR.message })
+    }
+    if (lightRows.length) {
+      const { error: insL } = await rest.from('guide_lightstones').insert(lightRows)
+      if (insL) throw createError({ statusCode: 502, statusMessage: insL.message })
+    }
   } else if (section === 'summary') {
     const text = String(payload.text || '').trim()
     if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })

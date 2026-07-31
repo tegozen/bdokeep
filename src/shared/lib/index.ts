@@ -28,3 +28,23 @@ export {
   isCrystalPresetId,
   type CrystalPresetId,
 } from './crystalPresets'
+/** Shared guide presets (crystals + relics). */
+export {
+  CRYSTAL_PRESETS as GUIDE_PRESETS,
+  CRYSTAL_PRESET_IDS as GUIDE_PRESET_IDS,
+  isCrystalPresetId as isGuidePresetId,
+  type CrystalPresetId as GuidePresetId,
+} from './crystalPresets'
+export {
+  LIGHTSTONE_SLOT_IDS,
+  RELIC_BOARD_PANELS,
+  RELIC_SLOT_IDS,
+  isLightstoneSlotId,
+  isRelicSlotId,
+  lightstoneSlotsForRelic,
+  relicSlotForLightstone,
+  type LightstoneSlotId,
+  type RelicBoardSlotDef,
+  type RelicBoardSlotKind,
+  type RelicSlotId,
+} from './relicSlots'

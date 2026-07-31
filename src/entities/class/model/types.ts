@@ -69,7 +69,7 @@ export type GuideBuffRow = {
 export type GuideItemRow = {
   id: string
   slot: string | null
-  /** Crystal preset: t1 / t2 / besp / sub (only on guide_crystals). */
+  /** Preset: t1 / t2 / besp / sub (crystals, relics, lightstones). */
   preset?: string | null
   notes: string | null
   sort_order: number
@@ -94,3 +94,4 @@ export type ProposalSection =
   | 'combo_awakening'
   | 'combo_succession'
   | 'crystals'
+  | 'relics'

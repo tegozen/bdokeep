@@ -1,5 +1,5 @@
 <template>
-  <section :id="anchor" :class="$style.section">
+  <section :id="anchor" :class="[$style.section, flush && $style.flush]">
     <header :class="$style.head">
       <div :class="$style.titleRow">
         <h2 :class="$style.title">{{ title }}</h2>
@@ -19,17 +19,26 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  title: string
-  subtitle?: string
-  anchor: string
-}>()
+withDefaults(
+  defineProps<{
+    title: string
+    subtitle?: string
+    anchor: string
+    /** Drop bottom margin (e.g. when nested in a row). */
+    flush?: boolean
+  }>(),
+  { flush: false },
+)
 </script>
 
 <style module>
 .section {
   margin-bottom: 2.5rem;
   scroll-margin-top: 5rem;
+}
+
+.flush {
+  margin-bottom: 0;
 }
 
 .head {

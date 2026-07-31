@@ -106,6 +106,30 @@ export async function fetchCrystals(): Promise<Item[]> {
   return (data ?? []) as Item[]
 }
 
+export async function fetchRelics(): Promise<Item[]> {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('items')
+    .select('id, name_ru, icon_url, item_type')
+    .eq('item_type', 'relic')
+    .order('name_ru', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as Item[]
+}
+
+export async function fetchLightstones(): Promise<Item[]> {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('items')
+    .select('id, name_ru, icon_url, item_type')
+    .eq('item_type', 'lightstone')
+    .order('name_ru', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as Item[]
+}
+
 export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBundle | null> {
   const empty = {
     comboSteps: [] as ClassGuideBundle['comboSteps'],
@@ -164,12 +188,12 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
       .order('sort_order', { ascending: true }),
     supabase
       .from('guide_relics')
-      .select('id, slot, notes, sort_order, items(id, name_ru, icon_url, item_type)')
+      .select('id, slot, preset, notes, sort_order, items(id, name_ru, icon_url, item_type)')
       .eq('guide_id', guideId)
       .order('sort_order', { ascending: true }),
     supabase
       .from('guide_lightstones')
-      .select('id, slot, notes, sort_order, items(id, name_ru, icon_url, item_type)')
+      .select('id, slot, preset, notes, sort_order, items(id, name_ru, icon_url, item_type)')
       .eq('guide_id', guideId)
       .order('sort_order', { ascending: true }),
     supabase

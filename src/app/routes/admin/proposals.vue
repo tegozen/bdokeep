@@ -100,6 +100,29 @@
               <CrystalBoard v-else :filled="crystalFilledFor(item.id)" />
             </template>
           </div>
+          <div v-else-if="isRelics(item.section)" :class="$style.crystalPreview">
+            <p v-if="relicPreview[item.id] === undefined" :class="$style.muted">
+              Загрузка реликвий…
+            </p>
+            <template v-else>
+              <div :class="$style.presetTabs" role="tablist">
+                <button
+                  v-for="p in crystalPresetTabs"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :class="[
+                    $style.presetTab,
+                    relicPreviewPreset[item.id] === p.id && $style.presetTabOn,
+                  ]"
+                  @click="relicPreviewPreset[item.id] = p.id"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
+              <RelicBoard :filled="relicFilledFor(item.id)" />
+            </template>
+          </div>
           <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
 
           <div v-if="item.status === 'pending'" :class="$style.actions">
@@ -133,6 +156,7 @@ import { getSupabase } from '@/shared/api'
 import { CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
+import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import type { Buff, Skill } from '@/entities/class'
 
 useHead({ title: 'Админ — предложения | BDO Keep' })
@@ -148,6 +172,8 @@ type Proposal = {
     buff_ids?: string[]
     mode?: string
     crystals?: Array<{ preset?: string; slot: string; item_id: string }>
+    relics?: Array<{ preset?: string; slot: string; item_id: string }>
+    lightstones?: Array<{ preset?: string; slot: string; item_id: string }>
   }
   author_label: string | null
   status: string
@@ -175,6 +201,10 @@ const crystalPreview = reactive<
   Record<string, Partial<Record<CrystalPresetId, Record<string, CrystalFill>>> | null>
 >({})
 const previewPreset = reactive<Record<string, CrystalPresetId>>({})
+const relicPreview = reactive<
+  Record<string, Partial<Record<CrystalPresetId, Record<string, RelicFill>>> | null>
+>({})
+const relicPreviewPreset = reactive<Record<string, CrystalPresetId>>({})
 
 const statusOpts = [
   { value: 'pending', label: 'Pending' },
@@ -191,6 +221,8 @@ function sectionLabel(section: string) {
       return 'Забаф'
     case 'crystals':
       return 'Инкрустация'
+    case 'relics':
+      return 'Реликвии'
     case 'combo_awakening':
       return 'Комба · пробуждение'
     case 'combo_succession':
@@ -212,6 +244,10 @@ function isCrystals(section: string) {
   return section === 'crystals'
 }
 
+function isRelics(section: string) {
+  return section === 'relics'
+}
+
 function textOf(item: Proposal) {
   return String(item.payload?.text || '')
 }
@@ -219,6 +255,11 @@ function textOf(item: Proposal) {
 function crystalFilledFor(proposalId: string): Record<string, CrystalFill> {
   const preset = previewPreset[proposalId] || 't1'
   return crystalPreview[proposalId]?.[preset] || {}
+}
+
+function relicFilledFor(proposalId: string): Record<string, RelicFill> {
+  const preset = relicPreviewPreset[proposalId] || 't1'
+  return relicPreview[proposalId]?.[preset] || {}
 }
 
 function formatDate(iso: string) {
@@ -266,7 +307,12 @@ async function load() {
       query: { status: status.value },
     })
     items.value = res.items ?? []
-    await Promise.all([hydrateComboPreviews(), hydrateBuffPreviews(), hydrateCrystalPreviews()])
+    await Promise.all([
+      hydrateComboPreviews(),
+      hydrateBuffPreviews(),
+      hydrateCrystalPreviews(),
+      hydrateRelicPreviews(),
+    ])
   } catch (e: unknown) {
     const code =
       e && typeof e === 'object' && 'statusCode' in e
@@ -379,6 +425,51 @@ async function hydrateCrystalPreviews() {
         crystalPreview[item.id] = byPreset
       } catch {
         crystalPreview[item.id] = {}
+      }
+    }),
+  )
+}
+
+async function hydrateRelicPreviews() {
+  for (const key of Object.keys(relicPreview)) delete relicPreview[key]
+  for (const key of Object.keys(relicPreviewPreset)) delete relicPreviewPreset[key]
+  const list = items.value.filter((i) => isRelics(i.section))
+  await Promise.all(
+    list.map(async (item) => {
+      relicPreviewPreset[item.id] = 't1'
+      const relicEntries = item.payload?.relics ?? []
+      const lightEntries = item.payload?.lightstones ?? []
+      const entries = [...relicEntries, ...lightEntries]
+      if (!entries.length) {
+        relicPreview[item.id] = {}
+        return
+      }
+      try {
+        const ids = entries.map((e) => e.item_id)
+        const supabase = getSupabase()
+        const { data, error } = await supabase
+          .from('items')
+          .select('id, name_ru, icon_url, item_type')
+          .in('item_type', ['relic', 'lightstone'])
+          .in('id', ids)
+        if (error) throw error
+        const byId = new Map(
+          (data ?? []).map((c) => [
+            c.id,
+            { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as RelicFill,
+          ]),
+        )
+        const byPreset: Partial<Record<CrystalPresetId, Record<string, RelicFill>>> = {}
+        for (const entry of entries) {
+          const fill = byId.get(entry.item_id)
+          if (!fill) continue
+          const preset = (entry.preset || 't1') as CrystalPresetId
+          if (!byPreset[preset]) byPreset[preset] = {}
+          byPreset[preset]![entry.slot] = fill
+        }
+        relicPreview[item.id] = byPreset
+      } catch {
+        relicPreview[item.id] = {}
       }
     }),
   )

@@ -98,60 +98,80 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
-      <GuideSection title="Инкрустация" anchor="crystals">
-        <template #beside>
-          <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
-            <button
-              v-for="p in crystalPresets"
-              :key="p.id"
-              type="button"
-              role="tab"
-              :aria-selected="activeCrystalPreset === p.id"
-              :class="[$style.presetTab, activeCrystalPreset === p.id && $style.presetTabOn]"
-              @click="activeCrystalPreset = p.id"
-            >
-              {{ p.label }}
-            </button>
+      <div :class="$style.gearRow">
+        <GuideSection flush :class="$style.gearCol" title="Инкрустация" anchor="crystals">
+          <template #beside>
+            <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
+              <button
+                v-for="p in crystalPresets"
+                :key="p.id"
+                type="button"
+                role="tab"
+                :aria-selected="activeCrystalPreset === p.id"
+                :class="[$style.presetTab, activeCrystalPreset === p.id && $style.presetTabOn]"
+                @click="activeCrystalPreset = p.id"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+          </template>
+          <template #actions>
+            <ProposeCrystalForm
+              :class-slug="bundle.class.slug"
+              :initial-crystals="bundle.crystals"
+            />
+          </template>
+          <div :class="[$style.crystalLayout, $style.fade]">
+            <div :class="$style.picked">
+              <p v-if="!crystalPickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
+              <ul v-else :class="$style.pickedList">
+                <li v-for="row in crystalPickedList" :key="row.id" :class="$style.pickedItem">
+                  <img
+                    v-if="row.icon_url"
+                    :src="row.icon_url"
+                    alt=""
+                    :class="$style.pickedIcon"
+                    loading="lazy"
+                  >
+                  <span :class="$style.pickedName">{{ row.name_ru }}</span>
+                  <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+                </li>
+              </ul>
+            </div>
+            <div :class="$style.crystalStage">
+              <CrystalBoard :filled="crystalFilled" />
+            </div>
           </div>
-        </template>
-        <template #actions>
-          <ProposeCrystalForm
-            :class-slug="bundle.class.slug"
-            :initial-crystals="bundle.crystals"
-          />
-        </template>
-        <div :class="[$style.crystalLayout, $style.fade]">
-          <div :class="$style.picked">
-            <p v-if="!crystalPickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
-            <ul v-else :class="$style.pickedList">
-              <li v-for="row in crystalPickedList" :key="row.id" :class="$style.pickedItem">
-                <img
-                  v-if="row.icon_url"
-                  :src="row.icon_url"
-                  alt=""
-                  :class="$style.pickedIcon"
-                  loading="lazy"
-                >
-                <span :class="$style.pickedName">{{ row.name_ru }}</span>
-                <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
-              </li>
-            </ul>
-          </div>
-          <div :class="$style.crystalStage">
-            <CrystalBoard :filled="crystalFilled" />
-          </div>
-        </div>
-      </GuideSection>
+        </GuideSection>
 
-      <GuideSection title="Релики" anchor="relics">
-        <GuideItemList v-if="bundle.relics.length" :rows="bundle.relics" />
-        <ShowEmptyGuide v-else />
-      </GuideSection>
-
-      <GuideSection title="Светящиеся камни" anchor="lightstones">
-        <GuideItemList v-if="bundle.lightstones.length" :rows="bundle.lightstones" />
-        <ShowEmptyGuide v-else />
-      </GuideSection>
+        <GuideSection flush :class="$style.gearCol" title="Реликвии" anchor="relics">
+          <template #beside>
+            <div :class="$style.presetTabs" role="tablist" aria-label="Пресет реликвий">
+              <button
+                v-for="p in crystalPresets"
+                :key="p.id"
+                type="button"
+                role="tab"
+                :aria-selected="activeRelicPreset === p.id"
+                :class="[$style.presetTab, activeRelicPreset === p.id && $style.presetTabOn]"
+                @click="activeRelicPreset = p.id"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+          </template>
+          <template #actions>
+            <ProposeRelicForm
+              :class-slug="bundle.class.slug"
+              :initial-relics="bundle.relics"
+              :initial-lightstones="bundle.lightstones"
+            />
+          </template>
+          <div :class="[$style.relicStage, $style.fade]">
+            <RelicBoard :filled="relicFilled" />
+          </div>
+        </GuideSection>
+      </div>
 
       <GuideSection title="Видео" anchor="videos">
         <VideoList :videos="bundle.videos" />
@@ -163,14 +183,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
-import { ProposeCrystalForm, ProposeGuideForm } from '@/features/propose-guide'
+import { ProposeCrystalForm, ProposeGuideForm, ProposeRelicForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import { CRYSTAL_ALL_SLOTS, CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
 import { UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
-import { GuideItemList } from '@/widgets/guide-item-list'
 import { GuideSection } from '@/widgets/guide-section'
+import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
 
 const props = defineProps<{
@@ -182,6 +202,7 @@ const props = defineProps<{
 const comboTab = ref<'awakening' | 'succession'>('awakening')
 const crystalPresets = CRYSTAL_PRESETS
 const activeCrystalPreset = ref<CrystalPresetId>('t1')
+const activeRelicPreset = ref<CrystalPresetId>('t1')
 
 const awakeningSteps = computed(
   () => props.bundle?.comboSteps.filter((s) => s.mode === 'awakening') ?? [],
@@ -231,6 +252,19 @@ const crystalPickedList = computed(() => {
     }
   }
   return [...counts.values()]
+})
+
+const relicFilled = computed(() => {
+  const map: Record<string, RelicFill> = {}
+  for (const row of [...(props.bundle?.relics ?? []), ...(props.bundle?.lightstones ?? [])]) {
+    const preset = (row.preset || 't1') as CrystalPresetId
+    if (preset !== activeRelicPreset.value) continue
+    const slot = row.slot
+    const item = row.items
+    if (!slot || !item) continue
+    map[slot] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
+  }
+  return map
 })
 </script>
 
@@ -340,12 +374,27 @@ const crystalPickedList = computed(() => {
   color: var(--color-gold);
 }
 
+.gearRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 1.5rem 2rem;
+  align-items: start;
+  margin-bottom: 2.5rem;
+}
+
+.gearCol {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
 .crystalLayout {
   display: grid;
-  grid-template-columns: minmax(14.5rem, 18rem) minmax(0, 32rem);
-  gap: 1rem;
+  grid-template-columns: minmax(11rem, 14rem) minmax(0, 22rem);
+  gap: 0.85rem;
   align-items: stretch;
-  justify-content: center;
+  justify-content: start;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .picked {
@@ -403,7 +452,18 @@ const crystalPickedList = computed(() => {
 
 .crystalStage {
   width: 100%;
+  max-width: 22rem;
   min-width: 0;
+}
+
+.relicStage {
+  width: min(100%, 28rem);
+}
+
+@media (max-width: 1100px) {
+  .gearRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {

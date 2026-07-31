@@ -7,8 +7,7 @@ export const CLASS_GUIDE_TOC: HeaderTocItem[] = [
   { id: 'buffs', label: 'Забаф' },
   { id: 'combo', label: 'Комба' },
   { id: 'crystals', label: 'Инкрустация' },
-  { id: 'relics', label: 'Релики' },
-  { id: 'lightstones', label: 'Камни' },
+  { id: 'relics', label: 'Реликвии' },
   { id: 'videos', label: 'Видео' },
 ]
 

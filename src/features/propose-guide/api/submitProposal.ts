@@ -14,6 +14,18 @@ export type SubmitProposalInput = {
       item_id: string
       sort_order?: number
     }>
+    relics?: Array<{
+      preset: string
+      slot: string
+      item_id: string
+      sort_order?: number
+    }>
+    lightstones?: Array<{
+      preset: string
+      slot: string
+      item_id: string
+      sort_order?: number
+    }>
   }
   author_label?: string
   website?: string

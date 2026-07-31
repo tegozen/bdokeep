@@ -4,6 +4,7 @@ export const PROPOSAL_SECTIONS = [
   'combo_awakening',
   'combo_succession',
   'crystals',
+  'relics',
 ] as const
 
 export type ProposalSection = (typeof PROPOSAL_SECTIONS)[number]
@@ -16,10 +17,15 @@ export const MAX_COMBO_STEPS = 30
 export const MAX_BUFFS = 20
 export const MAX_CRYSTALS = 23
 export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
+export const MAX_RELICS_ALL_PRESETS = 2 * 4
+export const MAX_LIGHTSTONES_ALL_PRESETS = 4 * 4
 export const MAX_AUTHOR_LEN = 80
 
 export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub'] as const
 export type CrystalPresetId = (typeof CRYSTAL_PRESET_IDS)[number]
+
+export const RELIC_SLOT_IDS = ['r0', 'r1'] as const
+export const LIGHTSTONE_SLOT_IDS = ['r0_a', 'r0_b', 'r1_a', 'r1_b'] as const
 
 export const CRYSTAL_SLOT_IDS = [
   'nw',
@@ -59,6 +65,10 @@ export function isCrystalsSection(section: ProposalSection): boolean {
   return section === 'crystals'
 }
 
+export function isRelicsSection(section: ProposalSection): boolean {
+  return section === 'relics'
+}
+
 export function comboModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
   return section === 'combo_succession' ? 'succession' : 'awakening'
 }
@@ -69,4 +79,12 @@ export function isCrystalSlotId(id: string): boolean {
 
 export function isCrystalPresetId(id: string): id is CrystalPresetId {
   return (CRYSTAL_PRESET_IDS as readonly string[]).includes(id)
+}
+
+export function isRelicSlotId(id: string): boolean {
+  return (RELIC_SLOT_IDS as readonly string[]).includes(id)
+}
+
+export function isLightstoneSlotId(id: string): boolean {
+  return (LIGHTSTONE_SLOT_IDS as readonly string[]).includes(id)
 }

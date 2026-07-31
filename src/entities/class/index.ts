@@ -17,5 +17,7 @@ export {
   fetchClassSkills,
   fetchBuffs,
   fetchCrystals,
+  fetchRelics,
+  fetchLightstones,
 } from './api/classApi'
 export { default as ClassIcon } from './ui/ClassIcon.vue'
