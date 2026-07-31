@@ -138,6 +138,22 @@
               <RelicBoard :filled="relicFilledFor(item.id)" />
             </template>
           </div>
+          <ul v-else-if="isVideos(item.section)" :class="$style.videoPreview">
+            <li
+              v-for="(v, i) in item.payload?.videos ?? []"
+              :key="`${item.id}-${i}`"
+              :class="$style.videoItem"
+            >
+              <span>{{ v.title || `Видео ${i + 1}` }}</span>
+              <a
+                v-if="v.youtube_url"
+                :href="v.youtube_url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >{{ v.youtube_url }}</a>
+            </li>
+            <li v-if="!(item.payload?.videos ?? []).length" :class="$style.muted">Нет видео</li>
+          </ul>
           <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
 
           <div v-if="item.status === 'pending'" :class="$style.actions">
@@ -190,6 +206,7 @@ type Proposal = {
     crystals?: Array<{ preset?: string; slot: string; item_id: string }>
     relics?: Array<{ preset?: string; slot: string; item_id: string }>
     lightstones?: Array<{ preset?: string; slot: string; item_id: string }>
+    videos?: Array<{ title?: string; youtube_url: string }>
   }
   author_label: string | null
   status: string
@@ -240,6 +257,8 @@ function sectionLabel(section: string) {
       return 'Инкрустация'
     case 'relics':
       return 'Реликвии'
+    case 'videos':
+      return 'Видео'
     case 'combo_awakening':
       return 'Комба · пробуждение'
     case 'combo_succession':
@@ -263,6 +282,10 @@ function isCrystals(section: string) {
 
 function isRelics(section: string) {
   return section === 'relics'
+}
+
+function isVideos(section: string) {
+  return section === 'videos'
 }
 
 function textOf(item: Proposal) {
@@ -707,6 +730,25 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+}
+
+.videoPreview {
+  margin: 0 0 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+  padding: 0;
+}
+
+.videoItem {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.88rem;
+}
+
+.videoItem a {
+  color: var(--color-gold);
+  word-break: break-all;
 }
 
 .presetTabs {

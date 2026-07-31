@@ -31,6 +31,11 @@ export type SubmitProposalInput = {
       item_id: string
       sort_order?: number
     }>
+    videos?: Array<{
+      title?: string
+      youtube_url: string
+      sort_order?: number
+    }>
   }
   author_label?: string
   website?: string

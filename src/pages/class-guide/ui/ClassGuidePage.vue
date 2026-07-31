@@ -197,6 +197,12 @@
       </div>
 
       <GuideSection title="Видео" anchor="videos">
+        <template #actions>
+          <ProposeVideosForm
+            :class-slug="bundle.class.slug"
+            :initial-videos="bundle.videos"
+          />
+        </template>
         <VideoList :videos="bundle.videos" />
       </GuideSection>
     </template>
@@ -206,7 +212,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
-import { ProposeCrystalForm, ProposeGuideForm, ProposeRelicForm } from '@/features/propose-guide'
+import { ProposeCrystalForm, ProposeGuideForm, ProposeRelicForm, ProposeVideosForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import { CRYSTAL_ALL_SLOTS, CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
 import { UiSkeleton } from '@/shared/ui'

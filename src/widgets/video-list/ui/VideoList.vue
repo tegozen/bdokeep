@@ -1,10 +1,9 @@
 <template>
-  <div v-if="!videos.length">
+  <div v-if="!display.length">
     <UiEmptyState title="Данных пока нет" description="Видео для этого класса ещё не добавлены." />
   </div>
   <ul v-else :class="[$style.list, $style.fade]">
-    <li v-for="video in videos" :key="video.id" :class="$style.item">
-      <h3 :class="$style.title">{{ video.title }}</h3>
+    <li v-for="video in display" :key="video.id" :class="$style.item">
       <div v-if="embedOf(video.youtube_url)" :class="$style.frame">
         <iframe
           :src="embedOf(video.youtube_url)!"
@@ -16,7 +15,7 @@
           :class="$style.iframe"
         />
       </div>
-      <p v-else :class="$style.bad">Некорректная ссылка на YouTube</p>
+      <p v-else :class="$style.bad">Некорректная ссылка</p>
       <a
         v-if="safeUrl(video.youtube_url)"
         :href="safeUrl(video.youtube_url)!"
@@ -24,20 +23,25 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        Открыть на YouTube
+        {{ video.title || 'YouTube' }}
       </a>
     </li>
   </ul>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { ClassVideo } from '@/entities/class'
 import { sanitizeYoutubeUrl, youtubeEmbedUrl } from '@/shared/lib'
 import { UiEmptyState } from '@/shared/ui'
 
-defineProps<{
+const props = defineProps<{
   videos: ClassVideo[]
 }>()
+
+const display = computed(() =>
+  [...props.videos].sort((a, b) => a.sort_order - b.sort_order).slice(0, 3),
+)
 
 function embedOf(url: string) {
   return youtubeEmbedUrl(url)
@@ -52,8 +56,9 @@ function safeUrl(url: string) {
 .list {
   margin: 0;
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   list-style: none;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: 0;
 }
 
@@ -62,21 +67,17 @@ function safeUrl(url: string) {
 }
 
 .item {
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-panel);
-  padding: 1rem;
-}
-
-.title {
-  margin-bottom: 0.75rem;
-  font-size: 1.05rem;
-  color: var(--color-ink);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .frame {
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
+  border: 1px solid var(--color-border);
   background: #000;
 }
 
@@ -89,13 +90,29 @@ function safeUrl(url: string) {
 }
 
 .link {
-  margin-top: 0.75rem;
-  display: inline-block;
-  font-size: 0.875rem;
+  font-size: 0.82rem;
+  color: var(--color-gold);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link:hover {
+  text-decoration: underline;
 }
 
 .bad {
   margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
   color: var(--color-danger);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+  .list {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -97,3 +97,4 @@ export type ProposalSection =
   | 'combo_succession'
   | 'crystals'
   | 'relics'
+  | 'videos'

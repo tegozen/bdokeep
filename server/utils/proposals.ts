@@ -5,6 +5,7 @@ export const PROPOSAL_SECTIONS = [
   'combo_succession',
   'crystals',
   'relics',
+  'videos',
 ] as const
 
 export type ProposalSection = (typeof PROPOSAL_SECTIONS)[number]
@@ -20,6 +21,7 @@ export const MAX_CRYSTALS = 23
 export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
 export const MAX_RELICS_ALL_PRESETS = 2 * 4
 export const MAX_LIGHTSTONES_ALL_PRESETS = 4 * 4
+export const MAX_VIDEOS = 3
 export const MAX_AUTHOR_LEN = 80
 
 export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub'] as const
@@ -68,6 +70,10 @@ export function isCrystalsSection(section: ProposalSection): boolean {
 
 export function isRelicsSection(section: ProposalSection): boolean {
   return section === 'relics'
+}
+
+export function isVideosSection(section: ProposalSection): boolean {
+  return section === 'videos'
 }
 
 export function comboModeFromSection(section: ProposalSection): 'awakening' | 'succession' {

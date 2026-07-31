@@ -234,6 +234,46 @@ export async function applyProposal(
       const { error: insL } = await rest.from('guide_lightstones').insert(lightRows)
       if (insL) throw createError({ statusCode: 502, statusMessage: insL.message })
     }
+  } else if (isVideosSection(section)) {
+    const raw = Array.isArray(payload.videos) ? payload.videos : []
+    if (!raw.length || raw.length > MAX_VIDEOS) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный payload видео' })
+    }
+
+    const rows: Array<{
+      class_id: string
+      title: string
+      youtube_url: string
+      sort_order: number
+    }> = []
+    for (let i = 0; i < raw.length; i++) {
+      const entry = raw[i] as {
+        title?: unknown
+        youtube_url?: unknown
+        sort_order?: unknown
+      }
+      const urlRaw = String(entry?.youtube_url || '').trim()
+      const safe = sanitizeYoutubeUrl(urlRaw)
+      if (!safe || !youtubeEmbedUrl(urlRaw)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректная ссылка на YouTube' })
+      }
+      const titleRaw = String(entry?.title || '').trim()
+      rows.push({
+        class_id: proposal.class_id,
+        title: titleRaw.slice(0, 120) || `Видео ${i + 1}`,
+        youtube_url: safe,
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const { error: delErr } = await rest
+      .from('class_videos')
+      .delete()
+      .eq('class_id', proposal.class_id)
+    if (delErr) throw createError({ statusCode: 502, statusMessage: delErr.message })
+
+    const { error: insErr } = await rest.from('class_videos').insert(rows)
+    if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
   } else if (section === 'summary') {
     const text = String(payload.text || '').trim()
     if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
