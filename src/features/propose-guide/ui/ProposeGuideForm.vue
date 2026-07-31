@@ -18,6 +18,24 @@
         >
           <header :class="$style.head">
             <h3 :class="$style.title">{{ title }}</h3>
+            <div
+              v-if="isBuffs"
+              :class="$style.presetTabs"
+              role="tablist"
+              aria-label="Пресет забафа"
+            >
+              <button
+                v-for="p in guidePresets"
+                :key="p.id"
+                type="button"
+                role="tab"
+                :aria-selected="activeBuffPreset === p.id"
+                :class="[$style.presetTab, activeBuffPreset === p.id && $style.presetTabOn]"
+                @click="activeBuffPreset = p.id"
+              >
+                {{ p.label }}
+              </button>
+            </div>
             <button type="button" :class="$style.close" aria-label="Закрыть" @click="close">
               ×
             </button>
@@ -220,16 +238,25 @@ import {
   fetchBuffs,
   fetchClassSkills,
   type Buff,
+  type GuideBuffRow,
   type ProposalSection,
   type Skill,
 } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
-import { useModalEscape, useSuperadmin } from '@/shared/lib'
+import {
+  CRYSTAL_PRESET_IDS,
+  CRYSTAL_PRESETS,
+  isCrystalPresetId,
+  useModalEscape,
+  useSuperadmin,
+  type CrystalPresetId,
+} from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
 import { skillCatalogBucket } from '../lib/skillBucket'
 
 type PickItem = { id: string; name_ru: string; icon_url: string | null }
 type BuffTabId = 'camp' | 'cron' | 'balm' | 'elixir'
+type BuffPresetBoards = Record<CrystalPresetId, PickItem[]>
 
 const BUFF_TABS: { id: BuffTabId; label: string }[] = [
   { id: 'camp', label: 'Лагерь' },
@@ -238,14 +265,20 @@ const BUFF_TABS: { id: BuffTabId; label: string }[] = [
   { id: 'elixir', label: 'Эликсиры' },
 ]
 
+function emptyBuffPresets(): BuffPresetBoards {
+  return { t1: [], t2: [], besp: [], sub: [] }
+}
+
 const props = withDefaults(
   defineProps<{
     classSlug: string
     section: ProposalSection
     triggerLabel?: string
+    initialBuffs?: GuideBuffRow[]
   }>(),
   {
     triggerLabel: 'Предложить',
+    initialBuffs: () => [],
   },
 )
 
@@ -259,7 +292,10 @@ const query = ref('')
 const catalogTab = ref<'main' | 'spec'>('main')
 const buffTab = ref<BuffTabId>('camp')
 const buffTabs = BUFF_TABS
-const picked = ref<PickItem[]>([])
+const guidePresets = CRYSTAL_PRESETS
+const activeBuffPreset = ref<CrystalPresetId>('t1')
+const buffByPreset = ref<BuffPresetBoards>(emptyBuffPresets())
+const comboPicked = ref<PickItem[]>([])
 const skills = ref<Skill[]>([])
 const buffs = ref<Buff[]>([])
 const catalogPending = ref(false)
@@ -280,6 +316,22 @@ const isBuffs = computed(() => props.section === 'buffs')
 const isSuccessionCombo = computed(() => props.section === 'combo_succession')
 const maxPicked = computed(() => (isBuffs.value ? 20 : 30))
 
+const picked = computed({
+  get(): PickItem[] {
+    return isBuffs.value ? buffByPreset.value[activeBuffPreset.value] : comboPicked.value
+  },
+  set(next: PickItem[]) {
+    if (isBuffs.value) {
+      buffByPreset.value = {
+        ...buffByPreset.value,
+        [activeBuffPreset.value]: next,
+      }
+    } else {
+      comboPicked.value = next
+    }
+  },
+})
+
 const title = computed(() => {
   switch (props.section) {
     case 'summary':
@@ -294,6 +346,21 @@ const title = computed(() => {
       return 'Предложить правку'
   }
 })
+
+function hydrateBuffsFromInitial() {
+  const next = emptyBuffPresets()
+  for (const row of props.initialBuffs ?? []) {
+    const presetRaw = String(row.preset || 't1')
+    if (!isCrystalPresetId(presetRaw) || !row.buffs) continue
+    next[presetRaw].push({
+      id: row.buffs.id,
+      name_ru: row.buffs.name_ru,
+      icon_url: row.buffs.icon_url,
+    })
+  }
+  buffByPreset.value = next
+  activeBuffPreset.value = 't1'
+}
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -373,7 +440,9 @@ function reset() {
   query.value = ''
   catalogTab.value = 'main'
   buffTab.value = 'camp'
-  picked.value = []
+  activeBuffPreset.value = 't1'
+  buffByPreset.value = emptyBuffPresets()
+  comboPicked.value = []
   formError.value = ''
   done.value = false
   doneMessage.value = ''
@@ -387,6 +456,7 @@ watch(open, async (v) => {
     formError.value = ''
     done.value = false
     doneMessage.value = ''
+    if (isBuffs.value) hydrateBuffsFromInitial()
     await refreshAdmin()
     if (isCombo.value && !skills.value.length) {
       catalogPending.value = true
@@ -418,19 +488,44 @@ async function onSubmit() {
   formError.value = ''
   submitting.value = true
   try {
-    if ((isCombo.value || isBuffs.value) && !picked.value.length) {
-      formError.value = isBuffs.value ? 'Добавьте хотя бы один баф' : 'Добавьте хотя бы один скилл'
+    if (isCombo.value && !picked.value.length) {
+      formError.value = 'Добавьте хотя бы один скилл'
       return
     }
+    if (isBuffs.value) {
+      const anyBuff = CRYSTAL_PRESET_IDS.some((p) => buffByPreset.value[p].length > 0)
+      if (!anyBuff) {
+        formError.value = 'Добавьте хотя бы один баф'
+        return
+      }
+    }
 
-    const payload = isCombo.value
-      ? {
-          mode: isSuccessionCombo.value ? 'succession' : 'awakening',
-          skill_ids: picked.value.map((s) => s.id),
+    let payload: Record<string, unknown>
+    if (isCombo.value) {
+      payload = {
+        mode: isSuccessionCombo.value ? 'succession' : 'awakening',
+        skill_ids: picked.value.map((s) => s.id),
+      }
+    } else if (isBuffs.value) {
+      const buffsPayload: Array<{
+        preset: CrystalPresetId
+        buff_id: string
+        sort_order: number
+      }> = []
+      let order = 0
+      for (const preset of CRYSTAL_PRESET_IDS) {
+        for (const b of buffByPreset.value[preset]) {
+          buffsPayload.push({
+            preset,
+            buff_id: b.id,
+            sort_order: order++,
+          })
         }
-      : isBuffs.value
-        ? { buff_ids: picked.value.map((b) => b.id) }
-        : { text: text.value.trim() }
+      }
+      payload = { buffs: buffsPayload }
+    } else {
+      payload = { text: text.value.trim() }
+    }
 
     const res = await submitGuideProposal({
       class_slug: props.classSlug,
@@ -513,15 +608,39 @@ async function onSubmit() {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: flex-start;
+  gap: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-border);
   padding: 0.85rem 1rem;
+  flex-wrap: wrap;
 }
 
 .title {
   margin: 0;
   font-size: 1.05rem;
+}
+
+.presetTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.presetTab {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.32rem 0.55rem;
+}
+
+.presetTabOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
 }
 
 .close {
@@ -531,6 +650,7 @@ async function onSubmit() {
   cursor: pointer;
   font-size: 1.5rem;
   line-height: 1;
+  margin-left: auto;
 }
 
 .form {

@@ -65,22 +65,54 @@ export async function applyProposal(
     const { error: insErr } = await rest.from('guide_combo_steps').insert(rows)
     if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
   } else if (isBuffsSection(section)) {
-    const buffIds = Array.isArray(payload.buff_ids)
+    const rawBuffs = Array.isArray(payload.buffs) ? payload.buffs : null
+    const legacyIds = Array.isArray(payload.buff_ids)
       ? payload.buff_ids.map((x) => String(x))
       : []
 
-    if (!buffIds.length || buffIds.some((bid) => !UUID_RE.test(bid))) {
+    const rows: Array<{
+      guide_id: string
+      buff_id: string
+      preset: string
+      sort_order: number
+    }> = []
+
+    if (rawBuffs?.length) {
+      for (let i = 0; i < rawBuffs.length; i++) {
+        const entry = rawBuffs[i] as {
+          preset?: unknown
+          buff_id?: unknown
+          sort_order?: unknown
+        }
+        const preset = String(entry?.preset || 't1')
+        const buffId = String(entry?.buff_id || '')
+        if (!isCrystalPresetId(preset) || !UUID_RE.test(buffId)) {
+          throw createError({ statusCode: 400, statusMessage: 'Некорректный payload забафа' })
+        }
+        rows.push({
+          guide_id: guide.id,
+          buff_id: buffId,
+          preset,
+          sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+        })
+      }
+    } else if (legacyIds.length && !legacyIds.some((bid) => !UUID_RE.test(bid))) {
+      for (let i = 0; i < legacyIds.length; i++) {
+        rows.push({
+          guide_id: guide.id,
+          buff_id: legacyIds[i]!,
+          preset: 't1',
+          sort_order: i,
+        })
+      }
+    }
+
+    if (!rows.length) {
       throw createError({ statusCode: 400, statusMessage: 'Некорректный payload забафа' })
     }
 
     const { error: delErr } = await rest.from('guide_buffs').delete().eq('guide_id', guide.id)
     if (delErr) throw createError({ statusCode: 502, statusMessage: delErr.message })
-
-    const rows = buffIds.map((buff_id, i) => ({
-      guide_id: guide.id,
-      buff_id,
-      sort_order: i,
-    }))
 
     const { error: insErr } = await rest.from('guide_buffs').insert(rows)
     if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })

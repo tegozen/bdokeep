@@ -7,6 +7,11 @@ export type SubmitProposalInput = {
     text?: string
     skill_ids?: string[]
     buff_ids?: string[]
+    buffs?: Array<{
+      preset: string
+      buff_id: string
+      sort_order?: number
+    }>
     mode?: string
     crystals?: Array<{
       preset: string

@@ -60,6 +60,8 @@ export type GuideComboStepRow = {
 export type GuideBuffRow = {
   id: string
   slot: string | null
+  /** Preset: t1 / t2 / besp / sub. */
+  preset?: string | null
   group_name: string | null
   notes: string | null
   sort_order: number

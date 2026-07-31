@@ -1,5 +1,8 @@
 <template>
-  <section :id="anchor" :class="[$style.section, flush && $style.flush]">
+  <section
+    :id="anchor"
+    :class="[$style.section, flush && $style.flush, fill && $style.fill]"
+  >
     <header :class="$style.head">
       <div :class="$style.titleRow">
         <h2 :class="$style.title">{{ title }}</h2>
@@ -12,7 +15,7 @@
       </div>
       <p v-if="subtitle" :class="$style.subtitle">{{ subtitle }}</p>
     </header>
-    <div>
+    <div :class="$style.body">
       <slot />
     </div>
   </section>
@@ -26,8 +29,10 @@ withDefaults(
     anchor: string
     /** Drop bottom margin (e.g. when nested in a row). */
     flush?: boolean
+    /** Fill parent height; body scrolls when content overflows. */
+    fill?: boolean
   }>(),
-  { flush: false },
+  { flush: false, fill: false },
 )
 </script>
 
@@ -39,6 +44,24 @@ withDefaults(
 
 .flush {
   margin-bottom: 0;
+}
+
+.fill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fill .head {
+  flex-shrink: 0;
+}
+
+.fill .body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .head {

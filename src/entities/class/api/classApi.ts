@@ -183,7 +183,7 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
       .order('sort_order', { ascending: true }),
     supabase
       .from('guide_buffs')
-      .select('id, slot, group_name, notes, sort_order, buffs(id, name_ru, icon_url, description)')
+      .select('id, slot, preset, group_name, notes, sort_order, buffs(id, name_ru, icon_url, description)')
       .eq('guide_id', guideId)
       .order('sort_order', { ascending: true }),
     supabase

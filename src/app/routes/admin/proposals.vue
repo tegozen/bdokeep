@@ -54,26 +54,41 @@
             </p>
             <p v-else :class="$style.muted">Нет скиллов в payload</p>
           </div>
-          <ul v-else-if="isBuffs(item.section)" :class="$style.buffList">
-            <template v-if="buffPreview[item.id] === undefined">
-              <li :class="$style.muted">Загрузка бафов…</li>
-            </template>
-            <template v-else-if="!buffPreview[item.id]?.length">
-              <li :class="$style.muted">Нет бафов в payload</li>
-            </template>
+          <div v-else-if="isBuffs(item.section)" :class="$style.crystalPreview">
+            <p v-if="buffPreview[item.id] === undefined" :class="$style.muted">
+              Загрузка бафов…
+            </p>
             <template v-else>
-              <li v-for="row in buffPreview[item.id]!" :key="row.id" :class="$style.buffItem">
-                <img
-                  v-if="row.buffs?.icon_url"
-                  :src="row.buffs.icon_url"
-                  alt=""
-                  :class="$style.buffIcon"
-                  loading="lazy"
+              <div :class="$style.presetTabs" role="tablist">
+                <button
+                  v-for="p in crystalPresetTabs"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :class="[
+                    $style.presetTab,
+                    buffPreviewPreset[item.id] === p.id && $style.presetTabOn,
+                  ]"
+                  @click="buffPreviewPreset[item.id] = p.id"
                 >
-                <span>{{ row.buffs?.name_ru || 'Баф' }}</span>
-              </li>
+                  {{ p.label }}
+                </button>
+              </div>
+              <ul v-if="buffsFor(item.id).length" :class="$style.buffList">
+                <li v-for="row in buffsFor(item.id)" :key="row.id" :class="$style.buffItem">
+                  <img
+                    v-if="row.buffs?.icon_url"
+                    :src="row.buffs.icon_url"
+                    alt=""
+                    :class="$style.buffIcon"
+                    loading="lazy"
+                  >
+                  <span>{{ row.buffs?.name_ru || 'Баф' }}</span>
+                </li>
+              </ul>
+              <p v-else :class="$style.muted">Нет бафов в этом пресете</p>
             </template>
-          </ul>
+          </div>
           <div v-else-if="isCrystals(item.section)" :class="$style.crystalPreview">
             <p v-if="crystalPreview[item.id] === undefined" :class="$style.muted">
               Загрузка кристаллов…
@@ -170,6 +185,7 @@ type Proposal = {
     text?: string
     skill_ids?: string[]
     buff_ids?: string[]
+    buffs?: Array<{ preset?: string; buff_id: string }>
     mode?: string
     crystals?: Array<{ preset?: string; slot: string; item_id: string }>
     relics?: Array<{ preset?: string; slot: string; item_id: string }>
@@ -195,8 +211,9 @@ const comboPreview = reactive<Record<string, Array<{ id: string; skills: Skill |
   {},
 )
 const buffPreview = reactive<
-  Record<string, Array<{ id: string; buffs: Buff | null }> | null>
+  Record<string, Partial<Record<CrystalPresetId, Array<{ id: string; buffs: Buff | null }>>> | null>
 >({})
+const buffPreviewPreset = reactive<Record<string, CrystalPresetId>>({})
 const crystalPreview = reactive<
   Record<string, Partial<Record<CrystalPresetId, Record<string, CrystalFill>>> | null>
 >({})
@@ -260,6 +277,11 @@ function crystalFilledFor(proposalId: string): Record<string, CrystalFill> {
 function relicFilledFor(proposalId: string): Record<string, RelicFill> {
   const preset = relicPreviewPreset[proposalId] || 't1'
   return relicPreview[proposalId]?.[preset] || {}
+}
+
+function buffsFor(proposalId: string): Array<{ id: string; buffs: Buff | null }> {
+  const preset = buffPreviewPreset[proposalId] || 't1'
+  return buffPreview[proposalId]?.[preset] || []
 }
 
 function formatDate(iso: string) {
@@ -360,15 +382,24 @@ async function hydrateComboPreviews() {
 
 async function hydrateBuffPreviews() {
   for (const key of Object.keys(buffPreview)) delete buffPreview[key]
+  for (const key of Object.keys(buffPreviewPreset)) delete buffPreviewPreset[key]
   const list = items.value.filter((i) => isBuffs(i.section))
   await Promise.all(
     list.map(async (item) => {
-      const ids = item.payload?.buff_ids ?? []
-      if (!ids.length) {
-        buffPreview[item.id] = []
+      buffPreviewPreset[item.id] = 't1'
+      const entries =
+        item.payload?.buffs?.length
+          ? item.payload.buffs
+          : (item.payload?.buff_ids ?? []).map((id) => ({
+              preset: 't1' as const,
+              buff_id: id,
+            }))
+      if (!entries.length) {
+        buffPreview[item.id] = {}
         return
       }
       try {
+        const ids = entries.map((e) => e.buff_id)
         const supabase = getSupabase()
         const { data, error } = await supabase
           .from('buffs')
@@ -376,12 +407,20 @@ async function hydrateBuffPreviews() {
           .in('id', ids)
         if (error) throw error
         const byId = new Map((data ?? []).map((b) => [b.id, b as Buff]))
-        buffPreview[item.id] = ids.map((id) => ({
-          id,
-          buffs: byId.get(id) ?? null,
-        }))
+        const byPreset: Partial<
+          Record<CrystalPresetId, Array<{ id: string; buffs: Buff | null }>>
+        > = {}
+        for (const entry of entries) {
+          const preset = (entry.preset || 't1') as CrystalPresetId
+          if (!byPreset[preset]) byPreset[preset] = []
+          byPreset[preset]!.push({
+            id: entry.buff_id,
+            buffs: byId.get(entry.buff_id) ?? null,
+          })
+        }
+        buffPreview[item.id] = byPreset
       } catch {
-        buffPreview[item.id] = []
+        buffPreview[item.id] = {}
       }
     }),
   )

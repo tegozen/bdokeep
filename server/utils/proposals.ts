@@ -15,6 +15,7 @@ export const UUID_RE =
 export const MAX_TEXT_LEN = 8000
 export const MAX_COMBO_STEPS = 30
 export const MAX_BUFFS = 20
+export const MAX_BUFFS_ALL_PRESETS = 20 * 4
 export const MAX_CRYSTALS = 23
 export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
 export const MAX_RELICS_ALL_PRESETS = 2 * 4

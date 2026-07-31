@@ -72,50 +72,52 @@
       </GuideSection>
 
       <div :class="$style.gearRow">
-        <GuideSection flush :class="$style.gearCol" title="Инкрустация" anchor="crystals">
-          <template #beside>
-            <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
-              <button
-                v-for="p in crystalPresets"
-                :key="p.id"
-                type="button"
-                role="tab"
-                :aria-selected="activeCrystalPreset === p.id"
-                :class="[$style.presetTab, activeCrystalPreset === p.id && $style.presetTabOn]"
-                @click="activeCrystalPreset = p.id"
-              >
-                {{ p.label }}
-              </button>
+        <div ref="crystalColRef" :class="$style.gearCol">
+          <GuideSection flush title="Инкрустация" anchor="crystals">
+            <template #beside>
+              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
+                <button
+                  v-for="p in crystalPresets"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :aria-selected="activeCrystalPreset === p.id"
+                  :class="[$style.presetTab, activeCrystalPreset === p.id && $style.presetTabOn]"
+                  @click="activeCrystalPreset = p.id"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
+            </template>
+            <template #actions>
+              <ProposeCrystalForm
+                :class-slug="bundle.class.slug"
+                :initial-crystals="bundle.crystals"
+              />
+            </template>
+            <div :class="[$style.crystalLayout, $style.fade]">
+              <div :class="$style.picked">
+                <p v-if="!crystalPickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
+                <ul v-else :class="$style.pickedList">
+                  <li v-for="row in crystalPickedList" :key="row.id" :class="$style.pickedItem">
+                    <img
+                      v-if="row.icon_url"
+                      :src="row.icon_url"
+                      alt=""
+                      :class="$style.pickedIcon"
+                      loading="lazy"
+                    >
+                    <span :class="$style.pickedName">{{ row.name_ru }}</span>
+                    <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+                  </li>
+                </ul>
+              </div>
+              <div :class="$style.crystalStage">
+                <CrystalBoard :filled="crystalFilled" />
+              </div>
             </div>
-          </template>
-          <template #actions>
-            <ProposeCrystalForm
-              :class-slug="bundle.class.slug"
-              :initial-crystals="bundle.crystals"
-            />
-          </template>
-          <div :class="[$style.crystalLayout, $style.fade]">
-            <div :class="$style.picked">
-              <p v-if="!crystalPickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
-              <ul v-else :class="$style.pickedList">
-                <li v-for="row in crystalPickedList" :key="row.id" :class="$style.pickedItem">
-                  <img
-                    v-if="row.icon_url"
-                    :src="row.icon_url"
-                    alt=""
-                    :class="$style.pickedIcon"
-                    loading="lazy"
-                  >
-                  <span :class="$style.pickedName">{{ row.name_ru }}</span>
-                  <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
-                </li>
-              </ul>
-            </div>
-            <div :class="$style.crystalStage">
-              <CrystalBoard :filled="crystalFilled" />
-            </div>
-          </div>
-        </GuideSection>
+          </GuideSection>
+        </div>
 
         <GuideSection flush :class="$style.gearCol" title="Реликвии" anchor="relics">
           <template #beside>
@@ -145,32 +147,53 @@
           </div>
         </GuideSection>
 
-        <GuideSection flush :class="$style.gearCol" title="Забаф" anchor="buffs">
-          <template #actions>
-            <ProposeGuideForm
-              :class-slug="bundle.class.slug"
-              section="buffs"
-              trigger-label="Предложить забаф"
-            />
-          </template>
-          <ul v-if="bundle.buffs.length" :class="[$style.buffList, $style.fade]">
-            <li v-for="row in bundle.buffs" :key="row.id" :class="$style.buffItem">
-              <img
-                v-if="row.buffs?.icon_url"
-                :src="row.buffs.icon_url"
-                alt=""
-                :class="$style.buffIcon"
-                loading="lazy"
-              >
-              <div :class="$style.buffBody">
-                <strong>{{ row.buffs?.name_ru || row.slot || 'Слот' }}</strong>
-                <span v-if="row.group_name" :class="$style.muted"> · {{ row.group_name }}</span>
-                <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
+        <div
+          :class="[$style.gearCol, $style.buffCol]"
+          :style="buffColStyle"
+        >
+          <GuideSection fill flush title="Забаф" anchor="buffs">
+            <template #beside>
+              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет забафа">
+                <button
+                  v-for="p in crystalPresets"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :aria-selected="activeBuffPreset === p.id"
+                  :class="[$style.presetTab, activeBuffPreset === p.id && $style.presetTabOn]"
+                  @click="activeBuffPreset = p.id"
+                >
+                  {{ p.label }}
+                </button>
               </div>
-            </li>
-          </ul>
-          <ShowEmptyGuide v-else />
-        </GuideSection>
+            </template>
+            <template #actions>
+              <ProposeGuideForm
+                :class-slug="bundle.class.slug"
+                section="buffs"
+                trigger-label="Предложить забаф"
+                :initial-buffs="bundle.buffs"
+              />
+            </template>
+            <ul v-if="activeBuffs.length" :class="[$style.buffList, $style.fade]">
+              <li v-for="row in activeBuffs" :key="row.id" :class="$style.buffItem">
+                <img
+                  v-if="row.buffs?.icon_url"
+                  :src="row.buffs.icon_url"
+                  alt=""
+                  :class="$style.buffIcon"
+                  loading="lazy"
+                >
+                <div :class="$style.buffBody">
+                  <strong>{{ row.buffs?.name_ru || row.slot || 'Слот' }}</strong>
+                  <span v-if="row.group_name" :class="$style.muted"> · {{ row.group_name }}</span>
+                  <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
+                </div>
+              </li>
+            </ul>
+            <p v-else :class="[$style.buffEmpty, $style.fade]">Пока пусто</p>
+          </GuideSection>
+        </div>
       </div>
 
       <GuideSection title="Видео" anchor="videos">
@@ -181,7 +204,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
 import { ProposeCrystalForm, ProposeGuideForm, ProposeRelicForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
@@ -203,6 +226,51 @@ const comboTab = ref<'awakening' | 'succession'>('awakening')
 const crystalPresets = CRYSTAL_PRESETS
 const activeCrystalPreset = ref<CrystalPresetId>('t1')
 const activeRelicPreset = ref<CrystalPresetId>('t1')
+const activeBuffPreset = ref<CrystalPresetId>('t1')
+const crystalColRef = ref<HTMLElement | null>(null)
+const buffMaxHeight = ref<number | null>(null)
+let crystalObserver: ResizeObserver | null = null
+
+const buffColStyle = computed(() =>
+  buffMaxHeight.value != null ? { maxHeight: `${buffMaxHeight.value}px` } : undefined,
+)
+
+function syncBuffMaxHeight() {
+  const h = crystalColRef.value?.getBoundingClientRect().height
+  if (!h || h < 80) {
+    buffMaxHeight.value = null
+    return
+  }
+  buffMaxHeight.value = Math.round(h)
+}
+
+function bindCrystalObserver() {
+  crystalObserver?.disconnect()
+  crystalObserver = null
+  const el = crystalColRef.value
+  if (!el || typeof ResizeObserver === 'undefined') {
+    syncBuffMaxHeight()
+    return
+  }
+  crystalObserver = new ResizeObserver(() => syncBuffMaxHeight())
+  crystalObserver.observe(el)
+  syncBuffMaxHeight()
+}
+
+watch(
+  () => [props.bundle, props.pending, activeCrystalPreset.value] as const,
+  async () => {
+    if (props.pending || !props.bundle) return
+    await nextTick()
+    bindCrystalObserver()
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  crystalObserver?.disconnect()
+  crystalObserver = null
+})
 
 const awakeningSteps = computed(
   () => props.bundle?.comboSteps.filter((s) => s.mode === 'awakening') ?? [],
@@ -215,6 +283,12 @@ const activeComboSteps = computed(() =>
 )
 const comboSection = computed<ProposalSection>(() =>
   comboTab.value === 'succession' ? 'combo_succession' : 'combo_awakening',
+)
+
+const activeBuffs = computed(() =>
+  (props.bundle?.buffs ?? []).filter(
+    (row) => (row.preset || 't1') === activeBuffPreset.value,
+  ),
 )
 
 const crystalFilled = computed(() => {
@@ -320,8 +394,6 @@ const relicFilled = computed(() => {
   list-style: none;
   gap: 0.5rem;
   padding: 0;
-  max-height: 28rem;
-  overflow: auto;
 }
 
 .buffItem {
@@ -345,6 +417,12 @@ const relicFilled = computed(() => {
   min-width: 0;
   font-size: 0.88rem;
   line-height: 1.3;
+}
+
+.buffEmpty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
 }
 
 .muted {
@@ -418,6 +496,13 @@ const relicFilled = computed(() => {
 .gearCol {
   margin-bottom: 0;
   min-width: 0;
+}
+
+.buffCol {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .crystalLayout {
