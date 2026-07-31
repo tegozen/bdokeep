@@ -30,33 +30,6 @@
         <ShowEmptyGuide v-else />
       </GuideSection>
 
-      <GuideSection title="Забаф" anchor="buffs">
-        <template #actions>
-          <ProposeGuideForm
-            :class-slug="bundle.class.slug"
-            section="buffs"
-            trigger-label="Предложить забаф"
-          />
-        </template>
-        <ul v-if="bundle.buffs.length" :class="[$style.list, $style.fade]">
-          <li v-for="row in bundle.buffs" :key="row.id" :class="$style.item">
-            <img
-              v-if="row.buffs?.icon_url"
-              :src="row.buffs.icon_url"
-              alt=""
-              :class="$style.icon"
-              loading="lazy"
-            >
-            <div>
-              <strong>{{ row.buffs?.name_ru || row.slot || 'Слот' }}</strong>
-              <span v-if="row.group_name" :class="$style.muted"> · {{ row.group_name }}</span>
-              <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
-            </div>
-          </li>
-        </ul>
-        <ShowEmptyGuide v-else />
-      </GuideSection>
-
       <GuideSection title="Комба" anchor="combo">
         <template #beside>
           <div :class="$style.comboTabs" role="tablist" aria-label="Тип комбы">
@@ -170,6 +143,33 @@
           <div :class="[$style.relicStage, $style.fade]">
             <RelicBoard :filled="relicFilled" />
           </div>
+        </GuideSection>
+
+        <GuideSection flush :class="$style.gearCol" title="Забаф" anchor="buffs">
+          <template #actions>
+            <ProposeGuideForm
+              :class-slug="bundle.class.slug"
+              section="buffs"
+              trigger-label="Предложить забаф"
+            />
+          </template>
+          <ul v-if="bundle.buffs.length" :class="[$style.buffList, $style.fade]">
+            <li v-for="row in bundle.buffs" :key="row.id" :class="$style.buffItem">
+              <img
+                v-if="row.buffs?.icon_url"
+                :src="row.buffs.icon_url"
+                alt=""
+                :class="$style.buffIcon"
+                loading="lazy"
+              >
+              <div :class="$style.buffBody">
+                <strong>{{ row.buffs?.name_ru || row.slot || 'Слот' }}</strong>
+                <span v-if="row.group_name" :class="$style.muted"> · {{ row.group_name }}</span>
+                <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
+              </div>
+            </li>
+          </ul>
+          <ShowEmptyGuide v-else />
         </GuideSection>
       </div>
 
@@ -314,6 +314,39 @@ const relicFilled = computed(() => {
   object-fit: contain;
 }
 
+.buffList {
+  margin: 0;
+  display: grid;
+  list-style: none;
+  gap: 0.5rem;
+  padding: 0;
+  max-height: 28rem;
+  overflow: auto;
+}
+
+.buffItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+  padding: 0.55rem 0.65rem;
+}
+
+.buffIcon {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  background: #000;
+  object-fit: contain;
+}
+
+.buffBody {
+  min-width: 0;
+  font-size: 0.88rem;
+  line-height: 1.3;
+}
+
 .muted {
   font-weight: 400;
   color: var(--color-muted);
@@ -376,8 +409,8 @@ const relicFilled = computed(() => {
 
 .gearRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  gap: 1.5rem 2rem;
+  grid-template-columns: auto auto minmax(14rem, 1fr);
+  gap: 1.5rem 1.75rem;
   align-items: start;
   margin-bottom: 2.5rem;
 }
@@ -460,9 +493,25 @@ const relicFilled = computed(() => {
   width: min(100%, 28rem);
 }
 
+@media (max-width: 1280px) {
+  .gearRow {
+    grid-template-columns: auto auto;
+  }
+
+  .gearRow > :last-child {
+    grid-column: 1 / -1;
+    max-width: 36rem;
+  }
+}
+
 @media (max-width: 1100px) {
   .gearRow {
     grid-template-columns: 1fr;
+  }
+
+  .gearRow > :last-child {
+    grid-column: auto;
+    max-width: none;
   }
 }
 

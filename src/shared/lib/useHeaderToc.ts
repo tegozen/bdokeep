@@ -4,10 +4,10 @@ export type HeaderTocItem = {
 }
 
 export const CLASS_GUIDE_TOC: HeaderTocItem[] = [
-  { id: 'buffs', label: 'Забаф' },
   { id: 'combo', label: 'Комба' },
   { id: 'crystals', label: 'Инкрустация' },
   { id: 'relics', label: 'Реликвии' },
+  { id: 'buffs', label: 'Забаф' },
   { id: 'videos', label: 'Видео' },
 ]
 
