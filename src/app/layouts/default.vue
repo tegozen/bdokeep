@@ -30,30 +30,48 @@
           </nav>
         </div>
         <div :class="$style.auth">
-          <div
-            v-if="headerClass"
-            :class="$style.specTabs"
-            role="tablist"
-            aria-label="Пробуждение или наследие"
-          >
-            <button
-              type="button"
-              role="tab"
-              :aria-selected="specMode === 'awakening'"
-              :class="[$style.specTab, specMode === 'awakening' && $style.specTabOn]"
-              @click="specMode = 'awakening'"
+          <div v-if="headerClass" :class="$style.filters">
+            <div
+              :class="$style.modeTabs"
+              role="tablist"
+              aria-label="Пробуждение или наследие"
             >
-              Пробуждение
-            </button>
-            <button
-              type="button"
-              role="tab"
-              :aria-selected="specMode === 'succession'"
-              :class="[$style.specTab, specMode === 'succession' && $style.specTabOn]"
-              @click="specMode = 'succession'"
+              <button
+                type="button"
+                role="tab"
+                :aria-selected="specMode === 'awakening'"
+                :class="[$style.modeTab, specMode === 'awakening' && $style.modeTabOn]"
+                @click="specMode = 'awakening'"
+              >
+                Пробуждение
+              </button>
+              <button
+                type="button"
+                role="tab"
+                :aria-selected="specMode === 'succession'"
+                :class="[$style.modeTab, specMode === 'succession' && $style.modeTabOn]"
+                @click="specMode = 'succession'"
+              >
+                Наследие
+              </button>
+            </div>
+            <div
+              :class="$style.modeTabs"
+              role="tablist"
+              aria-label="Пресет гайда"
             >
-              Наследие
-            </button>
+              <button
+                v-for="p in guidePresets"
+                :key="p.id"
+                type="button"
+                role="tab"
+                :aria-selected="guidePreset === p.id"
+                :class="[$style.modeTab, guidePreset === p.id && $style.modeTabOn]"
+                @click="guidePreset = p.id"
+              >
+                {{ p.label }}
+              </button>
+            </div>
           </div>
           <NuxtLink
             v-if="isSuperadmin"
@@ -91,12 +109,22 @@
 import { watch } from 'vue'
 import { ClassIcon } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
-import { useGuideSpecMode, useHeaderClass, useHeaderToc, usePendingSummary, useSuperadmin } from '@/shared/lib'
+import {
+  CRYSTAL_PRESETS,
+  useGuidePreset,
+  useGuideSpecMode,
+  useHeaderClass,
+  useHeaderToc,
+  usePendingSummary,
+  useSuperadmin,
+} from '@/shared/lib'
 import { UiConfirm } from '@/shared/ui'
 
 const headerClass = useHeaderClass()
 const headerToc = useHeaderToc()
 const specMode = useGuideSpecMode()
+const guidePreset = useGuidePreset()
+const guidePresets = CRYSTAL_PRESETS
 const { isSuperadmin, refresh } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
 
@@ -161,33 +189,49 @@ watch(isSuperadmin, () => {
   margin-left: auto;
   display: inline-flex;
   align-items: stretch;
-  gap: 0.65rem;
+  gap: 0.85rem;
   flex-shrink: 0;
   height: 2rem;
 }
 
-.specTabs {
+.filters {
   display: inline-flex;
   align-items: stretch;
-  gap: 0.3rem;
+  gap: 0.85rem;
   height: 100%;
+  margin-right: 0.15rem;
+  padding-right: 0.85rem;
+  border-right: 1px solid var(--color-border);
 }
 
-.specTab {
-  box-sizing: border-box;
+/* Segmented control: Пробуждение / Наследие */
+.modeTabs {
+  display: inline-flex;
+  align-items: stretch;
   height: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--color-border);
+  background: color-mix(in srgb, #000 35%, transparent);
+  padding: 2px;
+}
+
+.modeTab {
+  box-sizing: border-box;
+  border: 0;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   line-height: 1;
-  padding: 0 0.7rem;
+  padding: 0 0.75rem;
 }
 
-.specTabOn {
-  border-color: var(--color-border-strong);
+.modeTab:hover {
+  color: var(--color-gold-soft);
+}
+
+.modeTabOn {
   background: var(--color-gold-dim);
   color: var(--color-gold);
 }

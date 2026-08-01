@@ -20,13 +20,13 @@
             <h3 :class="$style.title">Предложить морфы</h3>
             <div :class="$style.presetTabs" role="tablist" aria-label="Пресет морфов">
               <button
-                v-for="p in morphPresetList"
+                v-for="p in guidePresets"
                 :key="p.id"
                 type="button"
                 role="tab"
-                :aria-selected="activePreset === p.id"
-                :class="[$style.presetTab, activePreset === p.id && $style.presetTabOn]"
-                @click="activePreset = p.id"
+                :aria-selected="activeGuidePreset === p.id"
+                :class="[$style.presetTab, activeGuidePreset === p.id && $style.presetTabOn]"
+                @click="activeGuidePreset = p.id"
               >
                 {{ p.label }}
               </button>
@@ -172,12 +172,18 @@ import {
 } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
+  CRYSTAL_PRESETS,
   MORPH_PRESETS,
   MORPH_PRESET_IDS,
   MORPH_SLOT_LEVELS,
+  emptyMorphPresetBoards,
   isMorphPresetId,
   isMorphSlotLevel,
+  morphGuidePreset,
+  morphPresetFrom,
   resolveAddonLabel,
+  useGuidePreset,
+  useGuideSpecMode,
   useModalEscape,
   useSuperadmin,
   type MorphPresetId,
@@ -194,7 +200,7 @@ type SlotState = {
 type PresetBoards = Record<MorphPresetId, Partial<Record<MorphSlotLevel, SlotState>>>
 
 function emptyPresets(): PresetBoards {
-  return { aw_cut: {}, aw_besp: {}, succ_cut: {}, succ_besp: {} }
+  return emptyMorphPresetBoards()
 }
 
 const props = withDefaults(
@@ -210,14 +216,16 @@ const props = withDefaults(
 )
 
 const { isSuperadmin, refresh: refreshAdmin } = useSuperadmin()
+const specMode = useGuideSpecMode()
 
 const open = ref(false)
 const honeypot = ref('')
 const author = ref('')
 const query = ref('')
 const catalogTab = ref<'skills' | 'effects'>('skills')
-const morphPresetList = MORPH_PRESETS
-const activePreset = ref<MorphPresetId>('aw_cut')
+const guidePresets = CRYSTAL_PRESETS
+const activeGuidePreset = ref<CrystalPresetId>('t1')
+const activePreset = computed(() => morphPresetFrom(specMode.value, activeGuidePreset.value))
 const activeLevel = ref<MorphSlotLevel | null>(null)
 const presets = ref<PresetBoards>(emptyPresets())
 const skills = ref<Skill[]>([])
@@ -252,7 +260,7 @@ function hydrateFromInitial() {
     }
   }
   presets.value = next
-  activePreset.value = 'aw_cut'
+  activeGuidePreset.value = 't1'
   activeLevel.value = null
   catalogTab.value = 'skills'
 }
@@ -402,7 +410,8 @@ async function onSubmit() {
       if (!slot?.skill) continue
       if (slot.effectIds.length !== 2) {
         formError.value = `В пресете «${MORPH_PRESETS.find((p) => p.id === preset)?.label}» слот Ур. ${level}: нужно ровно 2 эффекта`
-        activePreset.value = preset
+        activeGuidePreset.value = morphGuidePreset(preset)
+        specMode.value = preset.startsWith('succ_') ? 'succession' : 'awakening'
         activeLevel.value = level
         catalogTab.value = 'effects'
         return

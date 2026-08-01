@@ -73,21 +73,6 @@
             <template v-if="sectionCount('morphs')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('morphs') }}</span>
             </template>
-            <template #beside>
-              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет морфов">
-                <button
-                  v-for="p in morphCutKinds"
-                  :key="p.id"
-                  type="button"
-                  role="tab"
-                  :aria-selected="activeMorphCut === p.id"
-                  :class="[$style.presetTab, activeMorphCut === p.id && $style.presetTabOn]"
-                  @click="activeMorphCut = p.id"
-                >
-                  {{ p.label }}
-                </button>
-              </div>
-            </template>
             <template #actions>
               <ProposeMorphForm
                 :class-slug="bundle.class.slug"
@@ -111,21 +96,6 @@
           <GuideSection flush title="Инкрустация" anchor="crystals">
             <template v-if="sectionCount('crystals')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('crystals') }}</span>
-            </template>
-            <template #beside>
-              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
-                <button
-                  v-for="p in crystalPresets"
-                  :key="p.id"
-                  type="button"
-                  role="tab"
-                  :aria-selected="activeCrystalPreset === p.id"
-                  :class="[$style.presetTab, activeCrystalPreset === p.id && $style.presetTabOn]"
-                  @click="activeCrystalPreset = p.id"
-                >
-                  {{ p.label }}
-                </button>
-              </div>
             </template>
             <template #actions>
               <ProposeCrystalForm
@@ -162,21 +132,6 @@
             <template v-if="sectionCount('relics')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('relics') }}</span>
             </template>
-            <template #beside>
-              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет реликвий">
-                <button
-                  v-for="p in crystalPresets"
-                  :key="p.id"
-                  type="button"
-                  role="tab"
-                  :aria-selected="activeRelicPreset === p.id"
-                  :class="[$style.presetTab, activeRelicPreset === p.id && $style.presetTabOn]"
-                  @click="activeRelicPreset = p.id"
-                >
-                  {{ p.label }}
-                </button>
-              </div>
-            </template>
             <template #actions>
               <ProposeRelicForm
                 :class-slug="bundle.class.slug"
@@ -197,21 +152,6 @@
           <GuideSection fill flush title="Забаф" anchor="buffs">
             <template v-if="sectionCount('buffs')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('buffs') }}</span>
-            </template>
-            <template #beside>
-              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет забафа">
-                <button
-                  v-for="p in crystalPresets"
-                  :key="p.id"
-                  type="button"
-                  role="tab"
-                  :aria-selected="activeBuffPreset === p.id"
-                  :class="[$style.presetTab, activeBuffPreset === p.id && $style.presetTabOn]"
-                  @click="activeBuffPreset = p.id"
-                >
-                  {{ p.label }}
-                </button>
-              </div>
             </template>
             <template #actions>
               <ProposeGuideForm
@@ -298,12 +238,9 @@ import { ProposeCrystalForm, ProposeGuideForm, ProposeMorphForm, ProposeRelicFor
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import {
   CRYSTAL_ALL_SLOTS,
-  CRYSTAL_PRESETS,
-  MORPH_CUT_KINDS,
   morphPresetFrom,
   resolveAddonLabel,
-  type CrystalPresetId,
-  type MorphCutKind,
+  useGuidePreset,
   useGuideSpecMode,
   usePendingSummary,
   useSuperadmin,
@@ -377,13 +314,8 @@ watch(
 )
 
 const specMode = useGuideSpecMode()
-const crystalPresets = CRYSTAL_PRESETS
-const morphCutKinds = MORPH_CUT_KINDS
-const activeCrystalPreset = ref<CrystalPresetId>('t1')
-const activeRelicPreset = ref<CrystalPresetId>('t1')
-const activeBuffPreset = ref<CrystalPresetId>('t1')
-const activeMorphCut = ref<MorphCutKind>('cut')
-const activeMorphPreset = computed(() => morphPresetFrom(specMode.value, activeMorphCut.value))
+const guidePreset = useGuidePreset()
+const activeMorphPreset = computed(() => morphPresetFrom(specMode.value, guidePreset.value))
 const crystalColRef = ref<HTMLElement | null>(null)
 const buffMaxHeight = ref<number | null>(null)
 let crystalObserver: ResizeObserver | null = null
@@ -415,7 +347,7 @@ function bindCrystalObserver() {
 }
 
 watch(
-  () => [props.bundle, props.pending, activeCrystalPreset.value] as const,
+  () => [props.bundle, props.pending, guidePreset.value] as const,
   async () => {
     if (props.pending || !props.bundle) return
     await nextTick()
@@ -444,15 +376,15 @@ const comboSection = computed<ProposalSection>(() =>
 
 const activeBuffs = computed(() =>
   (props.bundle?.buffs ?? []).filter(
-    (row) => (row.preset || 't1') === activeBuffPreset.value,
+    (row) => (row.preset || 't1') === guidePreset.value,
   ),
 )
 
 const crystalFilled = computed(() => {
   const map: Record<string, CrystalFill> = {}
   for (const row of props.bundle?.crystals ?? []) {
-    const preset = (row.preset || 't1') as CrystalPresetId
-    if (preset !== activeCrystalPreset.value) continue
+    const preset = row.preset || 't1'
+    if (preset !== guidePreset.value) continue
     const slot = row.slot
     const item = row.items
     if (!slot || !item) continue
@@ -488,8 +420,8 @@ const crystalPickedList = computed(() => {
 const relicFilled = computed(() => {
   const map: Record<string, RelicFill> = {}
   for (const row of [...(props.bundle?.relics ?? []), ...(props.bundle?.lightstones ?? [])]) {
-    const preset = (row.preset || 't1') as CrystalPresetId
-    if (preset !== activeRelicPreset.value) continue
+    const preset = row.preset || 't1'
+    if (preset !== guidePreset.value) continue
     const slot = row.slot
     const item = row.items
     if (!slot || !item) continue

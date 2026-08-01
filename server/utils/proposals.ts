@@ -23,13 +23,22 @@ export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
 export const MAX_RELICS_ALL_PRESETS = 2 * 4
 export const MAX_LIGHTSTONES_ALL_PRESETS = 4 * 4
 export const MAX_VIDEOS = 3
-export const MAX_MORPHS_ALL_PRESETS = 6 * 4
+export const MAX_MORPHS_ALL_PRESETS = 6 * 8
 export const MAX_AUTHOR_LEN = 80
 
 export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub'] as const
 export type CrystalPresetId = (typeof CRYSTAL_PRESET_IDS)[number]
 
-export const MORPH_PRESET_IDS = ['aw_cut', 'aw_besp', 'succ_cut', 'succ_besp'] as const
+export const MORPH_PRESET_IDS = [
+  'aw_t1',
+  'aw_t2',
+  'aw_besp',
+  'aw_sub',
+  'succ_t1',
+  'succ_t2',
+  'succ_besp',
+  'succ_sub',
+] as const
 export type MorphPresetId = (typeof MORPH_PRESET_IDS)[number]
 
 export const MORPH_SLOT_LEVELS = [50, 52, 54, 56, 58, 60] as const

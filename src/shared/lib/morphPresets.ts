@@ -1,16 +1,17 @@
-export type MorphPresetId = 'aw_cut' | 'aw_besp' | 'succ_cut' | 'succ_besp'
-export type MorphCutKind = 'cut' | 'besp'
+import { CRYSTAL_PRESET_IDS, type CrystalPresetId } from './crystalPresets'
 
-export const MORPH_CUT_KINDS: ReadonlyArray<{ id: MorphCutKind; label: string }> = [
-  { id: 'cut', label: 'Порезки' },
-  { id: 'besp', label: 'Беспорезки' },
-]
+export type MorphSpecPrefix = 'aw' | 'succ'
+export type MorphPresetId = `${MorphSpecPrefix}_${CrystalPresetId}`
 
 export const MORPH_PRESETS: ReadonlyArray<{ id: MorphPresetId; label: string }> = [
-  { id: 'aw_cut', label: 'Порезки — проб' },
+  { id: 'aw_t1', label: 'T1 — проб' },
+  { id: 'aw_t2', label: 'T2 — проб' },
   { id: 'aw_besp', label: 'Беспорезки — проб' },
-  { id: 'succ_cut', label: 'Порезки — насл' },
+  { id: 'aw_sub', label: 'Субботка — проб' },
+  { id: 'succ_t1', label: 'T1 — насл' },
+  { id: 'succ_t2', label: 'T2 — насл' },
   { id: 'succ_besp', label: 'Беспорезки — насл' },
+  { id: 'succ_sub', label: 'Субботка — насл' },
 ]
 
 export const MORPH_PRESET_IDS: MorphPresetId[] = MORPH_PRESETS.map((p) => p.id)
@@ -28,20 +29,24 @@ export function isMorphSlotLevel(v: number): v is MorphSlotLevel {
   return (MORPH_SLOT_LEVELS as readonly number[]).includes(v)
 }
 
-export function isMorphCutKind(v: string): v is MorphCutKind {
-  return v === 'cut' || v === 'besp'
-}
-
-export function morphCutKind(preset: MorphPresetId): MorphCutKind {
-  return preset.endsWith('_besp') ? 'besp' : 'cut'
+export function morphGuidePreset(preset: MorphPresetId): CrystalPresetId {
+  return preset.slice(preset.indexOf('_') + 1) as CrystalPresetId
 }
 
 export function morphPresetFrom(
   mode: 'awakening' | 'succession',
-  kind: MorphCutKind,
+  kind: CrystalPresetId,
 ): MorphPresetId {
-  const prefix = mode === 'succession' ? 'succ' : 'aw'
+  const prefix: MorphSpecPrefix = mode === 'succession' ? 'succ' : 'aw'
   return `${prefix}_${kind}`
+}
+
+export function emptyMorphPresetBoards<T>(): Record<MorphPresetId, T> {
+  const out = {} as Record<MorphPresetId, T>
+  for (const id of MORPH_PRESET_IDS) {
+    out[id] = {} as T
+  }
+  return out
 }
 
 /** Awakening kit vs main+succession kit for a morph preset. */
@@ -57,3 +62,6 @@ export function resolveAddonLabel(
   const t = tier === 1 || tier === 2 || tier === 3 ? String(tier) : '2'
   return tierLabels?.[t] || tierLabels?.['2'] || fallback
 }
+
+/** Re-export for callers that only touch morph presets. */
+export { CRYSTAL_PRESET_IDS as MORPH_GUIDE_PRESET_IDS }

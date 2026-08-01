@@ -131,12 +131,12 @@
         <template v-else-if="item.section === 'morphs'">
           <div v-if="morphByPreset[item.id]" :class="$style.presetTabs" role="tablist">
             <button
-              v-for="p in morphPresets"
+              v-for="p in presets"
               :key="p.id"
               type="button"
               role="tab"
-              :class="[$style.presetTab, morphPreset[item.id] === p.id && $style.presetTabOn]"
-              @click="morphPreset[item.id] = p.id"
+              :class="[$style.presetTab, morphGuideTab[item.id] === p.id && $style.presetTabOn]"
+              @click="morphGuideTab[item.id] = p.id"
             >
               {{ p.label }}
             </button>
@@ -167,8 +167,9 @@ import BorderSparkler from './BorderSparkler.vue'
 import { getSupabase } from '@/shared/api'
 import {
   CRYSTAL_PRESETS,
-  MORPH_PRESETS,
+  morphPresetFrom,
   resolveAddonLabel,
+  useGuideSpecMode,
   type CrystalPresetId,
   type MorphPresetId,
   type MorphSlotLevel,
@@ -188,7 +189,7 @@ const emit = defineEmits<{
 }>()
 
 const presets = CRYSTAL_PRESETS
-const morphPresets = MORPH_PRESETS
+const specMode = useGuideSpecMode()
 const acting = ref<string | null>(null)
 
 type Payload = {
@@ -224,7 +225,7 @@ const relicPreset = reactive<Record<string, CrystalPresetId>>({})
 const morphByPreset = reactive<
   Record<string, Partial<Record<MorphPresetId, Partial<Record<MorphSlotLevel, MorphSlotFill>>>> | null>
 >({})
-const morphPreset = reactive<Record<string, MorphPresetId>>({})
+const morphGuideTab = reactive<Record<string, CrystalPresetId>>({})
 
 function payload(item: PendingProposal): Payload {
   return (item.payload ?? {}) as Payload
@@ -264,7 +265,7 @@ function relicFilled(id: string): Record<string, RelicFill> {
 }
 
 function morphFilled(id: string): Partial<Record<MorphSlotLevel, MorphSlotFill>> {
-  const preset = morphPreset[id] || 'aw_cut'
+  const preset = morphPresetFrom(specMode.value, morphGuideTab[id] || 't1')
   return morphByPreset[id]?.[preset] || {}
 }
 
@@ -423,7 +424,7 @@ async function hydrateRelics(item: PendingProposal) {
 }
 
 async function hydrateMorphs(item: PendingProposal) {
-  morphPreset[item.id] = 'aw_cut'
+  morphGuideTab[item.id] = 't1'
   const entries = payload(item).morphs ?? []
   if (!entries.length) {
     morphByPreset[item.id] = {}
@@ -451,7 +452,7 @@ async function hydrateMorphs(item: PendingProposal) {
       Record<MorphPresetId, Partial<Record<MorphSlotLevel, MorphSlotFill>>>
     > = {}
     for (const entry of entries) {
-      const preset = (entry.preset || 'aw_cut') as MorphPresetId
+      const preset = (entry.preset || 'aw_t1') as MorphPresetId
       const level = entry.slot_level as MorphSlotLevel
       const skill = skillById.get(entry.skill_id) ?? null
       const tier = skill?.addon_tier ?? 2

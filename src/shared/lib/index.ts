@@ -2,6 +2,7 @@ export { sanitizeYoutubeUrl, youtubeEmbedUrl } from './youtube'
 export { useHeaderClass, type HeaderClassInfo } from './useHeaderClass'
 export { useHeaderToc, CLASS_GUIDE_TOC, type HeaderTocItem } from './useHeaderToc'
 export { useGuideSpecMode, type GuideSpecMode } from './useGuideSpecMode'
+export { useGuidePreset } from './useGuidePreset'
 export { useSuperadmin } from './useSuperadmin'
 export { usePendingSummary } from './usePendingSummary'
 export { useConfirm, type ConfirmOptions } from './useConfirm'
@@ -52,18 +53,16 @@ export {
 } from './relicSlots'
 export {
   MAX_MORPHS_ALL_PRESETS,
-  MORPH_CUT_KINDS,
   MORPH_PRESETS,
   MORPH_PRESET_IDS,
   MORPH_SLOT_LEVELS,
-  isMorphCutKind,
+  emptyMorphPresetBoards,
   isMorphPresetId,
   isMorphSlotLevel,
-  morphCutKind,
+  morphGuidePreset,
   morphPresetFrom,
   morphPresetSkillMode,
   resolveAddonLabel,
-  type MorphCutKind,
   type MorphPresetId,
   type MorphSlotLevel,
 } from './morphPresets'

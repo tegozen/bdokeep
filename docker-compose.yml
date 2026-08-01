@@ -34,6 +34,7 @@ services:
       - ./supabase/migrations/018_morphs.sql:/docker-entrypoint-initdb.d/99-morphs.sql:ro
       - ./supabase/migrations/019_seed_skill_addon_effects.sql:/docker-entrypoint-initdb.d/99b-seed-addon-effects.sql:ro
       - ./supabase/migrations/020_morph_grants.sql:/docker-entrypoint-initdb.d/99c-morph-grants.sql:ro
+      - ./supabase/migrations/021_morph_presets_guide.sql:/docker-entrypoint-initdb.d/99d-morph-presets.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s
