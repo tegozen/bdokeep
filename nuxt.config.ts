@@ -46,7 +46,8 @@ export default defineNuxtConfig({
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        'Permissions-Policy':
+          'camera=(), microphone=(), geolocation=(), compute-pressure=*',
         // script-src/style-src 'unsafe-inline': required by Nuxt/Vue hydration + Tailwind.
         // Markdown XSS is mitigated by server sanitizeMarkdown + client XSSPlugin.
         // img-src https: allows remote images in approved markdown (hotlink/tracking risk).

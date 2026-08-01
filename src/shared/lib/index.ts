@@ -1,4 +1,10 @@
-export { sanitizeYoutubeUrl, youtubeEmbedUrl } from './youtube'
+export {
+  sanitizeYoutubeUrl,
+  youtubeEmbedUrl,
+  youtubeVideoId,
+  youtubeThumbProxyUrl,
+  YOUTUBE_IFRAME_ALLOW,
+} from './youtube'
 export { useHeaderClass, type HeaderClassInfo } from './useHeaderClass'
 export { useHeaderToc, CLASS_GUIDE_TOC, type HeaderTocItem } from './useHeaderToc'
 export { useGuideSpecMode, type GuideSpecMode } from './useGuideSpecMode'

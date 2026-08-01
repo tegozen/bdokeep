@@ -28,12 +28,10 @@
             </template>
             <template #actions>
               
-                <ClientOnly>
                 <ProposeSummaryForm
                   :class-slug="bundle.class.slug"
                   :initial-text="bundle.guide?.summary"
                 />
-              </ClientOnly>
 
             </template>
             <div v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
@@ -53,13 +51,11 @@
             </template>
             <template #actions>
               
-                <ClientOnly>
                 <ProposeComboForm
                   :key="comboSection"
                   :class-slug="bundle.class.slug"
                   :section="comboSection"
                 />
-              </ClientOnly>
 
             </template>
 
@@ -80,12 +76,10 @@
             </template>
             <template #actions>
               
-                <ClientOnly>
                 <ProposeMorphForm
                   :class-slug="bundle.class.slug"
                   :initial-morphs="bundle.morphs"
                 />
-              </ClientOnly>
 
             </template>
             <div :class="[$style.morphStage, $style.fade]">
@@ -97,38 +91,32 @@
         <template v-if="isSuperadmin && topDraftsVisible">
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
             
-              <ClientOnly>
               <PendingSectionDrafts
                 :proposals="pendingFor('summary')"
                 @changed="onDraftChanged"
                 @optimistic-remove="onOptimisticRemove"
                 @optimistic-restore="onOptimisticRestore"
               />
-            </ClientOnly>
 
           </div>
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
             
-              <ClientOnly>
               <PendingSectionDrafts
                 :proposals="comboPending"
                 @changed="onDraftChanged"
                 @optimistic-remove="onOptimisticRemove"
                 @optimistic-restore="onOptimisticRestore"
               />
-            </ClientOnly>
 
           </div>
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
             
-              <ClientOnly>
               <PendingSectionDrafts
                 :proposals="pendingFor('morphs')"
                 @changed="onDraftChanged"
                 @optimistic-remove="onOptimisticRemove"
                 @optimistic-restore="onOptimisticRestore"
               />
-            </ClientOnly>
 
           </div>
         </template>
@@ -142,12 +130,10 @@
             </template>
             <template #actions>
               
-                <ClientOnly>
                 <ProposeCrystalForm
                   :class-slug="bundle.class.slug"
                   :initial-crystals="bundle.crystals"
                 />
-              </ClientOnly>
 
             </template>
             <div :class="[$style.crystalLayout, $style.fade]">
@@ -181,13 +167,11 @@
             </template>
             <template #actions>
               
-                <ClientOnly>
                 <ProposeRelicForm
                   :class-slug="bundle.class.slug"
                   :initial-relics="bundle.relics"
                   :initial-lightstones="bundle.lightstones"
                 />
-              </ClientOnly>
 
             </template>
             <div :class="[$style.relicStage, $style.fade]">
@@ -206,12 +190,10 @@
             </template>
             <template #actions>
               
-                <ClientOnly>
                 <ProposeBuffsForm
                   :class-slug="bundle.class.slug"
                   :initial-buffs="bundle.buffs"
                 />
-              </ClientOnly>
 
             </template>
             <div :class="$style.scrollCard">
@@ -239,38 +221,32 @@
         <template v-if="isSuperadmin && gearDraftsVisible">
           <div :class="[$style.gearCell, $style.gearDraft]">
             
-              <ClientOnly>
               <PendingSectionDrafts
                 :proposals="pendingFor('crystals')"
                 @changed="onDraftChanged"
                 @optimistic-remove="onOptimisticRemove"
                 @optimistic-restore="onOptimisticRestore"
               />
-            </ClientOnly>
 
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
             
-              <ClientOnly>
               <PendingSectionDrafts
                 :proposals="pendingFor('relics')"
                 @changed="onDraftChanged"
                 @optimistic-remove="onOptimisticRemove"
                 @optimistic-restore="onOptimisticRestore"
               />
-            </ClientOnly>
 
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
             
-              <ClientOnly>
               <PendingSectionDrafts
                 :proposals="pendingFor('buffs')"
                 @changed="onDraftChanged"
                 @optimistic-remove="onOptimisticRemove"
                 @optimistic-restore="onOptimisticRestore"
               />
-            </ClientOnly>
 
           </div>
         </template>
@@ -282,24 +258,20 @@
         </template>
         <template #actions>
           
-            <ClientOnly>
-                <ProposeVideosForm
+            <ProposeVideosForm
               :class-slug="bundle.class.slug"
               :initial-videos="bundle.videos"
             />
-              </ClientOnly>
 
         </template>
         <VideoList :videos="bundle.videos" />
         <template v-if="isSuperadmin">
-          <ClientOnly>
-              <PendingSectionDrafts
+          <PendingSectionDrafts
             :proposals="pendingFor('videos')"
             @changed="onDraftChanged"
             @optimistic-remove="onOptimisticRemove"
             @optimistic-restore="onOptimisticRestore"
           />
-            </ClientOnly>
         </template>
       </GuideSection>
     </template>
@@ -307,13 +279,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ClassGuideBundle } from '@/entities/class'
 import {
   fetchPendingForClass,
   type PendingProposal,
 } from '@/features/superadmin-auth/api/pendingProposals'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
+import {
+  ProposeBuffsForm,
+  ProposeComboForm,
+  ProposeCrystalForm,
+  ProposeMorphForm,
+  ProposeRelicForm,
+  ProposeSummaryForm,
+  ProposeVideosForm,
+} from '@/features/propose-guide'
+import { PendingSectionDrafts } from '@/features/superadmin-auth'
+
 import {
   CRYSTAL_ALL_SLOTS,
   morphPresetFrom,
@@ -331,30 +314,6 @@ import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
 
-const ProposeBuffsForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeBuffsForm.vue'),
-)
-const ProposeComboForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeComboForm.vue'),
-)
-const ProposeCrystalForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeCrystalForm.vue'),
-)
-const ProposeMorphForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeMorphForm.vue'),
-)
-const ProposeRelicForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeRelicForm.vue'),
-)
-const ProposeSummaryForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeSummaryForm.vue'),
-)
-const ProposeVideosForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeVideosForm.vue'),
-)
-const PendingSectionDrafts = defineAsyncComponent(
-  () => import('@/features/superadmin-auth/ui/PendingSectionDrafts.vue'),
-)
 
 const props = defineProps<{
   bundle: ClassGuideBundle | null
@@ -477,12 +436,23 @@ function bindCrystalObserver() {
 watch(
   () => [props.bundle, props.pending, guidePreset.value] as const,
   async () => {
-    if (props.pending || !props.bundle) return
+    if (!import.meta.client) return
+    if (props.pending || !props.bundle) {
+      buffMaxHeight.value = null
+      crystalObserver?.disconnect()
+      crystalObserver = null
+      return
+    }
     await nextTick()
     bindCrystalObserver()
   },
-  { immediate: true },
 )
+
+onMounted(async () => {
+  if (props.pending || !props.bundle) return
+  await nextTick()
+  bindCrystalObserver()
+})
 
 onBeforeUnmount(() => {
   crystalObserver?.disconnect()

@@ -32,24 +32,27 @@
           aria-hidden="true"
         >
 
-        <SuperadminAuth>
-          <label :class="$style.label">
-            Игровой ник
-            <input
-              v-model="author"
-              type="text"
-              :class="$style.input"
-              maxlength="80"
-              required
-              autocomplete="nickname"
-              placeholder="Как вас зовут в игре"
-            >
-          </label>
-        </SuperadminAuth>
+        <div :class="$style.chrome">
+          <SuperadminAuth>
+            <label :class="$style.label">
+              Игровой ник
+              <input
+                v-model="author"
+                type="text"
+                :class="$style.input"
+                maxlength="80"
+                required
+                autocomplete="nickname"
+                placeholder="Как вас зовут в игре"
+              >
+            </label>
+          </SuperadminAuth>
+        </div>
 
-        <slot />
-
-        <p v-if="formError" :class="$style.error">{{ formError }}</p>
+        <div :class="[$style.body, full && $style.bodyFull]">
+          <slot />
+          <p v-if="formError" :class="$style.error">{{ formError }}</p>
+        </div>
 
         <div :class="[$style.actions, actionsClass]">
           <UiButton variant="secondary" type="button" @click="requestClose">Отмена</UiButton>
@@ -115,10 +118,32 @@ const author = defineModel<string>('author', { required: true })
   display: flex;
   flex: 1;
   flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chrome {
+  flex-shrink: 0;
+  display: grid;
   gap: 0.85rem;
+  padding: 1rem 1rem 0;
+}
+
+.body {
+  flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.bodyFull {
+  overflow: hidden;
+  min-height: 0;
+  padding-bottom: 0.5rem;
 }
 
 .formFull {
@@ -127,8 +152,8 @@ const author = defineModel<string>('author', { required: true })
 
 .formFull .actions {
   flex-shrink: 0;
-  margin-top: auto;
-  padding-top: 0.25rem;
+  margin-top: 0;
+  padding: 0.25rem 1rem 1rem;
 }
 
 .honey {
@@ -165,6 +190,8 @@ const author = defineModel<string>('author', { required: true })
   flex-shrink: 0;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 0.25rem;
+  border-top: 1px solid var(--color-border);
+  padding: 0.85rem 1rem;
+  background: var(--color-bg-elevated);
 }
 </style>

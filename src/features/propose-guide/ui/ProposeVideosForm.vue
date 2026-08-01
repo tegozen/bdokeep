@@ -10,34 +10,33 @@
     :obscured="obscured"
     :is-superadmin="isSuperadmin"
     :request-close="requestClose"
-    size="lg"
     @submit="onSubmit"
   >
     <p :class="$style.hint">До 3 ссылок на YouTube. Пустые слоты не сохранятся.</p>
 
     <div :class="$style.slots">
-      <label v-for="(slot, i) in slots" :key="i" :class="$style.slot">
+      <label
+        v-for="(slot, i) in slots"
+        :key="i"
+        :class="[$style.slot, slotErrors[i] && $style.slotInvalid]"
+      >
         <span :class="$style.slotLabel">Видео {{ i + 1 }}</span>
         <input
           v-model="slot.url"
           type="url"
-          :class="$style.input"
+          :class="[$style.input, slotErrors[i] && $style.inputInvalid]"
+          :aria-invalid="Boolean(slotErrors[i])"
+          :aria-describedby="slotErrors[i] ? `video-slot-err-${i}` : undefined"
           placeholder="https://www.youtube.com/watch?v=…"
           maxlength="500"
+          @input="clearSlotError(i)"
         >
-        <div v-if="embedOf(slot.url)" :class="$style.preview">
-          <iframe
-            :src="embedOf(slot.url)!"
-            :title="`Превью ${i + 1}`"
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-            referrerpolicy="strict-origin-when-cross-origin"
-            :class="$style.iframe"
-          />
-        </div>
-        <p v-else-if="slot.url.trim()" :class="$style.errorInline">
-          Некорректная ссылка
+        <p
+          v-if="slotErrors[i]"
+          :id="`video-slot-err-${i}`"
+          :class="$style.errorInline"
+        >
+          {{ slotErrors[i] }}
         </p>
       </label>
     </div>
@@ -47,8 +46,9 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import type { ClassVideo } from '@/entities/class'
-import { sanitizeYoutubeUrl, youtubeEmbedUrl } from '@/shared/lib'
+import { sanitizeYoutubeUrl, youtubeVideoId } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
+import { parseSubmitError } from '../lib/parseSubmitError'
 import { useProposeModal } from '../lib/useProposeModal'
 import ProposeModalShell from './ProposeModalShell.vue'
 
@@ -69,6 +69,7 @@ const props = withDefaults(
 )
 
 const slots = reactive<Slot[]>([{ url: '' }, { url: '' }, { url: '' }])
+const slotErrors = reactive<string[]>(['', '', ''])
 
 const {
   open,
@@ -85,14 +86,20 @@ const {
   serialize: () => JSON.stringify(slots.map((s) => s.url)),
   onOpen: () => {
     hydrateFromInitial()
+    clearAllSlotErrors()
   },
   onReset: () => {
     for (let i = 0; i < MAX; i++) slots[i]!.url = ''
+    clearAllSlotErrors()
   },
 })
 
-function embedOf(url: string) {
-  return youtubeEmbedUrl(url)
+function clearSlotError(i: number) {
+  slotErrors[i] = ''
+}
+
+function clearAllSlotErrors() {
+  for (let i = 0; i < MAX; i++) slotErrors[i] = ''
 }
 
 function hydrateFromInitial() {
@@ -103,34 +110,49 @@ function hydrateFromInitial() {
   }
 }
 
+function applyFieldErrorFromMessage(msg: string): boolean {
+  const m = /^Видео\s+(\d+)\s*:\s*(.+)$/i.exec(msg.trim())
+  if (!m) return false
+  const idx = Number(m[1]) - 1
+  if (!Number.isInteger(idx) || idx < 0 || idx >= MAX) return false
+  slotErrors[idx] = m[2]!.trim() || 'Ошибка'
+  return true
+}
+
 async function onSubmit() {
+  clearAllSlotErrors()
   await runSubmit(async () => {
     const videos: Array<{ title: string; youtube_url: string; sort_order: number }> = []
     for (let i = 0; i < MAX; i++) {
       const raw = slots[i]!.url.trim()
       if (!raw) continue
       const safe = sanitizeYoutubeUrl(raw)
-      if (!safe || !youtubeEmbedUrl(raw)) {
-        formError.value = `Слот ${i + 1}: некорректная ссылка на YouTube`
+      if (!safe || !youtubeVideoId(raw)) {
+        slotErrors[i] = 'Некорректная ссылка'
         return null
       }
       videos.push({
-        title: `Видео ${videos.length + 1}`,
+        title: `Видео ${i + 1}`,
         youtube_url: safe,
-        sort_order: videos.length,
+        sort_order: i,
       })
     }
     if (!videos.length) {
       formError.value = 'Добавьте хотя бы одну ссылку'
       return null
     }
-    return submitGuideProposal({
-      class_slug: props.classSlug,
-      section: 'videos',
-      payload: { videos },
-      author_label: author.value || undefined,
-      website: honeypot.value || undefined,
-    })
+    try {
+      return await submitGuideProposal({
+        class_slug: props.classSlug,
+        section: 'videos',
+        payload: { videos },
+        author_label: author.value || undefined,
+        website: honeypot.value || undefined,
+      })
+    } catch (e: unknown) {
+      if (applyFieldErrorFromMessage(parseSubmitError(e))) return null
+      throw e
+    }
   })
 }
 </script>
@@ -149,12 +171,17 @@ async function onSubmit() {
 
 .slot {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .slotLabel {
   font-size: 0.85rem;
   color: var(--color-muted);
+  transition: color 120ms ease;
+}
+
+.slotInvalid .slotLabel {
+  color: var(--color-danger);
 }
 
 .input {
@@ -163,28 +190,29 @@ async function onSubmit() {
   color: var(--color-ink);
   font: inherit;
   padding: 0.45rem 0.6rem;
+  border-radius: 2px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
-.preview {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  max-width: 22rem;
-  overflow: hidden;
-  background: #000;
-  border: 1px solid var(--color-border);
+.input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-gold) 70%, var(--color-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-gold) 35%, transparent);
 }
 
-.iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
+.inputInvalid {
+  border-color: var(--color-danger);
+}
+
+.inputInvalid:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-danger) 45%, transparent);
 }
 
 .errorInline {
   margin: 0;
   color: var(--color-danger);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 </style>

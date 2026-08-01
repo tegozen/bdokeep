@@ -1,55 +1,33 @@
 <template>
-  <div v-if="!display.length">
-    <UiEmptyState title="Данных пока нет" description="Видео для этого класса ещё не добавлены." />
-  </div>
-  <ul v-else :class="[$style.list, $style.fade]">
-    <li v-for="video in display" :key="video.id" :class="$style.item">
-      <div v-if="embedOf(video.youtube_url)" :class="$style.frame">
-        <iframe
-          :src="embedOf(video.youtube_url)!"
-          :title="video.title"
-          loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-          referrerpolicy="strict-origin-when-cross-origin"
-          :class="$style.iframe"
-        />
+  <ClientOnly>
+    <VideoListInner :videos="videos" />
+    <template #fallback>
+      <div v-if="!videos.length">
+        <UiEmptyState title="Данных пока нет" description="Видео для этого класса ещё не добавлены." />
       </div>
-      <p v-else :class="$style.bad">Некорректная ссылка</p>
-      <a
-        v-if="safeUrl(video.youtube_url)"
-        :href="safeUrl(video.youtube_url)!"
-        :class="$style.link"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ video.title || 'YouTube' }}
-      </a>
-    </li>
-  </ul>
+      <ul v-else :class="[$style.list]">
+        <li v-for="video in preview" :key="video.id" :class="$style.item">
+          <div :class="$style.ph" />
+          <span :class="$style.linkPh">{{ video.title || 'YouTube' }}</span>
+        </li>
+      </ul>
+    </template>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ClassVideo } from '@/entities/class'
-import { sanitizeYoutubeUrl, youtubeEmbedUrl } from '@/shared/lib'
 import { UiEmptyState } from '@/shared/ui'
+import VideoListInner from './VideoListInner.vue'
 
 const props = defineProps<{
   videos: ClassVideo[]
 }>()
 
-const display = computed(() =>
+const preview = computed(() =>
   [...props.videos].sort((a, b) => a.sort_order - b.sort_order).slice(0, 3),
 )
-
-function embedOf(url: string) {
-  return youtubeEmbedUrl(url)
-}
-
-function safeUrl(url: string) {
-  return sanitizeYoutubeUrl(url)
-}
 </script>
 
 <style module>
@@ -62,10 +40,6 @@ function safeUrl(url: string) {
   padding: 0;
 }
 
-.fade {
-  animation: fade-in 320ms ease both;
-}
-
 .item {
   min-width: 0;
   display: flex;
@@ -73,41 +47,18 @@ function safeUrl(url: string) {
   gap: 0.45rem;
 }
 
-.frame {
-  position: relative;
+.ph {
   aspect-ratio: 16 / 9;
-  overflow: hidden;
   border: 1px solid var(--color-border);
-  background: #000;
+  background: #111;
 }
 
-.iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-.link {
+.linkPh {
   font-size: 0.82rem;
   color: var(--color-gold);
-  text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-.bad {
-  margin: 0;
-  padding: 0.75rem;
-  border: 1px solid var(--color-border);
-  color: var(--color-danger);
-  font-size: 0.85rem;
 }
 
 @media (max-width: 900px) {

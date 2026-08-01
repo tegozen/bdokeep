@@ -1,6 +1,8 @@
 <template>
   <ClientOnly>
-    <AsyncMdEditor
+    <component
+      :is="Editor"
+      v-if="Editor"
       :id="id"
       v-model="text"
       theme="dark"
@@ -13,6 +15,15 @@
       :placeholder="placeholder"
       :style="{ height }"
       :class="$style.editor"
+    />
+    <textarea
+      v-else
+      v-model="text"
+      :class="$style.fallback"
+      :rows="12"
+      :placeholder="placeholder"
+      required
+      maxlength="8000"
     />
     <template #fallback>
       <textarea
@@ -28,16 +39,8 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
+import { onMounted, shallowRef, type Component } from 'vue'
 import type { Footers, ToolbarNames } from 'md-editor-v3'
-
-const AsyncMdEditor = defineAsyncComponent(async () => {
-  const { ensureMdEditorConfigured } = await import('./mdEditorSetup.client')
-  await ensureMdEditorConfigured()
-  await import('md-editor-v3/lib/style.css')
-  const { MdEditor } = await import('md-editor-v3')
-  return MdEditor
-})
 
 const text = defineModel<string>({ default: '' })
 
@@ -53,6 +56,16 @@ withDefaults(
     height: '360px',
   },
 )
+
+const Editor = shallowRef<Component | null>(null)
+
+onMounted(async () => {
+  const { ensureMdEditorConfigured } = await import('./mdEditorSetup.client')
+  await ensureMdEditorConfigured()
+  await import('md-editor-v3/lib/style.css')
+  const mod = await import('md-editor-v3')
+  Editor.value = mod.MdEditor
+})
 
 const toolbars: ToolbarNames[] = [
   'bold',

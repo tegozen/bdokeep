@@ -1,6 +1,8 @@
 <template>
   <ClientOnly>
-    <AsyncMdPreview
+    <component
+      :is="Preview"
+      v-if="Preview"
       :id="id"
       :model-value="modelValue"
       theme="dark"
@@ -9,6 +11,7 @@
       code-theme="github"
       :class="[$style.preview, attrs.class]"
     />
+    <div v-else :class="[$style.fallback, attrs.class]">{{ modelValue }}</div>
     <template #fallback>
       <div :class="[$style.fallback, attrs.class]">{{ modelValue }}</div>
     </template>
@@ -16,15 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, useAttrs } from 'vue'
-
-const AsyncMdPreview = defineAsyncComponent(async () => {
-  const { ensureMdEditorConfigured } = await import('./mdEditorSetup.client')
-  await ensureMdEditorConfigured()
-  await import('md-editor-v3/lib/preview.css')
-  const { MdPreview } = await import('md-editor-v3')
-  return MdPreview
-})
+import { onMounted, ref, shallowRef, useAttrs, type Component } from 'vue'
 
 defineOptions({ inheritAttrs: false })
 
@@ -39,6 +34,15 @@ withDefaults(
 )
 
 const attrs = useAttrs()
+const Preview = shallowRef<Component | null>(null)
+
+onMounted(async () => {
+  const { ensureMdEditorConfigured } = await import('./mdEditorSetup.client')
+  await ensureMdEditorConfigured()
+  await import('md-editor-v3/lib/preview.css')
+  const mod = await import('md-editor-v3')
+  Preview.value = mod.MdPreview
+})
 </script>
 
 <style module>

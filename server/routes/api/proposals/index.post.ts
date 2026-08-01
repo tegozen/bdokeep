@@ -299,39 +299,7 @@ export default defineEventHandler(async (event) => {
 
     payload = { relics, lightstones }
   } else if (isVideosSection(section)) {
-    const raw = body.payload?.videos
-    if (!Array.isArray(raw) || raw.length === 0) {
-      throw createError({ statusCode: 400, statusMessage: 'Добавьте хотя бы одно видео' })
-    }
-    if (raw.length > MAX_VIDEOS) {
-      throw createError({ statusCode: 400, statusMessage: `Максимум ${MAX_VIDEOS} видео` })
-    }
-
-    const videos: Array<{
-      title: string
-      youtube_url: string
-      sort_order: number
-    }> = []
-    for (let i = 0; i < raw.length; i++) {
-      const entry = raw[i] as {
-        title?: unknown
-        youtube_url?: unknown
-        sort_order?: unknown
-      }
-      const urlRaw = String(entry?.youtube_url || '').trim()
-      const safe = sanitizeYoutubeUrl(urlRaw)
-      if (!safe || !youtubeEmbedUrl(urlRaw)) {
-        throw createError({ statusCode: 400, statusMessage: 'Некорректная ссылка на YouTube' })
-      }
-      const titleRaw = String(entry?.title || '').trim()
-      videos.push({
-        title: titleRaw.slice(0, 120) || `Видео ${i + 1}`,
-        youtube_url: safe,
-        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
-      })
-    }
-
-    payload = { videos }
+    payload = { videos: await parseVideosPayload(body.payload?.videos) }
   } else if (isMorphsSection(section)) {
     const raw = body.payload?.morphs
     if (!Array.isArray(raw) || raw.length === 0) {

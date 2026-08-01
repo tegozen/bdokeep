@@ -19,6 +19,12 @@ export async function applyProposal(
   let payload = (proposal.payload || {}) as Record<string, unknown>
   const sql = useDb()
 
+  // Network probe before DB tx — don't hold locks while talking to ytimg.
+  let verifiedVideos: ParsedGuideVideo[] | null = null
+  if (isVideosSection(section)) {
+    verifiedVideos = await parseVideosPayload(payload.videos)
+  }
+
   await withDbError(async () => {
     await sql.begin(async (tx) => {
       // Claim pending row first so concurrent approves serialize / roll back cleanly
@@ -252,36 +258,16 @@ export async function applyProposal(
           `
         }
       } else if (isVideosSection(section)) {
-        const raw = Array.isArray(payload.videos) ? payload.videos : []
-        if (!raw.length || raw.length > MAX_VIDEOS) {
+        if (!verifiedVideos?.length) {
           throw createError({ statusCode: 400, statusMessage: 'Некорректные данные видео' })
         }
 
-        const rows: Array<{
-          class_id: string
-          title: string
-          youtube_url: string
-          sort_order: number
-        }> = []
-        for (let i = 0; i < raw.length; i++) {
-          const entry = raw[i] as {
-            title?: unknown
-            youtube_url?: unknown
-            sort_order?: unknown
-          }
-          const urlRaw = String(entry?.youtube_url || '').trim()
-          const safe = sanitizeYoutubeUrl(urlRaw)
-          if (!safe || !youtubeEmbedUrl(urlRaw)) {
-            throw createError({ statusCode: 400, statusMessage: 'Некорректная ссылка на YouTube' })
-          }
-          const titleRaw = String(entry?.title || '').trim()
-          rows.push({
-            class_id: proposal.class_id,
-            title: titleRaw.slice(0, 120) || `Видео ${i + 1}`,
-            youtube_url: safe,
-            sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
-          })
-        }
+        const rows = verifiedVideos.map((v) => ({
+          class_id: proposal.class_id,
+          title: v.title,
+          youtube_url: v.youtube_url,
+          sort_order: v.sort_order,
+        }))
 
         await tx`delete from class_videos where class_id = ${proposal.class_id}`
         await tx`

@@ -21,9 +21,8 @@
           Войти как суперадмин
         </UiButton>
 
-        <Teleport to="body">
+        <Teleport v-if="openLogin" to="body">
           <div
-            v-if="openLogin"
             :class="[$style.backdrop, obscured && $style.obscured]"
             @click.self="closeLogin"
           >

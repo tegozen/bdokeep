@@ -27,7 +27,7 @@ export function sanitizeYoutubeUrl(raw: string): string | null {
   return url.toString()
 }
 
-export function youtubeEmbedUrl(raw: string): string | null {
+export function youtubeVideoId(raw: string): string | null {
   const safe = sanitizeYoutubeUrl(raw)
   if (!safe) return null
 
@@ -47,6 +47,11 @@ export function youtubeEmbedUrl(raw: string): string | null {
   }
 
   if (!id || !/^[\w-]{6,32}$/.test(id)) return null
+  return id
+}
 
+export function youtubeEmbedUrl(raw: string): string | null {
+  const id = youtubeVideoId(raw)
+  if (!id) return null
   return `https://www.youtube-nocookie.com/embed/${id}`
 }

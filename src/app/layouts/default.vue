@@ -7,72 +7,80 @@
             <span :class="$style.brandMark">BDO</span>
             <span :class="$style.brandName">Keep</span>
           </NuxtLink>
-          <a
-            v-if="headerClass"
-            href="#summary"
-            :class="$style.classMeta"
-            :aria-label="`${headerClass.name_ru} — суть`"
-          >
-            <ClassIcon
-              :slug="headerClass.slug"
-              :icon-url="headerClass.icon_url"
-              :label="headerClass.name_ru"
-              size="sm"
-            />
-            <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
-          </a>
-          <nav
-            v-if="headerToc?.length"
-            :class="$style.toc"
-            aria-label="Разделы гайда"
-          >
-            <a v-for="item in headerToc" :key="item.id" :href="`#${item.id}`">{{ item.label }}</a>
-          </nav>
+          <!--
+            headerClass is set from the page child after layout render starts on SSR,
+            so keep this client-only to avoid hydration mismatches.
+          -->
+          <ClientOnly>
+            <a
+              v-if="headerClass"
+              href="#summary"
+              :class="$style.classMeta"
+              :aria-label="`${headerClass.name_ru} — суть`"
+            >
+              <ClassIcon
+                :slug="headerClass.slug"
+                :icon-url="headerClass.icon_url"
+                :label="headerClass.name_ru"
+                size="sm"
+              />
+              <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
+            </a>
+            <nav
+              v-if="headerToc?.length"
+              :class="$style.toc"
+              aria-label="Разделы гайда"
+            >
+              <a v-for="item in headerToc" :key="item.id" :href="`#${item.id}`">{{ item.label }}</a>
+            </nav>
+          </ClientOnly>
         </div>
         <div :class="$style.auth">
-          <div v-if="headerClass" :class="$style.filters">
-            <div
-              :class="$style.modeTabs"
-              role="tablist"
-              aria-label="Пробуждение или наследие"
-            >
-              <button
-                type="button"
-                role="tab"
-                :aria-selected="specMode === 'awakening'"
-                :class="[$style.modeTab, specMode === 'awakening' && $style.modeTabOn]"
-                @click="specMode = 'awakening'"
+          <ClientOnly>
+            <div v-if="headerClass" :class="$style.filters">
+              <div
+                :class="$style.modeTabs"
+                role="tablist"
+                aria-label="Пробуждение или наследие"
               >
-                Пробуждение
-              </button>
-              <button
-                type="button"
-                role="tab"
-                :aria-selected="specMode === 'succession'"
-                :class="[$style.modeTab, specMode === 'succession' && $style.modeTabOn]"
-                @click="specMode = 'succession'"
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="specMode === 'awakening'"
+                  :class="[$style.modeTab, specMode === 'awakening' && $style.modeTabOn]"
+                  @click="specMode = 'awakening'"
+                >
+                  Пробуждение
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="specMode === 'succession'"
+                  :class="[$style.modeTab, specMode === 'succession' && $style.modeTabOn]"
+                  @click="specMode = 'succession'"
+                >
+                  Наследие
+                </button>
+              </div>
+              <div
+                :class="$style.modeTabs"
+                role="tablist"
+                aria-label="Пресет гайда"
               >
-                Наследие
-              </button>
+                <button
+                  v-for="p in guidePresets"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :aria-selected="guidePreset === p.id"
+                  :class="[$style.modeTab, guidePreset === p.id && $style.modeTabOn]"
+                  @click="guidePreset = p.id"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
             </div>
-            <div
-              :class="$style.modeTabs"
-              role="tablist"
-              aria-label="Пресет гайда"
-            >
-              <button
-                v-for="p in guidePresets"
-                :key="p.id"
-                type="button"
-                role="tab"
-                :aria-selected="guidePreset === p.id"
-                :class="[$style.modeTab, guidePreset === p.id && $style.modeTabOn]"
-                @click="guidePreset = p.id"
-              >
-                {{ p.label }}
-              </button>
-            </div>
-          </div>
+          </ClientOnly>
           <NuxtLink
             v-if="isSuperadmin"
             to="/admin/proposals?status=pending"

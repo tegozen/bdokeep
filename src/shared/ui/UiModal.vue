@@ -1,7 +1,6 @@
 <template>
-  <Teleport to="body">
+  <Teleport v-if="open" to="body">
     <div
-      v-if="open"
       :class="[
         $style.backdrop,
         full && $style.backdropFull,
