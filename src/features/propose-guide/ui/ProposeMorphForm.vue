@@ -137,8 +137,16 @@
                 <SuperadminAuth />
 
                 <label v-if="!isSuperadmin" :class="$style.label">
-                  Ник / Discord (необязательно)
-                  <input v-model="author" type="text" :class="$style.input" maxlength="80">
+                  Игровой ник
+                  <input
+                    v-model="author"
+                    type="text"
+                    :class="$style.input"
+                    maxlength="80"
+                    required
+                    autocomplete="nickname"
+                    placeholder="Как вас зовут в игре"
+                  >
                 </label>
 
                 <p v-if="formError" :class="$style.error">{{ formError }}</p>
@@ -396,6 +404,11 @@ watch(activePreset, () => {
 async function onSubmit() {
   formError.value = ''
   if (honeypot.value) return
+
+  if (!isSuperadmin.value && !author.value.trim()) {
+    formError.value = 'Укажите игровой ник'
+    return
+  }
 
   const morphs: Array<{
     preset: MorphPresetId

@@ -142,8 +142,16 @@
                 <SuperadminAuth />
 
                 <label v-if="!isSuperadmin" :class="$style.label">
-                  Ник / Discord (необязательно)
-                  <input v-model="author" type="text" :class="$style.input" maxlength="80">
+                  Игровой ник
+                  <input
+                    v-model="author"
+                    type="text"
+                    :class="$style.input"
+                    maxlength="80"
+                    required
+                    autocomplete="nickname"
+                    placeholder="Как вас зовут в игре"
+                  >
                 </label>
 
                 <p v-if="formError" :class="$style.error">{{ formError }}</p>
@@ -425,6 +433,10 @@ function close() {
 
 async function onSubmit() {
   formError.value = ''
+  if (!isSuperadmin.value && !author.value.trim()) {
+    formError.value = 'Укажите игровой ник'
+    return
+  }
   const crystalsPayload: Array<{
     preset: CrystalPresetId
     slot: string

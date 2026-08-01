@@ -140,7 +140,7 @@ async function onApprove() {
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(100%, 1920px);
+  width: var(--summary-edit-modal-width);
   height: 100%;
   overflow: hidden;
   border: 1px solid var(--color-border);

@@ -427,7 +427,11 @@ export default defineEventHandler(async (event) => {
   if (body.author_label != null && String(body.author_label).trim()) {
     authorLabel = String(body.author_label).trim().slice(0, MAX_AUTHOR_LEN)
   }
-  if (asSuperadmin && !authorLabel) {
+  if (!asSuperadmin) {
+    if (!authorLabel) {
+      throw createError({ statusCode: 400, statusMessage: 'Укажите игровой ник' })
+    }
+  } else if (!authorLabel) {
     authorLabel = 'superadmin'
   }
 

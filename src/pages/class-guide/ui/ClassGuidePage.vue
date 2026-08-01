@@ -20,32 +20,34 @@
     </template>
 
     <template v-else>
-      <GuideSection title="Суть" anchor="summary">
-        <template v-if="sectionCount('summary')" #badge>
-          <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
-        </template>
-        <template #actions>
-          <ProposeGuideForm
-            :class-slug="bundle.class.slug"
-            section="summary"
-            :initial-text="bundle.guide?.summary"
-          />
-        </template>
-        <div v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
-          <UiMarkdownPreview
-            id="class-summary-preview"
-            :model-value="bundle.guide.summary"
-          />
-        </div>
-        <ShowEmptyGuide v-else />
-        <PendingSectionDrafts
-          v-if="isSuperadmin"
-          :proposals="pendingFor('summary')"
-          @changed="onDraftChanged"
-        />
-      </GuideSection>
-
       <div :class="$style.comboMorphRow">
+        <div :class="$style.comboMorphCell">
+          <GuideSection flush title="Суть" anchor="summary">
+            <template v-if="sectionCount('summary')" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
+            </template>
+            <template #actions>
+              <ProposeGuideForm
+                :class-slug="bundle.class.slug"
+                section="summary"
+                :initial-text="bundle.guide?.summary"
+              />
+            </template>
+            <div v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
+              <UiMarkdownPreview
+                id="class-summary-preview"
+                :model-value="bundle.guide.summary"
+              />
+            </div>
+            <ShowEmptyGuide v-else />
+            <PendingSectionDrafts
+              v-if="isSuperadmin"
+              :proposals="pendingFor('summary')"
+              @changed="onDraftChanged"
+            />
+          </GuideSection>
+        </div>
+
         <div :class="$style.comboMorphCell">
           <GuideSection flush title="Комба" anchor="combo">
             <template v-if="comboPendingCount" #badge>
@@ -584,7 +586,7 @@ const morphFilled = computed(() => {
 
 .comboMorphRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 1px;
   margin-bottom: 2.5rem;
   background: var(--color-border);

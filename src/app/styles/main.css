@@ -45,6 +45,30 @@
 }
 
 @layer base {
+  :root {
+    /* Page shell + class guide top row (Суть | Комба | Морфы). */
+    --page-gutter: 1rem;
+    --page-max: 1920px;
+    --page-width: min(calc(100vw - 2 * var(--page-gutter)), var(--page-max));
+    /* One cell in the 3-col row (borders/gaps ≈ 4px). */
+    --guide-col-width: calc((var(--page-width) - 4px) / 3);
+    /*
+      Summary edit modal: editor+preview panes ≈ one guide column each,
+      plus modal body padding (1rem × 2).
+    */
+    --summary-edit-modal-width: min(
+      calc(100vw - 2 * var(--page-gutter)),
+      calc(var(--guide-col-width) * 2 + 2rem)
+    );
+  }
+
+  @media (max-width: 1100px) {
+    :root {
+      /* Stacked layout: column ≈ full page width → modal nearly full. */
+      --summary-edit-modal-width: min(calc(100vw - 2 * var(--page-gutter)), var(--page-max));
+    }
+  }
+
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
