@@ -1,8 +1,8 @@
 <template>
   <div :class="$style.wrap">
-    <button type="button" :class="$style.trigger" @click="open = true">
+    <UiButton type="button" @click="open = true">
       {{ triggerLabel }}
-    </button>
+    </UiButton>
 
     <Teleport to="body">
       <div
@@ -153,12 +153,12 @@
                 <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
 
                 <div :class="$style.actions">
-                  <button type="button" :class="$style.secondary" @click="requestClose">Отмена</button>
-                  <button type="submit" :class="$style.primary" :disabled="submitting || done">
+                  <UiButton variant="secondary" type="button" @click="requestClose">Отмена</UiButton>
+                  <UiButton type="submit" :disabled="submitting || done">
                     {{
                       submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
                     }}
-                  </button>
+                  </UiButton>
                 </div>
               </div>
             </div>
@@ -197,6 +197,7 @@ import {
   type MorphPresetId,
   type MorphSlotLevel,
 } from '@/shared/lib'
+import { UiButton } from '@/shared/ui'
 import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { submitGuideProposal } from '../api/submitProposal'
 
@@ -218,7 +219,7 @@ const props = withDefaults(
     initialMorphs?: GuideMorphRow[]
   }>(),
   {
-    triggerLabel: 'Предложить морфы',
+    triggerLabel: 'Предложить',
     initialMorphs: () => [],
   },
 )
@@ -521,16 +522,6 @@ async function onSubmit() {
   display: inline-flex;
 }
 
-.trigger {
-  border: 1px solid var(--color-border-strong);
-  background: transparent;
-  color: var(--color-gold);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
-  padding: 0.35rem 0.7rem;
-}
-
 .backdrop {
   position: fixed;
   inset: 0;
@@ -733,26 +724,6 @@ async function onSubmit() {
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.75rem;
-}
-
-.primary,
-.secondary {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.88rem;
-  padding: 0.4rem 0.75rem;
-}
-
-.primary {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.secondary {
-  color: var(--color-muted);
 }
 
 .muted {

@@ -23,12 +23,12 @@
         <div :class="$style.body">
           <p :id="messageId" :class="$style.message">{{ request.message }}</p>
           <div :class="$style.actions">
-            <button type="button" :class="$style.secondary" @click="settle(false)">
+            <UiButton variant="secondary" type="button" @click="settle(false)">
               {{ request.cancelLabel || 'Отмена' }}
-            </button>
-            <button type="button" :class="$style.primary" @click="settle(true)">
+            </UiButton>
+            <UiButton type="button" @click="settle(true)">
               {{ request.confirmLabel || 'Подтвердить' }}
-            </button>
+            </UiButton>
           </div>
         </div>
       </div>
@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import { useConfirm, useModalEscape } from '@/shared/lib'
+import UiButton from './UiButton.vue'
 
 const titleId = useId()
 const messageId = useId()
@@ -119,22 +120,4 @@ const { obscured } = useModalEscape(confirmOpen, () => settle(false))
   gap: 0.5rem;
 }
 
-.primary,
-.secondary {
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.45rem 0.9rem;
-}
-
-.primary {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.secondary {
-  background: transparent;
-  color: var(--color-muted);
-}
 </style>

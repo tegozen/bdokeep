@@ -32,17 +32,12 @@
           <p v-if="error" :class="$style.error">{{ error }}</p>
 
           <div :class="$style.actions">
-            <button type="button" :class="$style.secondary" :disabled="submitting" @click="requestClose">
+            <UiButton variant="secondary" type="button" :disabled="submitting" @click="requestClose">
               Отмена
-            </button>
-            <button
-              type="button"
-              :class="$style.primary"
-              :disabled="submitting"
-              @click="onApprove"
-            >
+            </UiButton>
+            <UiButton type="button" :disabled="submitting" @click="onApprove">
               {{ submitting ? 'Одобрение…' : 'Одобрить с правками' }}
-            </button>
+            </UiButton>
           </div>
         </div>
       </div>
@@ -54,7 +49,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { approveProposal } from '../api/pendingProposals'
 import { useUnsavedGuard } from '@/shared/lib'
-import { UiMarkdownEditor } from '@/shared/ui'
+import { UiButton, UiMarkdownEditor } from '@/shared/ui'
 
 const props = defineProps<{
   open: boolean
@@ -237,28 +232,4 @@ async function onApprove() {
   gap: 0.5rem;
 }
 
-.primary,
-.secondary {
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.45rem 0.9rem;
-}
-
-.primary {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.primary:disabled,
-.secondary:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.secondary {
-  background: transparent;
-  color: var(--color-muted);
-}
 </style>

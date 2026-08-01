@@ -11,19 +11,16 @@
         @keydown.enter.prevent="$emit('login')"
       >
     </label>
-    <button
-      type="button"
-      :class="$style.secondary"
-      :disabled="busy"
-      @click="$emit('login')"
-    >
+    <UiButton type="button" :disabled="busy" @click="$emit('login')">
       {{ busy ? '…' : 'Войти' }}
-    </button>
+    </UiButton>
     <p v-if="error" :class="$style.error">{{ error }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
+import { UiButton } from '@/shared/ui'
+
 defineProps<{
   password: string
   busy: boolean
@@ -59,20 +56,6 @@ function onInput(e: Event) {
   color: var(--color-ink);
   font: inherit;
   padding: 0.5rem 0.65rem;
-}
-
-.secondary {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.45rem 0.9rem;
-}
-
-.secondary:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 .error {

@@ -1,8 +1,8 @@
 <template>
   <div :class="$style.wrap">
-    <button type="button" :class="$style.trigger" @click="open = true">
+    <UiButton type="button" @click="open = true">
       {{ triggerLabel }}
-    </button>
+    </UiButton>
 
     <Teleport to="body">
       <div
@@ -209,8 +209,8 @@
             <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
 
             <div :class="$style.actions">
-              <button type="button" :class="$style.secondary" @click="requestClose">Отмена</button>
-              <button type="submit" :class="$style.primary" :disabled="submitting || done">
+              <UiButton variant="secondary" type="button" @click="requestClose">Отмена</UiButton>
+              <UiButton type="submit" :disabled="submitting || done">
                 {{
                   submitting
                     ? 'Отправка…'
@@ -218,7 +218,7 @@
                       ? 'Опубликовать'
                       : 'Отправить'
                 }}
-              </button>
+              </UiButton>
             </div>
           </form>
         </div>
@@ -246,7 +246,7 @@ import {
   useUnsavedGuard,
   type CrystalPresetId,
 } from '@/shared/lib'
-import { UiMarkdownEditor } from '@/shared/ui'
+import { UiButton, UiMarkdownEditor } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
 
 type PickItem = { id: string; name_ru: string; icon_url: string | null }
@@ -587,20 +587,6 @@ async function onSubmit() {
 <style module>
 .wrap {
   display: inline-flex;
-}
-
-.trigger {
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.88rem;
-  padding: 0.35rem 0.75rem;
-}
-
-.trigger:hover {
-  background: color-mix(in srgb, var(--color-gold) 22%, transparent);
 }
 
 .backdrop {
@@ -950,30 +936,6 @@ async function onSubmit() {
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.25rem;
-}
-
-.primary,
-.secondary {
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.45rem 0.9rem;
-}
-
-.primary {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.primary:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.secondary {
-  background: transparent;
-  color: var(--color-muted);
 }
 
 .muted {

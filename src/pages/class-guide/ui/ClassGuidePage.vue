@@ -58,7 +58,6 @@
                 :key="comboSection"
                 :class-slug="bundle.class.slug"
                 :section="comboSection"
-                trigger-label="Предложить комбу"
               />
             </template>
 
@@ -166,7 +165,6 @@
               <ProposeGuideForm
                 :class-slug="bundle.class.slug"
                 section="buffs"
-                trigger-label="Предложить забаф"
                 :initial-buffs="bundle.buffs"
               />
             </template>

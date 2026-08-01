@@ -11,17 +11,15 @@
       </div>
 
       <template v-else>
-        <button
+        <UiButton
           type="button"
-          :class="[
-            $style.trigger,
-            compact && $style.triggerCompact,
-            !$slots.default && !compact && $style.triggerWide,
-          ]"
+          :variant="compact ? 'ghost' : 'secondary'"
+          :size="compact ? 'sm' : 'md'"
+          :class="!$slots.default && !compact && $style.triggerWide"
           @click="openLogin = true"
         >
           Войти как суперадмин
-        </button>
+        </UiButton>
 
         <Teleport to="body">
           <div
@@ -59,6 +57,7 @@
 
 <script setup lang="ts">
 import { useModalEscape, useSuperadmin } from '@/shared/lib'
+import { UiButton } from '@/shared/ui'
 import LoginFields from './LoginFields.vue'
 
 withDefaults(defineProps<{ compact?: boolean }>(), {
@@ -159,34 +158,8 @@ async function onLogout() {
   line-height: 1;
 }
 
-.trigger {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.88rem;
-  white-space: nowrap;
-  padding: 0.5rem 0.75rem;
-  line-height: 1.25;
-}
-
-.triggerCompact {
-  box-sizing: border-box;
-  height: 2rem;
-  font-size: 0.82rem;
-  padding: 0 0.65rem;
-  line-height: 1;
-}
-
 .triggerWide {
   width: 100%;
-  text-align: left;
-}
-
-.trigger:hover {
-  border-color: var(--color-border-strong);
-  color: var(--color-gold-soft);
 }
 
 .linkish {

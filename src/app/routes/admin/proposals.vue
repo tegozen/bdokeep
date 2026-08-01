@@ -10,7 +10,7 @@
         <input v-model="password" type="password" :class="$style.input" required autocomplete="current-password">
       </label>
       <p v-if="loginError" :class="$style.error">{{ loginError }}</p>
-      <button type="submit" :class="$style.primary" :disabled="busy">Войти</button>
+      <UiButton type="submit" :disabled="busy">Войти</UiButton>
     </form>
 
     <template v-else>
@@ -32,9 +32,9 @@
         >
           Класс: {{ classFilter }} ×
         </button>
-        <button type="button" :class="$style.ghost" :disabled="loading" @click="load">
+        <UiButton variant="ghost" type="button" :disabled="loading" @click="load">
           Обновить
-        </button>
+        </UiButton>
       </div>
 
       <p v-if="loading" :class="$style.muted">Загрузка…</p>
@@ -170,31 +170,30 @@
           <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
 
           <div v-if="item.status === 'pending'" :class="$style.actions">
-            <button
+            <UiButton
               v-if="item.section === 'summary'"
+              variant="ghost"
               type="button"
-              :class="$style.ghost"
               :disabled="acting === item.id"
               @click="startEdit(item)"
             >
               Редактировать
-            </button>
-            <button
+            </UiButton>
+            <UiButton
               type="button"
-              :class="$style.primary"
               :disabled="acting === item.id"
               @click="approve(item)"
             >
               Одобрить
-            </button>
-            <button
+            </UiButton>
+            <UiButton
+              variant="danger"
               type="button"
-              :class="$style.danger"
               :disabled="acting === item.id"
               @click="reject(item.id)"
             >
               Отклонить
-            </button>
+            </UiButton>
           </div>
           <p v-if="item.review_note" :class="$style.muted">Заметка: {{ item.review_note }}</p>
         </li>
@@ -217,7 +216,7 @@ import type { Buff, Skill } from '@/entities/class'
 import { resolveCatalogIds } from '@/shared/api/catalogResolve'
 import { ReviewSummaryModal } from '@/features/superadmin-auth'
 import { CRYSTAL_PRESETS, type CrystalPresetId, usePendingSummary, useSuperadmin } from '@/shared/lib'
-import { UiMarkdownPreview } from '@/shared/ui'
+import { UiButton, UiMarkdownPreview } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
@@ -710,10 +709,7 @@ onMounted(async () => {
   margin-bottom: 1.25rem;
 }
 
-.chip,
-.ghost,
-.primary,
-.danger {
+.chip {
   border: 1px solid var(--color-border);
   background: transparent;
   color: var(--color-ink);
@@ -726,21 +722,6 @@ onMounted(async () => {
   border-color: var(--color-border-strong);
   background: var(--color-gold-dim);
   color: var(--color-gold);
-}
-
-.primary {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.danger {
-  border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
-  color: var(--color-danger);
-}
-
-.ghost {
-  color: var(--color-muted);
 }
 
 .list {

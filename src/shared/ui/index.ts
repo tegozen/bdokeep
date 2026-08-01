@@ -1,5 +1,6 @@
 export { default as UiSkeleton } from './UiSkeleton.vue'
 export { default as UiEmptyState } from './UiEmptyState.vue'
 export { default as UiConfirm } from './UiConfirm.vue'
+export { default as UiButton } from './UiButton.vue'
 export { default as UiMarkdownPreview } from './UiMarkdownPreview.vue'
 export { default as UiMarkdownEditor } from './UiMarkdownEditor.vue'

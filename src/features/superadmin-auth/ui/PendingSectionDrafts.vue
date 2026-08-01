@@ -11,31 +11,33 @@
           <template v-if="comboLabel(item.section)"> · {{ comboLabel(item.section) }}</template>
         </span>
         <div :class="$style.actions">
-          <button
+          <UiButton
             v-if="item.section === 'summary'"
+            variant="ghost"
+            size="sm"
             type="button"
-            :class="$style.edit"
             :disabled="acting === item.id"
             @click="startEdit(item)"
           >
             Редактировать
-          </button>
-          <button
+          </UiButton>
+          <UiButton
+            size="sm"
             type="button"
-            :class="$style.approve"
             :disabled="acting === item.id"
             @click="onApprove(item)"
           >
             Одобрить
-          </button>
-          <button
+          </UiButton>
+          <UiButton
+            variant="danger"
+            size="sm"
             type="button"
-            :class="$style.reject"
             :disabled="acting === item.id"
             @click="onReject(item.id)"
           >
             Отклонить
-          </button>
+          </UiButton>
         </div>
       </header>
 
@@ -195,7 +197,7 @@ import {
   type MorphPresetId,
   type MorphSlotLevel,
 } from '@/shared/lib'
-import { UiMarkdownPreview } from '@/shared/ui'
+import { UiButton, UiMarkdownPreview } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
@@ -653,37 +655,4 @@ watch(
   margin-left: auto;
 }
 
-.approve,
-.reject,
-.edit {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.78rem;
-  line-height: 1.2;
-  padding: 0.25rem 0.55rem;
-}
-
-.approve {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.edit {
-  color: var(--color-ink);
-}
-
-.reject {
-  border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
-  color: var(--color-danger);
-}
-
-.approve:disabled,
-.reject:disabled,
-.edit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 </style>

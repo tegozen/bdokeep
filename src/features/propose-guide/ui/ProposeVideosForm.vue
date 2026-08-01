@@ -1,8 +1,8 @@
 <template>
   <div :class="$style.wrap">
-    <button type="button" :class="$style.trigger" @click="open = true">
+    <UiButton type="button" @click="open = true">
       {{ triggerLabel }}
-    </button>
+    </UiButton>
 
     <Teleport to="body">
       <div
@@ -82,12 +82,12 @@
             <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
 
             <div :class="$style.actions">
-              <button type="button" :class="$style.secondary" @click="requestClose">Отмена</button>
-              <button type="submit" :class="$style.primary" :disabled="submitting || done">
+              <UiButton variant="secondary" type="button" @click="requestClose">Отмена</UiButton>
+              <UiButton type="submit" :disabled="submitting || done">
                 {{
                   submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
                 }}
-              </button>
+              </UiButton>
             </div>
           </form>
         </div>
@@ -101,6 +101,7 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import type { ClassVideo } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import { sanitizeYoutubeUrl, useSuperadmin, useUnsavedGuard, youtubeEmbedUrl } from '@/shared/lib'
+import { UiButton } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
 
 const MAX = 3
@@ -114,7 +115,7 @@ const props = withDefaults(
     initialVideos?: ClassVideo[]
   }>(),
   {
-    triggerLabel: 'Предложить видео',
+    triggerLabel: 'Предложить',
     initialVideos: () => [],
   },
 )
@@ -246,20 +247,6 @@ async function onSubmit() {
 <style module>
 .wrap {
   display: inline-flex;
-}
-
-.trigger {
-  border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-gold) 12%, transparent);
-  color: var(--color-gold);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.88rem;
-  padding: 0.35rem 0.7rem;
-}
-
-.trigger:hover {
-  background: color-mix(in srgb, var(--color-gold) 22%, transparent);
 }
 
 .backdrop {
@@ -406,24 +393,4 @@ async function onSubmit() {
   gap: 0.55rem;
 }
 
-.secondary,
-.primary {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-ink);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.45rem 0.85rem;
-}
-
-.primary {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.primary:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
 </style>
