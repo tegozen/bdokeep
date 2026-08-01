@@ -1,108 +1,56 @@
 <template>
-  <div :class="$style.wrap">
-    <UiButton type="button" @click="open = true">
-      {{ triggerLabel }}
-    </UiButton>
+  <ProposeModalShell
+    v-model:open="open"
+    v-model:honeypot="honeypot"
+    v-model:author="author"
+    title="Предложить видео"
+    :trigger-label="triggerLabel"
+    :submitting="submitting"
+    :form-error="formError"
+    :obscured="obscured"
+    :is-superadmin="isSuperadmin"
+    :request-close="requestClose"
+    size="lg"
+    @submit="onSubmit"
+  >
+    <p :class="$style.hint">До 3 ссылок на YouTube. Пустые слоты не сохранятся.</p>
 
-    <Teleport to="body">
-      <div
-        v-if="open"
-        :class="[$style.backdrop, obscured && $style.obscured]"
-        @click.self="requestClose"
-      >
-        <div
-          :class="$style.modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Предложить видео"
+    <div :class="$style.slots">
+      <label v-for="(slot, i) in slots" :key="i" :class="$style.slot">
+        <span :class="$style.slotLabel">Видео {{ i + 1 }}</span>
+        <input
+          v-model="slot.url"
+          type="url"
+          :class="$style.input"
+          placeholder="https://www.youtube.com/watch?v=…"
+          maxlength="500"
         >
-          <header :class="$style.head">
-            <h3 :class="$style.title">Предложить видео</h3>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
-              ×
-            </button>
-          </header>
-
-          <form :class="$style.form" @submit.prevent="onSubmit">
-            <input
-              v-model="honeypot"
-              type="text"
-              name="website"
-              autocomplete="off"
-              tabindex="-1"
-              :class="$style.honey"
-              aria-hidden="true"
-            >
-
-            <SuperadminAuth>
-              <label :class="$style.label">
-                Игровой ник
-                <input
-                  v-model="author"
-                  type="text"
-                  :class="$style.input"
-                  maxlength="80"
-                  required
-                  autocomplete="nickname"
-                  placeholder="Как вас зовут в игре"
-                >
-              </label>
-            </SuperadminAuth>
-
-            <p :class="$style.hint">До 3 ссылок на YouTube. Пустые слоты не сохранятся.</p>
-
-            <div :class="$style.slots">
-              <label v-for="(slot, i) in slots" :key="i" :class="$style.slot">
-                <span :class="$style.slotLabel">Видео {{ i + 1 }}</span>
-                <input
-                  v-model="slot.url"
-                  type="url"
-                  :class="$style.input"
-                  placeholder="https://www.youtube.com/watch?v=…"
-                  maxlength="500"
-                >
-                <div v-if="embedOf(slot.url)" :class="$style.preview">
-                  <iframe
-                    :src="embedOf(slot.url)!"
-                    :title="`Превью ${i + 1}`"
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    :class="$style.iframe"
-                  />
-                </div>
-                <p v-else-if="slot.url.trim()" :class="$style.errorInline">
-                  Некорректная ссылка
-                </p>
-              </label>
-            </div>
-
-            <p v-if="formError" :class="$style.error">{{ formError }}</p>
-            <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
-
-            <div :class="$style.actions">
-              <UiButton variant="secondary" type="button" @click="requestClose">Отмена</UiButton>
-              <UiButton type="submit" :disabled="submitting || done">
-                {{
-                  submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
-                }}
-              </UiButton>
-            </div>
-          </form>
+        <div v-if="embedOf(slot.url)" :class="$style.preview">
+          <iframe
+            :src="embedOf(slot.url)!"
+            :title="`Превью ${i + 1}`"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            referrerpolicy="strict-origin-when-cross-origin"
+            :class="$style.iframe"
+          />
         </div>
-      </div>
-    </Teleport>
-  </div>
+        <p v-else-if="slot.url.trim()" :class="$style.errorInline">
+          Некорректная ссылка
+        </p>
+      </label>
+    </div>
+  </ProposeModalShell>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { reactive } from 'vue'
 import type { ClassVideo } from '@/entities/class'
-import { SuperadminAuth } from '@/features/superadmin-auth'
-import { sanitizeYoutubeUrl, useSuperadmin, useUnsavedGuard, youtubeEmbedUrl } from '@/shared/lib'
-import { UiButton } from '@/shared/ui'
+import { sanitizeYoutubeUrl, youtubeEmbedUrl } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
+import { useProposeModal } from '../lib/useProposeModal'
+import ProposeModalShell from './ProposeModalShell.vue'
 
 const MAX = 3
 
@@ -120,34 +68,26 @@ const props = withDefaults(
   },
 )
 
-const { isSuperadmin, refresh: refreshAdmin } = useSuperadmin()
-
-const open = ref(false)
-const honeypot = ref('')
-const author = ref('')
 const slots = reactive<Slot[]>([{ url: '' }, { url: '' }, { url: '' }])
-const submitting = ref(false)
-const formError = ref('')
-const done = ref(false)
-const doneMessage = ref('')
-const baseline = ref('')
 
-function serializeState() {
-  return JSON.stringify(slots.map((s) => s.url))
-}
-
-const dirty = computed(
-  () => open.value && !done.value && baseline.value !== '' && serializeState() !== baseline.value,
-)
-
-function close() {
-  open.value = false
-}
-
-const { requestClose, obscured } = useUnsavedGuard({
-  active: open,
-  dirty,
-  onClose: close,
+const {
+  open,
+  honeypot,
+  author,
+  submitting,
+  formError,
+  obscured,
+  requestClose,
+  isSuperadmin,
+  runSubmit,
+} = useProposeModal({
+  serialize: () => JSON.stringify(slots.map((s) => s.url)),
+  onOpen: () => {
+    hydrateFromInitial()
+  },
+  onReset: () => {
+    for (let i = 0; i < MAX; i++) slots[i]!.url = ''
+  },
 })
 
 function embedOf(url: string) {
@@ -162,160 +102,39 @@ function hydrateFromInitial() {
   }
 }
 
-function reset() {
-  honeypot.value = ''
-  author.value = ''
-  for (let i = 0; i < MAX; i++) slots[i]!.url = ''
-  formError.value = ''
-  done.value = false
-  doneMessage.value = ''
-  submitting.value = false
-}
-
-watch(open, async (v) => {
-  if (v) {
-    baseline.value = ''
-    formError.value = ''
-    done.value = false
-    hydrateFromInitial()
-    await refreshAdmin()
-    await nextTick()
-    baseline.value = serializeState()
-  } else {
-    baseline.value = ''
-    reset()
-  }
-})
-
 async function onSubmit() {
-  formError.value = ''
-  if (!isSuperadmin.value && !author.value.trim()) {
-    formError.value = 'Укажите игровой ник'
-    return
-  }
-  const videos: Array<{ title: string; youtube_url: string; sort_order: number }> = []
-  for (let i = 0; i < MAX; i++) {
-    const raw = slots[i]!.url.trim()
-    if (!raw) continue
-    const safe = sanitizeYoutubeUrl(raw)
-    if (!safe || !youtubeEmbedUrl(raw)) {
-      formError.value = `Слот ${i + 1}: некорректная ссылка на YouTube`
-      return
+  await runSubmit(async () => {
+    const videos: Array<{ title: string; youtube_url: string; sort_order: number }> = []
+    for (let i = 0; i < MAX; i++) {
+      const raw = slots[i]!.url.trim()
+      if (!raw) continue
+      const safe = sanitizeYoutubeUrl(raw)
+      if (!safe || !youtubeEmbedUrl(raw)) {
+        formError.value = `Слот ${i + 1}: некорректная ссылка на YouTube`
+        return null
+      }
+      videos.push({
+        title: `Видео ${videos.length + 1}`,
+        youtube_url: safe,
+        sort_order: videos.length,
+      })
     }
-    videos.push({
-      title: `Видео ${videos.length + 1}`,
-      youtube_url: safe,
-      sort_order: videos.length,
-    })
-  }
-  if (!videos.length) {
-    formError.value = 'Добавьте хотя бы одну ссылку'
-    return
-  }
-
-  submitting.value = true
-  try {
-    const res = await submitGuideProposal({
+    if (!videos.length) {
+      formError.value = 'Добавьте хотя бы одну ссылку'
+      return null
+    }
+    return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'videos',
       payload: { videos },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
     })
-    done.value = true
-    close()
-    if (res.autoApproved) {
-      window.location.reload()
-    }
-  } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    formError.value = msg || 'Не удалось отправить'
-  } finally {
-    submitting.value = false
-  }
+  })
 }
 </script>
 
 <style module>
-.wrap {
-  display: inline-flex;
-}
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 1rem;
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  transition: filter 160ms ease;
-}
-
-.obscured {
-  filter: blur(10px);
-  pointer-events: none;
-  user-select: none;
-}
-
-.modal {
-  display: flex;
-  flex-direction: column;
-  width: min(100%, 52rem);
-  max-height: min(94vh, 48rem);
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-elevated);
-  box-shadow: var(--shadow-glow);
-}
-
-.head {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.85rem 1rem;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.05rem;
-}
-
-.close {
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
-  margin-left: auto;
-}
-
-.form {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.85rem;
-  min-height: 0;
-  overflow: auto;
-  padding: 1rem;
-}
-
-.honey {
-  position: absolute;
-  left: -9999px;
-  height: 0;
-  width: 0;
-  opacity: 0;
-}
-
 .hint {
   margin: 0;
   font-size: 0.88rem;
@@ -362,30 +181,9 @@ async function onSubmit() {
   border: 0;
 }
 
-.label {
-  display: grid;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-  color: var(--color-muted);
-}
-
-.errorInline,
-.error {
+.errorInline {
   margin: 0;
   color: var(--color-danger);
   font-size: 0.85rem;
 }
-
-.ok {
-  margin: 0;
-  color: var(--color-gold);
-  font-size: 0.88rem;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.55rem;
-}
-
 </style>

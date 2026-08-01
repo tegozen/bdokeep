@@ -27,9 +27,8 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
             </template>
             <template #actions>
-              <ProposeGuideForm
+              <ProposeSummaryForm
                 :class-slug="bundle.class.slug"
-                section="summary"
                 :initial-text="bundle.guide?.summary"
               />
             </template>
@@ -49,7 +48,7 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ comboPendingCount }}</span>
             </template>
             <template #actions>
-              <ProposeGuideForm
+              <ProposeComboForm
                 :key="comboSection"
                 :class-slug="bundle.class.slug"
                 :section="comboSection"
@@ -168,9 +167,8 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('buffs') }}</span>
             </template>
             <template #actions>
-              <ProposeGuideForm
+              <ProposeBuffsForm
                 :class-slug="bundle.class.slug"
-                section="buffs"
                 :initial-buffs="bundle.buffs"
               />
             </template>
@@ -241,13 +239,21 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
+import type { ClassGuideBundle } from '@/entities/class'
 import {
   fetchPendingForClass,
   PendingSectionDrafts,
   type PendingProposal,
 } from '@/features/superadmin-auth'
-import { ProposeCrystalForm, ProposeGuideForm, ProposeMorphForm, ProposeRelicForm, ProposeVideosForm } from '@/features/propose-guide'
+import {
+  ProposeBuffsForm,
+  ProposeComboForm,
+  ProposeCrystalForm,
+  ProposeMorphForm,
+  ProposeRelicForm,
+  ProposeSummaryForm,
+  ProposeVideosForm,
+} from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import {
   CRYSTAL_ALL_SLOTS,
@@ -390,8 +396,8 @@ const successionSteps = computed(
 const activeComboSteps = computed(() =>
   specMode.value === 'succession' ? successionSteps.value : awakeningSteps.value,
 )
-const comboSection = computed<ProposalSection>(() =>
-  specMode.value === 'succession' ? 'combo_succession' : 'combo_awakening',
+const comboSection = computed(() =>
+  specMode.value === 'succession' ? ('combo_succession' as const) : ('combo_awakening' as const),
 )
 
 const activeBuffs = computed(() =>
@@ -619,28 +625,6 @@ const morphFilled = computed(() => {
 .morphStage {
   width: 100%;
   min-width: 0;
-}
-
-.presetTabs {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.presetTab {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.82rem;
-  padding: 0.3rem 0.65rem;
-}
-
-.presetTabOn {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
 }
 
 .gearBlock {

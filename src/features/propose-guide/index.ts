@@ -1,4 +1,6 @@
-export { default as ProposeGuideForm } from './ui/ProposeGuideForm.vue'
+export { default as ProposeSummaryForm } from './ui/ProposeSummaryForm.vue'
+export { default as ProposeComboForm } from './ui/ProposeComboForm.vue'
+export { default as ProposeBuffsForm } from './ui/ProposeBuffsForm.vue'
 export { default as ProposeCrystalForm } from './ui/ProposeCrystalForm.vue'
 export { default as ProposeMorphForm } from './ui/ProposeMorphForm.vue'
 export { default as ProposeRelicForm } from './ui/ProposeRelicForm.vue'

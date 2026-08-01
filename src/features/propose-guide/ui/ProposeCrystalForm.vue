@@ -1,183 +1,93 @@
 <template>
-  <div :class="$style.wrap">
-    <UiButton type="button" @click="open = true">
-      {{ triggerLabel }}
-    </UiButton>
+  <ProposeModalShell
+    v-model:open="open"
+    v-model:honeypot="honeypot"
+    v-model:author="author"
+    title="Предложить инкрустацию"
+    :trigger-label="triggerLabel"
+    :submitting="submitting"
+    :form-error="formError"
+    :obscured="obscured"
+    :is-superadmin="isSuperadmin"
+    :request-close="requestClose"
+    size="xxl"
+    @submit="onSubmit"
+  >
+    <template #headerExtra>
+      <UiPresetTabs
+        v-model="activePreset"
+        :tabs="crystalPresets"
+        aria-label="Пресет инкрустации"
+      />
+    </template>
 
-    <Teleport to="body">
-      <div
-        v-if="open"
-        :class="[$style.backdrop, obscured && $style.obscured]"
-        @click.self="requestClose"
-      >
-        <div
-          :class="$style.modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Предложить инкрустацию"
-        >
-          <header :class="$style.head">
-            <h3 :class="$style.title">Предложить инкрустацию</h3>
-            <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
-              <button
-                v-for="p in crystalPresets"
-                :key="p.id"
-                type="button"
-                role="tab"
-                :aria-selected="activePreset === p.id"
-                :class="[$style.presetTab, activePreset === p.id && $style.presetTabOn]"
-                @click="activePreset = p.id"
+    <div :class="$style.workspace">
+      <div :class="$style.boardSide">
+        <div :class="$style.picked">
+          <p v-if="!pickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
+          <ul v-else :class="$style.pickedList">
+            <li v-for="row in pickedList" :key="row.id" :class="$style.pickedItem">
+              <img
+                v-if="row.icon_url"
+                :src="row.icon_url"
+                alt=""
+                :class="$style.pickedIcon"
+                loading="lazy"
               >
-                {{ p.label }}
-              </button>
-            </div>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
-              ×
-            </button>
-          </header>
+              <span :class="$style.pickedName">{{ row.name_ru }}</span>
+              <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+            </li>
+          </ul>
+        </div>
 
-          <form :class="$style.form" @submit.prevent="onSubmit">
-            <input
-              v-model="honeypot"
-              type="text"
-              name="website"
-              autocomplete="off"
-              tabindex="-1"
-              :class="$style.honey"
-              aria-hidden="true"
-            >
-
-            <SuperadminAuth>
-              <label :class="$style.label">
-                Игровой ник
-                <input
-                  v-model="author"
-                  type="text"
-                  :class="$style.input"
-                  maxlength="80"
-                  required
-                  autocomplete="nickname"
-                  placeholder="Как вас зовут в игре"
-                >
-              </label>
-            </SuperadminAuth>
-
-            <div :class="$style.workspace">
-              <div :class="$style.boardSide">
-                <div :class="$style.picked">
-                  <p v-if="!pickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
-                  <ul v-else :class="$style.pickedList">
-                    <li v-for="row in pickedList" :key="row.id" :class="$style.pickedItem">
-                      <img
-                        v-if="row.icon_url"
-                        :src="row.icon_url"
-                        alt=""
-                        :class="$style.pickedIcon"
-                        loading="lazy"
-                      >
-                      <span :class="$style.pickedName">{{ row.name_ru }}</span>
-                      <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div :class="$style.left">
-                  <CrystalBoard
-                    :filled="filledMap"
-                    :selected-id="activeSlot"
-                    interactive
-                    fill
-                    :fill-width="boardWidth"
-                    @select="onSelectSlot"
-                    @clear="clearSlot"
-                  />
-                </div>
-              </div>
-
-              <div ref="rightMainEl" :class="$style.rightMain">
-                <div
-                  :class="[$style.tabs, !tabsEnabled && $style.tabsOff]"
-                  role="tablist"
-                  aria-label="Категория кристаллов"
-                >
-                  <button
-                    v-for="tab in crystalTabs"
-                    :key="tab.id"
-                    type="button"
-                    role="tab"
-                    :aria-selected="crystalTab === tab.id"
-                    :aria-disabled="!tabsEnabled"
-                    :disabled="!tabsEnabled"
-                    :class="[$style.tab, crystalTab === tab.id && $style.tabOn]"
-                    @click="crystalTab = tab.id"
-                  >
-                    {{ tab.label }}
-                  </button>
-                </div>
-
-                <input
-                  v-model="query"
-                  type="search"
-                  :class="$style.input"
-                  placeholder="Название кристалла"
-                  aria-label="Поиск кристалла"
-                  :disabled="!activeSlot"
-                >
-
-                <div v-if="catalogPending" :class="$style.muted">Загрузка кристаллов…</div>
-                <div v-else-if="catalogError" :class="$style.error">Не удалось загрузить кристаллы.</div>
-                <ul v-else :class="[$style.catalog, !activeSlot && $style.catalogOff]">
-                  <li v-for="item in filteredCatalog" :key="item.id">
-                    <button type="button" :class="$style.catalogBtn" @click="assignCrystal(item)">
-                      <img
-                        v-if="item.icon_url"
-                        :src="item.icon_url"
-                        alt=""
-                        :class="$style.icon"
-                        loading="lazy"
-                      >
-                      <span>{{ item.name_ru }}</span>
-                      <span :class="$style.add">+</span>
-                    </button>
-                  </li>
-                </ul>
-                <p
-                  v-if="activeSlot && !catalogPending && !catalogError && !filteredCatalog.length"
-                  :class="$style.muted"
-                >
-                  Нет {{
-                    isDawnSlotId(activeSlot)
-                      ? 'кристаллов рассвета'
-                      : isCenterSlotId(activeSlot)
-                        ? 'камней духов'
-                        : 'кристаллов'
-                  }}{{ query ? ' по поиску' : '' }}.
-                </p>
-
-                <p v-if="formError" :class="$style.error">{{ formError }}</p>
-                <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
-              </div>
-
-              <div :class="$style.actions">
-                <UiButton variant="secondary" type="button" @click="requestClose">Отмена</UiButton>
-                <UiButton type="submit" :disabled="submitting || done">
-                  {{
-                    submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
-                  }}
-                </UiButton>
-              </div>
-            </div>
-          </form>
+        <div :class="$style.left">
+          <CrystalBoard
+            :filled="filledMap"
+            :selected-id="activeSlot"
+            interactive
+            fill
+            :fill-width="boardWidth"
+            @select="onSelectSlot"
+            @clear="clearSlot"
+          />
         </div>
       </div>
-    </Teleport>
-  </div>
+
+      <div ref="rightMainEl" :class="$style.rightMain">
+        <UiPresetTabs
+          v-model="crystalTab"
+          :tabs="crystalTabs"
+          aria-label="Категория кристаллов"
+          :disabled="!tabsEnabled"
+          auto-fit
+        />
+
+        <CatalogPicker
+          v-model:query="query"
+          tall
+          :items="filteredCatalog"
+          :pending="catalogPending"
+          :error="catalogError"
+          :disabled="!activeSlot"
+          :catalog-off="!activeSlot"
+          placeholder="Название кристалла"
+          aria-label="Поиск кристалла"
+          pending-text="Загрузка кристаллов…"
+          error-text="Не удалось загрузить кристаллы."
+          :show-empty="
+            Boolean(activeSlot) && !catalogPending && !catalogError && !filteredCatalog.length
+          "
+          :empty-text="emptyCatalogText"
+          @pick="assignCrystal"
+        />
+      </div>
+    </div>
+  </ProposeModalShell>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { fetchCrystals, type GuideItemRow, type Item } from '@/entities/class'
-import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
@@ -189,14 +99,15 @@ import {
   isDawnCrystalName,
   isDawnSlotId,
   isSpiritCrystalName,
-  useSuperadmin,
-  useUnsavedGuard,
   type CrystalPresetId,
   type CrystalTabId,
 } from '@/shared/lib'
-import { UiButton } from '@/shared/ui'
+import { UiPresetTabs } from '@/shared/ui'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
+import { useProposeModal } from '../lib/useProposeModal'
+import CatalogPicker from './CatalogPicker.vue'
+import ProposeModalShell from './ProposeModalShell.vue'
 
 type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
 
@@ -216,11 +127,6 @@ const props = withDefaults(
   },
 )
 
-const { isSuperadmin, refresh: refreshAdmin } = useSuperadmin()
-
-const open = ref(false)
-const honeypot = ref('')
-const author = ref('')
 const query = ref('')
 const crystalTab = ref<CrystalTabId>('basic')
 const crystalTabs = CRYSTAL_TABS
@@ -231,13 +137,8 @@ const presets = ref<PresetBoards>(emptyPresets())
 const crystals = ref<Item[]>([])
 const catalogPending = ref(false)
 const catalogError = ref(false)
-const submitting = ref(false)
-const formError = ref('')
-const done = ref(false)
-const doneMessage = ref('')
 const rightMainEl = ref<HTMLElement | null>(null)
 const boardWidth = ref(360)
-const baseline = ref('')
 let rightMainObserver: ResizeObserver | null = null
 
 function serializeState() {
@@ -253,20 +154,6 @@ function serializeState() {
   )
 }
 
-const dirty = computed(
-  () => open.value && !done.value && baseline.value !== '' && serializeState() !== baseline.value,
-)
-
-function close() {
-  open.value = false
-}
-
-const { requestClose, obscured } = useUnsavedGuard({
-  active: open,
-  dirty,
-  onClose: close,
-})
-
 function hydrateFromInitial() {
   const next = emptyPresets()
   for (const row of props.initialCrystals ?? []) {
@@ -276,14 +163,6 @@ function hydrateFromInitial() {
   }
   presets.value = next
   activePreset.value = 't1'
-}
-
-function currentSlots(): Record<string, Item> {
-  return presets.value[activePreset.value]
-}
-
-function setCurrentSlots(next: Record<string, Item>) {
-  presets.value = { ...presets.value, [activePreset.value]: next }
 }
 
 function syncBoardWidth() {
@@ -309,6 +188,65 @@ onBeforeUnmount(() => {
   rightMainObserver?.disconnect()
   rightMainObserver = null
 })
+
+const {
+  open,
+  honeypot,
+  author,
+  submitting,
+  formError,
+  obscured,
+  requestClose,
+  isSuperadmin,
+  runSubmit,
+} = useProposeModal({
+  serialize: serializeState,
+  onOpen: async () => {
+    hydrateFromInitial()
+    await nextTick()
+    bindRightMainObserver()
+    if (!crystals.value.length) {
+      catalogPending.value = true
+      catalogError.value = false
+      try {
+        crystals.value = await fetchCrystals()
+      } catch {
+        catalogError.value = true
+      } finally {
+        catalogPending.value = false
+        await nextTick()
+        syncBoardWidth()
+      }
+    }
+  },
+  onReset: () => {
+    query.value = ''
+    activeSlot.value = null
+    activePreset.value = 't1'
+    presets.value = emptyPresets()
+    rightMainObserver?.disconnect()
+    rightMainObserver = null
+  },
+})
+
+watch([isSuperadmin, catalogPending], async () => {
+  if (!open.value) return
+  await nextTick()
+  syncBoardWidth()
+})
+
+watch(activePreset, () => {
+  activeSlot.value = null
+  query.value = ''
+})
+
+function currentSlots(): Record<string, Item> {
+  return presets.value[activePreset.value]
+}
+
+function setCurrentSlots(next: Record<string, Item>) {
+  presets.value = { ...presets.value, [activePreset.value]: next }
+}
 
 const filledMap = computed(() => {
   const map: Record<string, CrystalFill> = {}
@@ -366,42 +304,15 @@ const filteredCatalog = computed(() => {
   })
 })
 
-watch(open, async (v) => {
-  if (v) {
-    baseline.value = ''
-    formError.value = ''
-    done.value = false
-    hydrateFromInitial()
-    await refreshAdmin()
-    await nextTick()
-    bindRightMainObserver()
-    if (!crystals.value.length) {
-      catalogPending.value = true
-      catalogError.value = false
-      try {
-        crystals.value = await fetchCrystals()
-      } catch {
-        catalogError.value = true
-      } finally {
-        catalogPending.value = false
-        await nextTick()
-        syncBoardWidth()
-      }
-    }
-    await nextTick()
-    baseline.value = serializeState()
-  } else {
-    baseline.value = ''
-    rightMainObserver?.disconnect()
-    rightMainObserver = null
-    reset()
-  }
-})
-
-watch([isSuperadmin, catalogPending], async () => {
-  if (!open.value) return
-  await nextTick()
-  syncBoardWidth()
+const emptyCatalogText = computed(() => {
+  const kind = activeSlot.value
+    ? isDawnSlotId(activeSlot.value)
+      ? 'кристаллов рассвета'
+      : isCenterSlotId(activeSlot.value)
+        ? 'камней духов'
+        : 'кристаллов'
+    : 'кристаллов'
+  return `Нет ${kind}${query.value ? ' по поиску' : ''}.`
 })
 
 function onSelectSlot(id: string) {
@@ -445,179 +356,44 @@ function clearSlot(slotId?: string) {
   setCurrentSlots(next)
 }
 
-function reset() {
-  honeypot.value = ''
-  author.value = ''
-  query.value = ''
-  activeSlot.value = null
-  activePreset.value = 't1'
-  presets.value = emptyPresets()
-  formError.value = ''
-  done.value = false
-  doneMessage.value = ''
-  submitting.value = false
-}
-
 async function onSubmit() {
-  formError.value = ''
-  if (!isSuperadmin.value && !author.value.trim()) {
-    formError.value = 'Укажите игровой ник'
-    return
-  }
-  const crystalsPayload: Array<{
-    preset: CrystalPresetId
-    slot: string
-    item_id: string
-    sort_order: number
-  }> = []
-  let order = 0
-  for (const preset of CRYSTAL_PRESET_IDS) {
-    for (const [slot, item] of Object.entries(presets.value[preset])) {
-      crystalsPayload.push({
-        preset,
-        slot,
-        item_id: item.id,
-        sort_order: order++,
-      })
+  await runSubmit(async () => {
+    const crystalsPayload: Array<{
+      preset: CrystalPresetId
+      slot: string
+      item_id: string
+      sort_order: number
+    }> = []
+    let order = 0
+    for (const preset of CRYSTAL_PRESET_IDS) {
+      for (const [slot, item] of Object.entries(presets.value[preset])) {
+        crystalsPayload.push({
+          preset,
+          slot,
+          item_id: item.id,
+          sort_order: order++,
+        })
+      }
     }
-  }
-  if (!crystalsPayload.length) {
-    formError.value = 'Заполните хотя бы один слот'
-    return
-  }
-
-  submitting.value = true
-  try {
-    const res = await submitGuideProposal({
+    if (!crystalsPayload.length) {
+      formError.value = 'Заполните хотя бы один слот'
+      return null
+    }
+    return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'crystals',
       payload: { crystals: crystalsPayload },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
     })
-    done.value = true
-    close()
-    if (res.autoApproved) {
-      window.location.reload()
-    }
-  } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    formError.value = msg || 'Не удалось отправить'
-  } finally {
-    submitting.value = false
-  }
+  })
 }
 </script>
 
 <style module>
-.wrap {
-  display: inline-flex;
-}
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 1rem;
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  transition: filter 160ms ease;
-}
-
-.obscured {
-  filter: blur(10px);
-  pointer-events: none;
-  user-select: none;
-}
-
-.modal {
-  display: flex;
-  flex-direction: column;
-  width: min(100%, 84rem);
-  max-height: min(94vh, 58rem);
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-elevated);
-  box-shadow: var(--shadow-glow);
-}
-
-.head {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.85rem 1rem;
-  flex-wrap: wrap;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.05rem;
-}
-
-.presetTabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  min-width: 0;
-}
-
-.presetTab {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.78rem;
-  padding: 0.32rem 0.55rem;
-}
-
-.presetTabOn {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.close {
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
-  margin-left: auto;
-}
-
-.form {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 0;
-  overflow: auto;
-  padding: 1rem;
-}
-
-.honey {
-  position: absolute;
-  left: -9999px;
-  height: 0;
-  width: 0;
-  opacity: 0;
-}
-
 .workspace {
   display: grid;
   grid-template-columns: auto minmax(16rem, 1fr);
-  grid-template-rows: auto auto;
   gap: 0.75rem 1rem;
   align-items: start;
   min-height: 0;
@@ -625,8 +401,6 @@ async function onSubmit() {
 }
 
 .boardSide {
-  grid-column: 1;
-  grid-row: 1;
   display: grid;
   grid-template-columns: minmax(14.5rem, 18rem) auto;
   gap: 1rem;
@@ -635,7 +409,6 @@ async function onSubmit() {
 }
 
 .picked {
-  /* Height follows the board column; do not expand the row. */
   height: 0;
   min-height: 100%;
   min-width: 0;
@@ -694,8 +467,6 @@ async function onSubmit() {
 }
 
 .rightMain {
-  grid-column: 2;
-  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -703,161 +474,13 @@ async function onSubmit() {
   min-height: 0;
 }
 
-.tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.3rem;
-}
-
-.tab {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.75rem;
-  padding: 0.38rem 0.25rem;
-}
-
-.tabOn {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.tabsOff {
-  opacity: 0.4;
-}
-
-.tabsOff .tab {
-  cursor: not-allowed;
-}
-
-.tabsOff .tabOn {
-  border-color: var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-}
-
-.label {
-  display: grid;
-  gap: 0.35rem;
-  font-size: 0.88rem;
-  color: var(--color-muted);
-}
-
-.input {
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font: inherit;
-  padding: 0.5rem 0.65rem;
-}
-
-.catalog {
-  flex: none;
-  height: min(28rem, 48vh);
-  margin: 0;
-  overflow: auto;
-  list-style: none;
-  border: 1px solid var(--color-border);
-  padding: 0;
-}
-
-.catalogOff {
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-.catalogBtn {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 0.5rem;
-  border: 0;
-  border-bottom: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-ink);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.4rem 0.55rem;
-  text-align: left;
-}
-
-.catalogBtn:hover {
-  background: var(--color-gold-dim);
-}
-
-.add {
-  margin-left: auto;
-  color: var(--color-gold);
-}
-
-.icon {
-  width: 1.6rem;
-  height: 1.6rem;
-  flex-shrink: 0;
-  background: #000;
-  object-fit: contain;
-}
-
-.actions {
-  grid-column: 2;
-  grid-row: 2;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.muted {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.error {
-  margin: 0;
-  color: var(--color-danger);
-  font-size: 0.9rem;
-}
-
-.ok {
-  margin: 0;
-  color: var(--color-gold-soft);
-  font-size: 0.9rem;
-}
-
 @media (max-width: 900px) {
-  .modal {
-    width: min(100%, 42rem);
-  }
-
   .workspace {
     grid-template-columns: 1fr;
   }
 
-  .boardSide,
-  .rightMain,
-  .actions {
-    grid-column: 1;
-  }
-
   .boardSide {
     grid-template-columns: 1fr;
-  }
-
-  .picked {
-    height: auto;
-    min-height: 0;
-    max-height: 10rem;
-  }
-
-  .left {
-    justify-self: center;
-  }
-
-  .catalog {
-    height: 14rem;
   }
 }
 </style>

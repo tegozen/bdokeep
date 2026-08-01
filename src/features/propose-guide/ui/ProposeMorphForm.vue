@@ -1,176 +1,96 @@
 <template>
-  <div :class="$style.wrap">
-    <UiButton type="button" @click="open = true">
-      {{ triggerLabel }}
-    </UiButton>
+  <ProposeModalShell
+    v-model:open="open"
+    v-model:honeypot="honeypot"
+    v-model:author="author"
+    title="Предложить морфы"
+    :trigger-label="triggerLabel"
+    :submitting="submitting"
+    :form-error="formError"
+    :obscured="obscured"
+    :is-superadmin="isSuperadmin"
+    :request-close="requestClose"
+    size="fluid"
+    border-strong
+    @submit="onSubmit"
+  >
+    <template #headerExtra>
+      <UiPresetTabs
+        v-model="activeGuidePreset"
+        :tabs="guidePresets"
+        aria-label="Пресет морфов"
+      />
+    </template>
 
-    <Teleport to="body">
-      <div
-        v-if="open"
-        :class="[$style.backdrop, obscured && $style.obscured]"
-        @click.self="requestClose"
-      >
-        <div
-          :class="$style.modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Предложить морфы"
-        >
-          <header :class="$style.head">
-            <h3 :class="$style.title">Предложить морфы</h3>
-            <div :class="$style.presetTabs" role="tablist" aria-label="Пресет морфов">
-              <button
-                v-for="p in guidePresets"
-                :key="p.id"
-                type="button"
-                role="tab"
-                :aria-selected="activeGuidePreset === p.id"
-                :class="[$style.presetTab, activeGuidePreset === p.id && $style.presetTabOn]"
-                @click="activeGuidePreset = p.id"
-              >
-                {{ p.label }}
-              </button>
-            </div>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
-              ×
-            </button>
-          </header>
-
-          <form :class="$style.form" @submit.prevent="onSubmit">
-            <input
-              v-model="honeypot"
-              type="text"
-              name="website"
-              autocomplete="off"
-              tabindex="-1"
-              :class="$style.honey"
-              aria-hidden="true"
-            >
-
-            <SuperadminAuth>
-              <label :class="$style.label">
-                Игровой ник
-                <input
-                  v-model="author"
-                  type="text"
-                  :class="$style.input"
-                  maxlength="80"
-                  required
-                  autocomplete="nickname"
-                  placeholder="Как вас зовут в игре"
-                >
-              </label>
-            </SuperadminAuth>
-
-            <div :class="$style.workspace">
-              <div :class="$style.left">
-                <MorphBoard
-                  :filled="filledMap"
-                  :selected-level="activeLevel"
-                  interactive
-                  @select="onSelectSlot"
-                  @clear="clearSlot"
-                />
-              </div>
-
-              <div :class="$style.right">
-                <div :class="$style.tabs" role="tablist" aria-label="Каталог">
-                  <button
-                    type="button"
-                    role="tab"
-                    :aria-selected="catalogTab === 'skills'"
-                    :class="[$style.tab, catalogTab === 'skills' && $style.tabOn]"
-                    @click="catalogTab = 'skills'"
-                  >
-                    Скиллы
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    :aria-selected="catalogTab === 'effects'"
-                    :class="[$style.tab, catalogTab === 'effects' && $style.tabOn]"
-                    :disabled="!activeSlotSkill"
-                    @click="catalogTab = 'effects'"
-                  >
-                    Эффекты
-                    <span v-if="activeSlotSkill">({{ effectCount }}/2)</span>
-                  </button>
-                </div>
-
-                <input
-                  v-model="query"
-                  type="search"
-                  :class="$style.input"
-                  :placeholder="catalogTab === 'skills' ? 'Название скилла' : 'Эффект'"
-                  :disabled="!activeLevel"
-                >
-
-                <div v-if="catalogPending" :class="$style.muted">Загрузка…</div>
-                <div v-else-if="catalogError" :class="$style.error">Не удалось загрузить каталог.</div>
-
-                <ul
-                  v-else-if="catalogTab === 'skills'"
-                  :class="[$style.catalog, !activeLevel && $style.catalogOff]"
-                >
-                  <li v-for="skill in filteredSkills" :key="skill.id">
-                    <button type="button" :class="$style.catalogBtn" @click="assignSkill(skill)">
-                      <img
-                        v-if="skill.icon_url"
-                        :src="skill.icon_url"
-                        alt=""
-                        :class="$style.icon"
-                        loading="lazy"
-                      >
-                      <span>{{ skill.name_ru }}</span>
-                      <span :class="$style.add">+</span>
-                    </button>
-                  </li>
-                </ul>
-
-                <ul
-                  v-else
-                  :class="[$style.catalog, (!activeLevel || !activeSlotSkill) && $style.catalogOff]"
-                >
-                  <li v-for="fx in filteredEffects" :key="fx.id">
-                    <button
-                      type="button"
-                      :class="[$style.catalogBtn, isEffectPicked(fx.id) && $style.picked]"
-                      :disabled="isEffectPicked(fx.id) || effectCount >= 2"
-                      @click="assignEffect(fx)"
-                    >
-                      <span>{{ effectLabel(fx) }}</span>
-                      <span :class="$style.add">+</span>
-                    </button>
-                  </li>
-                </ul>
-
-                <p v-if="activeLevel && !catalogPending && !filteredListLength" :class="$style.muted">
-                  Ничего не найдено{{ query ? ' по поиску' : '' }}.
-                </p>
-                <p v-else-if="!activeLevel" :class="$style.muted">Выберите слот слева.</p>
-
-                <p v-if="formError" :class="$style.error">{{ formError }}</p>
-                <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
-
-                <div :class="$style.actions">
-                  <UiButton variant="secondary" type="button" @click="requestClose">Отмена</UiButton>
-                  <UiButton type="submit" :disabled="submitting || done">
-                    {{
-                      submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
-                    }}
-                  </UiButton>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
+    <div :class="$style.workspace">
+      <div :class="$style.left">
+        <MorphBoard
+          :filled="filledMap"
+          :selected-level="activeLevel"
+          interactive
+          @select="onSelectSlot"
+          @clear="clearSlot"
+        />
       </div>
-    </Teleport>
-  </div>
+
+      <div :class="$style.right">
+        <UiPresetTabs
+          v-model="catalogTab"
+          :tabs="catalogTabs"
+          aria-label="Каталог"
+        >
+          <template #tab="{ tab }">
+            <template v-if="tab.id === 'effects'">
+              Эффекты
+              <span v-if="activeSlotSkill">({{ effectCount }}/2)</span>
+            </template>
+            <template v-else>{{ tab.label }}</template>
+          </template>
+        </UiPresetTabs>
+
+        <CatalogPicker
+          v-if="catalogTab === 'skills'"
+          v-model:query="query"
+          fill
+          :items="filteredSkills"
+          :pending="catalogPending"
+          :error="catalogError"
+          :disabled="!activeLevel"
+          :catalog-off="!activeLevel"
+          placeholder="Название скилла"
+          pending-text="Загрузка…"
+          :show-empty="Boolean(activeLevel) && !catalogPending && !filteredSkills.length"
+          :empty-text="`Ничего не найдено${query ? ' по поиску' : ''}.`"
+          @pick="assignSkill"
+        />
+
+        <CatalogPicker
+          v-else
+          v-model:query="query"
+          fill
+          :items="filteredEffects"
+          :pending="catalogPending"
+          :error="catalogError"
+          :disabled="!activeLevel || !activeSlotSkill"
+          :catalog-off="!activeLevel || !activeSlotSkill"
+          placeholder="Эффект"
+          pending-text="Загрузка…"
+          :show-empty="Boolean(activeLevel) && !catalogPending && !filteredEffects.length"
+          :empty-text="`Ничего не найдено${query ? ' по поиску' : ''}.`"
+          :is-picked="(fx) => isEffectPicked(fx.id)"
+          :is-disabled="(fx) => isEffectPicked(fx.id) || effectCount >= 2"
+          :item-label="effectLabel"
+          @pick="assignEffect"
+        />
+
+        <p v-if="!activeLevel" :class="$style.muted">Выберите слот слева.</p>
+      </div>
+    </div>
+  </ProposeModalShell>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   fetchClassSkills,
   fetchSkillAddonEffects,
@@ -178,7 +98,6 @@ import {
   type Skill,
   type SkillAddonEffect,
 } from '@/entities/class'
-import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
   CRYSTAL_PRESETS,
   MORPH_PRESETS,
@@ -190,16 +109,17 @@ import {
   morphGuidePreset,
   morphPresetFrom,
   resolveAddonLabel,
-  useGuidePreset,
   useGuideSpecMode,
-  useSuperadmin,
-  useUnsavedGuard,
+  type CrystalPresetId,
   type MorphPresetId,
   type MorphSlotLevel,
 } from '@/shared/lib'
-import { UiButton } from '@/shared/ui'
+import { UiPresetTabs } from '@/shared/ui'
 import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { submitGuideProposal } from '../api/submitProposal'
+import { useProposeModal } from '../lib/useProposeModal'
+import CatalogPicker from './CatalogPicker.vue'
+import ProposeModalShell from './ProposeModalShell.vue'
 
 type SlotState = {
   skill: Skill | null
@@ -224,12 +144,8 @@ const props = withDefaults(
   },
 )
 
-const { isSuperadmin, refresh: refreshAdmin } = useSuperadmin()
 const specMode = useGuideSpecMode()
 
-const open = ref(false)
-const honeypot = ref('')
-const author = ref('')
 const query = ref('')
 const catalogTab = ref<'skills' | 'effects'>('skills')
 const guidePresets = CRYSTAL_PRESETS
@@ -241,11 +157,15 @@ const skills = ref<Skill[]>([])
 const effects = ref<SkillAddonEffect[]>([])
 const catalogPending = ref(false)
 const catalogError = ref(false)
-const submitting = ref(false)
-const formError = ref('')
-const done = ref(false)
-const doneMessage = ref('')
-const baseline = ref('')
+
+const catalogTabs = computed(() => [
+  { id: 'skills' as const, label: 'Скиллы' },
+  {
+    id: 'effects' as const,
+    label: 'Эффекты',
+    disabled: !activeSlotSkill.value,
+  },
+])
 
 function serializeState() {
   return JSON.stringify(
@@ -263,20 +183,6 @@ function serializeState() {
     ),
   )
 }
-
-const dirty = computed(
-  () => open.value && !done.value && baseline.value !== '' && serializeState() !== baseline.value,
-)
-
-function close() {
-  open.value = false
-}
-
-const { requestClose, obscured } = useUnsavedGuard({
-  active: open,
-  dirty,
-  onClose: close,
-})
 
 function hydrateFromInitial() {
   const next = emptyPresets()
@@ -303,6 +209,45 @@ function hydrateFromInitial() {
   activeLevel.value = null
   catalogTab.value = 'skills'
 }
+
+const {
+  open,
+  honeypot,
+  author,
+  submitting,
+  formError,
+  obscured,
+  requestClose,
+  isSuperadmin,
+  runSubmit,
+} = useProposeModal({
+  serialize: serializeState,
+  onOpen: async () => {
+    hydrateFromInitial()
+    if (skills.value.length && effects.value.length) return
+    catalogPending.value = true
+    catalogError.value = false
+    try {
+      const [s, e] = await Promise.all([
+        fetchClassSkills(props.classSlug),
+        fetchSkillAddonEffects(),
+      ])
+      skills.value = s
+      effects.value = e
+    } catch {
+      catalogError.value = true
+    } finally {
+      catalogPending.value = false
+    }
+  },
+  onReset: () => {
+    query.value = ''
+    catalogTab.value = 'skills'
+    activeGuidePreset.value = 't1'
+    activeLevel.value = null
+    presets.value = emptyPresets()
+  },
+})
 
 function slotAt(level: MorphSlotLevel): SlotState | undefined {
   return presets.value[activePreset.value][level]
@@ -350,10 +295,6 @@ const filteredEffects = computed(() => {
   })
 })
 
-const filteredListLength = computed(() =>
-  catalogTab.value === 'skills' ? filteredSkills.value.length : filteredEffects.value.length,
-)
-
 function effectLabel(fx: SkillAddonEffect) {
   const tier = activeSlotSkill.value?.addon_tier ?? 2
   return resolveAddonLabel(fx.tier_labels, tier, fx.name_ru)
@@ -398,51 +339,6 @@ function assignEffect(fx: SkillAddonEffect) {
   presets.value = { ...presets.value, [activePreset.value]: board }
 }
 
-function reset() {
-  honeypot.value = ''
-  author.value = ''
-  query.value = ''
-  catalogTab.value = 'skills'
-  activeGuidePreset.value = 't1'
-  activeLevel.value = null
-  presets.value = emptyPresets()
-  formError.value = ''
-  done.value = false
-  doneMessage.value = ''
-  submitting.value = false
-}
-
-watch(open, async (v) => {
-  if (v) {
-    baseline.value = ''
-    formError.value = ''
-    done.value = false
-    hydrateFromInitial()
-    await refreshAdmin()
-    if (!skills.value.length || !effects.value.length) {
-      catalogPending.value = true
-      catalogError.value = false
-      try {
-        const [s, e] = await Promise.all([
-          fetchClassSkills(props.classSlug),
-          fetchSkillAddonEffects(),
-        ])
-        skills.value = s
-        effects.value = e
-      } catch {
-        catalogError.value = true
-      } finally {
-        catalogPending.value = false
-      }
-    }
-    await nextTick()
-    baseline.value = serializeState()
-  } else {
-    baseline.value = ''
-    reset()
-  }
-})
-
 watch(activePreset, () => {
   activeLevel.value = null
   catalogTab.value = 'skills'
@@ -450,163 +346,53 @@ watch(activePreset, () => {
 })
 
 async function onSubmit() {
-  formError.value = ''
   if (honeypot.value) return
+  await runSubmit(async () => {
+    const morphs: Array<{
+      preset: MorphPresetId
+      slot_level: MorphSlotLevel
+      skill_id: string
+      effect_ids: [string, string]
+    }> = []
 
-  if (!isSuperadmin.value && !author.value.trim()) {
-    formError.value = 'Укажите игровой ник'
-    return
-  }
-
-  const morphs: Array<{
-    preset: MorphPresetId
-    slot_level: MorphSlotLevel
-    skill_id: string
-    effect_ids: [string, string]
-  }> = []
-
-  for (const preset of MORPH_PRESET_IDS) {
-    for (const level of MORPH_SLOT_LEVELS) {
-      const slot = presets.value[preset][level]
-      if (!slot?.skill) continue
-      if (slot.effectIds.length !== 2) {
-        formError.value = `В пресете «${MORPH_PRESETS.find((p) => p.id === preset)?.label}» слот Ур. ${level}: нужно ровно 2 эффекта`
-        activeGuidePreset.value = morphGuidePreset(preset)
-        specMode.value = preset.startsWith('succ_') ? 'succession' : 'awakening'
-        activeLevel.value = level
-        catalogTab.value = 'effects'
-        return
+    for (const preset of MORPH_PRESET_IDS) {
+      for (const level of MORPH_SLOT_LEVELS) {
+        const slot = presets.value[preset][level]
+        if (!slot?.skill) continue
+        if (slot.effectIds.length !== 2) {
+          formError.value = `В пресете «${MORPH_PRESETS.find((p) => p.id === preset)?.label}» слот Ур. ${level}: нужно ровно 2 эффекта`
+          activeGuidePreset.value = morphGuidePreset(preset)
+          specMode.value = preset.startsWith('succ_') ? 'succession' : 'awakening'
+          activeLevel.value = level
+          catalogTab.value = 'effects'
+          return null
+        }
+        morphs.push({
+          preset,
+          slot_level: level,
+          skill_id: slot.skill.id,
+          effect_ids: [slot.effectIds[0]!, slot.effectIds[1]!],
+        })
       }
-      morphs.push({
-        preset,
-        slot_level: level,
-        skill_id: slot.skill.id,
-        effect_ids: [slot.effectIds[0]!, slot.effectIds[1]!],
-      })
     }
-  }
 
-  if (!morphs.length) {
-    formError.value = 'Заполните хотя бы один слот'
-    return
-  }
+    if (!morphs.length) {
+      formError.value = 'Заполните хотя бы один слот'
+      return null
+    }
 
-  submitting.value = true
-  try {
-    const res = await submitGuideProposal({
+    return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'morphs',
       payload: { morphs },
       author_label: author.value.trim() || undefined,
       website: honeypot.value,
     })
-    done.value = true
-    close()
-    if (res.autoApproved) {
-      reloadNuxtApp({ force: true })
-    }
-  } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    formError.value = msg || 'Ошибка отправки'
-  } finally {
-    submitting.value = false
-  }
+  })
 }
 </script>
 
 <style module>
-.wrap {
-  display: inline-flex;
-}
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.65);
-  padding: 1rem;
-}
-
-.obscured {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.modal {
-  display: flex;
-  flex-direction: column;
-  width: min(1100px, 100%);
-  max-height: min(92vh, 900px);
-  overflow: hidden;
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-bg-elevated);
-}
-
-.head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.85rem 1rem;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.presetTabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.presetTab {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.78rem;
-  padding: 0.25rem 0.5rem;
-}
-
-.presetTabOn {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.close {
-  margin-left: auto;
-  border: none;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.form {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  padding: 0.85rem 1rem 1rem;
-}
-
-.honey {
-  position: absolute;
-  left: -9999px;
-  opacity: 0;
-}
-
 .workspace {
   display: grid;
   grid-template-columns: minmax(18rem, 1.1fr) minmax(16rem, 1fr);
@@ -617,134 +403,21 @@ async function onSubmit() {
 
 .left,
 .right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
   min-width: 0;
   min-height: 0;
   overflow: auto;
 }
 
-.tabs {
-  display: flex;
-  gap: 0.3rem;
-  margin-bottom: 0.55rem;
-}
-
-.tab {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.82rem;
-  padding: 0.3rem 0.55rem;
-}
-
-.tab:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.tabOn {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
-}
-
-.input {
-  width: 100%;
-  margin-bottom: 0.55rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font: inherit;
-  padding: 0.4rem 0.55rem;
-}
-
-.catalog {
-  margin: 0 0 0.75rem;
-  max-height: 18rem;
-  overflow: auto;
-  list-style: none;
-  border: 1px solid var(--color-border);
-  padding: 0;
-}
-
-.catalogOff {
-  opacity: 0.45;
-  pointer-events: none;
-}
-
-.catalogBtn {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: 100%;
-  border: none;
-  border-bottom: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-ink);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
-  text-align: left;
-  padding: 0.4rem 0.5rem;
-}
-
-.catalogBtn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.picked {
-  background: var(--color-gold-dim);
-}
-
-.icon {
-  width: 1.6rem;
-  height: 1.6rem;
-  flex-shrink: 0;
-  background: #000;
-  object-fit: contain;
-}
-
-.add {
-  margin-left: auto;
-  color: var(--color-gold);
-}
-
-.label {
-  display: grid;
-  gap: 0.3rem;
-  margin-bottom: 0.65rem;
-  font-size: 0.85rem;
-  color: var(--color-muted);
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
 .muted {
-  margin: 0 0 0.55rem;
+  margin: 0;
+  font-size: 0.85rem;
   color: var(--color-muted);
-  font-size: 0.88rem;
 }
 
-.error {
-  margin: 0 0 0.55rem;
-  color: var(--color-danger);
-  font-size: 0.88rem;
-}
-
-.ok {
-  margin: 0 0 0.55rem;
-  color: var(--color-gold);
-  font-size: 0.88rem;
-}
-
-@media (max-width: 900px) {
+@media (max-width: 820px) {
   .workspace {
     grid-template-columns: 1fr;
   }

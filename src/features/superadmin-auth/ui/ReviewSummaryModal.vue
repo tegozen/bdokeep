@@ -1,55 +1,43 @@
 <template>
-  <Teleport to="body">
-    <div
-      v-if="open"
-      :class="[$style.backdrop, obscured && $style.obscured]"
-      @click.self="requestClose"
-    >
-      <div
-        :class="$style.modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Редактировать суть перед одобрением"
-      >
-        <header :class="$style.head">
-          <h3 :class="$style.title">Редактировать суть</h3>
-          <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
-            ×
-          </button>
-        </header>
+  <UiModal
+    :open="open"
+    title="Редактировать суть"
+    aria-label="Редактировать суть перед одобрением"
+    full
+    :z-index="90"
+    :obscured="obscured"
+    @close="requestClose"
+  >
+    <div :class="$style.body">
+      <div :class="$style.editorWrap">
+        <span :class="$style.label">Markdown</span>
+        <UiMarkdownEditor
+          id="review-summary-editor"
+          v-model="text"
+          height="100%"
+          placeholder="Отредактируйте суть…"
+        />
+      </div>
 
-        <div :class="$style.body">
-          <div :class="$style.editorWrap">
-            <span :class="$style.label">Markdown</span>
-            <UiMarkdownEditor
-              id="review-summary-editor"
-              v-model="text"
-              height="100%"
-              placeholder="Отредактируйте суть…"
-            />
-          </div>
+      <p v-if="error" :class="$style.error">{{ error }}</p>
 
-          <p v-if="error" :class="$style.error">{{ error }}</p>
-
-          <div :class="$style.actions">
-            <UiButton variant="secondary" type="button" :disabled="submitting" @click="requestClose">
-              Отмена
-            </UiButton>
-            <UiButton type="button" :disabled="submitting" @click="onApprove">
-              {{ submitting ? 'Одобрение…' : 'Одобрить с правками' }}
-            </UiButton>
-          </div>
-        </div>
+      <div :class="$style.actions">
+        <UiButton variant="secondary" type="button" :disabled="submitting" @click="requestClose">
+          Отмена
+        </UiButton>
+        <UiButton type="button" :disabled="submitting" @click="onApprove">
+          {{ submitting ? 'Одобрение…' : 'Одобрить с правками' }}
+        </UiButton>
       </div>
     </div>
-  </Teleport>
+  </UiModal>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { approveProposal } from '../api/pendingProposals'
 import { useUnsavedGuard } from '@/shared/lib'
-import { UiButton, UiMarkdownEditor } from '@/shared/ui'
+import { UiButton, UiMarkdownEditor, UiModal } from '@/shared/ui'
 
 const props = defineProps<{
   open: boolean
@@ -137,61 +125,6 @@ async function onApprove() {
 </script>
 
 <style module>
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  display: grid;
-  justify-items: center;
-  align-items: stretch;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 1rem;
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  transition: filter 160ms ease;
-}
-
-.obscured {
-  filter: blur(10px);
-  pointer-events: none;
-  user-select: none;
-}
-
-.modal {
-  display: flex;
-  flex-direction: column;
-  width: var(--summary-edit-modal-width);
-  height: 100%;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-elevated);
-  box-shadow: var(--shadow-glow);
-}
-
-.head {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.85rem 1rem;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.05rem;
-}
-
-.close {
-  margin-left: auto;
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
 .body {
   display: flex;
   flex: 1;
@@ -232,5 +165,4 @@ async function onApprove() {
   justify-content: flex-end;
   gap: 0.5rem;
 }
-
 </style>
