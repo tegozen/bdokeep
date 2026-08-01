@@ -57,7 +57,7 @@
 
 - Два сервиса: `web` (сайт + API) и `db` (Postgres)
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
-- Postgres только на `127.0.0.1`, наружу — только сайт
+- Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
 - Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
 - За reverse proxy — `TRUST_PROXY=1` для корректного rate limit по `X-Forwarded-For`
 
@@ -66,7 +66,7 @@
 | Сервис | Зачем | Порт |
 |--------|--------|------|
 | `web` | сайт Nuxt + Nitro API | `HOST_PORT` (3000) |
-| `db` | Postgres | `127.0.0.1:POSTGRES_PORT` (5432) |
+| `db` | Postgres | нет (внутренняя сеть); для `npm run dev` — `docker:up:dev` → `127.0.0.1:POSTGRES_PORT` |
 
 ## Быстрый старт
 
@@ -76,13 +76,15 @@ cp .env.example .env
 # ADMIN_PASSWORD, ADMIN_SESSION_SECRET (openssl rand -base64 48)
 # ADMIN_PASSWORD в production не может быть changeme / password / admin / 123456
 npm install
-npm run docker:up
-npm run dev   # или сразу сайт с compose: http://127.0.0.1:3000
+npm run docker:up        # прод-подобно: db без портов на хосте
+# npm run docker:up:dev  # локальная разработка: Postgres на 127.0.0.1
+npm run dev              # нужен docker:up:dev + DATABASE_URL на 127.0.0.1
+# или сайт целиком из compose: http://127.0.0.1:3000
 ```
 
 Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля).
 
-SQL к БД: `docker compose exec db psql -U postgres -d bdokeep`.
+SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты на хосте не нужны).
 
 Если БД уже была создана со старым общим паролем, обнови роль и policy вручную:
 

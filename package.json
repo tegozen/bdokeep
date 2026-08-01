@@ -12,6 +12,7 @@
     "images:portraits:card": "tsx scripts/optimize-class-portraits.ts",
     "codex:refresh": "tsx scripts/build-codex-seed.ts",
     "docker:up": "docker compose --env-file .env up -d",
+    "docker:up:dev": "docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up -d",
     "docker:down": "docker compose --env-file .env down"
   },
   "dependencies": {
