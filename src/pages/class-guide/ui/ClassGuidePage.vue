@@ -328,23 +328,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ClassTierStars, updateClassTier, type ClassGuideBundle } from '@/entities/class'
 import {
   fetchPendingForClass,
   type PendingProposal,
 } from '@/features/superadmin-auth/api/pendingProposals'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
-import {
-  ProposeBuffsForm,
-  ProposeComboForm,
-  ProposeCrystalForm,
-  ProposeMorphForm,
-  ProposeRelicForm,
-  ProposeSummaryForm,
-  ProposeVideosForm,
-} from '@/features/propose-guide'
-import { PendingSectionDrafts } from '@/features/superadmin-auth'
 
 import {
   computePresetFill,
@@ -361,7 +351,8 @@ import {
   useSuperadmin,
   type GuideUiSection,
 } from '@/shared/lib'
-import { UiMarkdownPreview, UiSkeleton } from '@/shared/ui'
+import UiMarkdownPreview from '@/shared/ui/UiMarkdownPreview.vue'
+import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard } from '@/widgets/crystal-board'
 import { GuideSection } from '@/widgets/guide-section'
@@ -369,6 +360,32 @@ import { MorphBoard } from '@/widgets/morph-board'
 import { RelicBoard } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
 import { useGuideBoardFills } from '../lib/useGuideBoardFills'
+
+/** Propose / moderation UI — keep off the initial class-page JS budget. */
+const ProposeBuffsForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeBuffsForm.vue'),
+)
+const ProposeComboForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeComboForm.vue'),
+)
+const ProposeCrystalForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeCrystalForm.vue'),
+)
+const ProposeMorphForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeMorphForm.vue'),
+)
+const ProposeRelicForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeRelicForm.vue'),
+)
+const ProposeSummaryForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeSummaryForm.vue'),
+)
+const ProposeVideosForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeVideosForm.vue'),
+)
+const PendingSectionDrafts = defineAsyncComponent(
+  () => import('@/features/superadmin-auth/ui/PendingSectionDrafts.vue'),
+)
 
 
 const props = defineProps<{
@@ -550,12 +567,20 @@ const buffColStyle = computed(() =>
 )
 
 function syncBuffMaxHeight() {
-  const h = crystalColRef.value?.getBoundingClientRect().height
-  if (!h || h < 80) {
+  const el = crystalColRef.value
+  if (!el) {
     buffMaxHeight.value = null
     return
   }
-  buffMaxHeight.value = Math.round(h)
+  // Read layout in rAF to avoid forced reflow during ResizeObserver/style invalidation.
+  requestAnimationFrame(() => {
+    const h = el.getBoundingClientRect().height
+    if (!h || h < 80) {
+      buffMaxHeight.value = null
+      return
+    }
+    buffMaxHeight.value = Math.round(h)
+  })
 }
 
 function bindCrystalObserver() {

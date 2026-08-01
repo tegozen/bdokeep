@@ -12,6 +12,7 @@
       <div :class="$style.editorWrap">
         <span :class="$style.label">Markdown</span>
         <UiMarkdownEditor
+          v-if="open"
           id="review-summary-editor"
           v-model="text"
           height="100%"
@@ -34,10 +35,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { approveProposal } from '../api/pendingProposals'
 import { useUnsavedGuard } from '@/shared/lib'
-import { UiButton, UiMarkdownEditor, UiModal } from '@/shared/ui'
+import { UiButton, UiModal } from '@/shared/ui'
+
+const UiMarkdownEditor = defineAsyncComponent(
+  () => import('@/shared/ui/UiMarkdownEditor.vue'),
+)
 
 const props = defineProps<{
   open: boolean

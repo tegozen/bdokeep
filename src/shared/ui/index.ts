@@ -5,7 +5,8 @@ export { default as UiButton } from './UiButton.vue'
 export { default as UiSwitch } from './UiSwitch.vue'
 export { default as UiMarkdownPreview } from './UiMarkdownPreview.vue'
 export type { UiSwitchSize, UiSwitchLabelPlacement } from './UiSwitch.vue'
-export { default as UiMarkdownEditor } from './UiMarkdownEditor.vue'
+// UiMarkdownEditor is intentionally not barrel-exported — importing it from here
+// pulled md-editor into every consumer of this index (class guide LCP/JS).
 export { default as UiModal } from './UiModal.vue'
 export { default as UiPresetTabs } from './UiPresetTabs.vue'
 export { default as YoutubeEmbed } from './YoutubeEmbed.vue'

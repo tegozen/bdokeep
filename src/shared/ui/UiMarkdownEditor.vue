@@ -12,6 +12,9 @@
       :toolbars="toolbars"
       :footers="footers"
       :no-upload-img="true"
+      no-katex
+      no-mermaid
+      no-echarts
       :placeholder="placeholder"
       :style="{ height }"
       :class="$style.editor"

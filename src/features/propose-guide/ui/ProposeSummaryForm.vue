@@ -13,7 +13,7 @@
     full
     @submit="onSubmit"
   >
-    <div :class="[$style.label, $style.summaryEditor]">
+    <div v-if="open" :class="[$style.label, $style.summaryEditor]">
       <span>Markdown</span>
       <UiMarkdownEditor
         id="propose-summary-editor"
@@ -26,12 +26,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { defineAsyncComponent, ref } from 'vue'
 import type { ProposalSection } from '@/entities/class'
-import { UiMarkdownEditor } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
 import { useProposeModal } from '../lib/useProposeModal'
 import ProposeModalShell from './ProposeModalShell.vue'
+
+const UiMarkdownEditor = defineAsyncComponent(
+  () => import('@/shared/ui/UiMarkdownEditor.vue'),
+)
 
 const props = withDefaults(
   defineProps<{

@@ -72,8 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { SuperadminAuth } from '@/features/superadmin-auth'
+import { defineAsyncComponent } from 'vue'
 import { UiButton, UiModal, type UiModalSize } from '@/shared/ui'
+
+const SuperadminAuth = defineAsyncComponent(
+  () => import('@/features/superadmin-auth/ui/SuperadminAuth.vue'),
+)
 
 withDefaults(
   defineProps<{

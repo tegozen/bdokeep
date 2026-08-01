@@ -166,9 +166,12 @@ function hydrateFromInitial() {
 }
 
 function syncBoardWidth() {
-  const h = rightMainEl.value?.getBoundingClientRect().height ?? 0
-  if (h < 120) return
-  boardWidth.value = Math.max(220, Math.round((h - 20) * (6 / 7)))
+  // Defer geometric read past style invalidation (ResizeObserver / forced reflow).
+  requestAnimationFrame(() => {
+    const h = rightMainEl.value?.getBoundingClientRect().height ?? 0
+    if (h < 120) return
+    boardWidth.value = Math.max(220, Math.round((h - 20) * (6 / 7)))
+  })
 }
 
 function bindRightMainObserver() {

@@ -14,11 +14,15 @@ export default defineNuxtConfig({
   modules: ['@vite-pwa/nuxt'],
 
   hooks: {
-    // Auth UI is click-loaded on home — don't prefetch its CSS/JS into anonymous visits.
+    // Don't prefetch click-only / editor-only chunks into anonymous page loads.
     'build:manifest'(manifest) {
       for (const item of Object.values(manifest)) {
         const id = `${item.file ?? ''} ${item.src ?? ''}`
-        if (/SuperadminAuth|LoginFields|superadmin-auth\/ui|UiConfirm|UiModal\.vue/i.test(id)) {
+        if (
+          /SuperadminAuth|LoginFields|superadmin-auth\/ui|UiConfirm|UiModal\.vue|Propose\w+Form|PendingSectionDrafts|mdEditorSetup|md-editor-v3|UiMarkdownEditor|highlight\.js|screenfull/i.test(
+            id,
+          )
+        ) {
           item.prefetch = false
           item.preload = false
         }

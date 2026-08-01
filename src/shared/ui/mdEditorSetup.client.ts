@@ -33,12 +33,9 @@ const ru = {
     link: 'Ссылка',
     image: 'Изображение',
     table: 'Таблица',
-    mermaid: 'Mermaid',
-    katex: 'Формула',
     revoke: 'Отменить',
     next: 'Повторить',
     save: 'Сохранить',
-    prettier: 'Форматировать',
     pageFullscreen: 'На всю страницу',
     fullscreen: 'Полный экран',
     preview: 'Превью',
@@ -81,29 +78,15 @@ let ready: Promise<void> | null = null
 /**
  * Idempotent md-editor-v3 config; call before first MdEditor/MdPreview mount.
  *
- * CRITICAL: always pass local npm `instance`s for every extension md-editor knows
- * about (highlight, screenfull, katex, mermaid, echarts, prettier). If `instance`
- * is missing, md-editor-v3 loads scripts from unpkg.com — blocked by CSP.
+ * - highlight + screenfull: local npm instances (never CDN).
+ * - katex / mermaid / echarts / prettier / cropper: not used — blank their CDN
+ *   urls so md-editor cannot fall back to unpkg. Components must also set
+ *   noKatex / noMermaid / noEcharts.
  */
 export function ensureMdEditorConfigured(): Promise<void> {
   if (!ready) {
     ready = (async () => {
-      const [
-        { default: screenfull },
-        { default: katex },
-        { default: mermaid },
-        echarts,
-        prettier,
-        prettierMarkdown,
-      ] = await Promise.all([
-        import('screenfull'),
-        import('katex'),
-        import('mermaid'),
-        import('echarts'),
-        import('prettier/standalone'),
-        import('prettier/plugins/markdown'),
-      ])
-      await import('katex/dist/katex.min.css')
+      const { default: screenfull } = await import('screenfull')
 
       config({
         editorConfig: {
@@ -114,20 +97,18 @@ export function ensureMdEditorConfigured(): Promise<void> {
           highlight: {
             instance: hljs,
             // Empty hrefs: keep codeTheme switching from injecting unpkg stylesheets.
-            // Styles come from the static import of highlight.js/styles/github-dark.css above.
             css: {
               github: { light: '', dark: '' },
               'atom-one-dark': { light: '', dark: '' },
             },
           },
           screenfull: { instance: screenfull },
-          katex: { instance: katex },
-          mermaid: { instance: mermaid },
-          echarts: { instance: echarts },
-          prettier: {
-            prettierInstance: prettier,
-            parserMarkdownInstance: prettierMarkdown,
-          },
+          // Clear default unpkg URLs — do not load these packages at all.
+          katex: { js: '', css: '' },
+          mermaid: { js: '' },
+          echarts: { js: '' },
+          prettier: { standaloneJs: '', parserMarkdownJs: '' },
+          cropper: { js: '', css: '' },
         },
         markdownItPlugins(plugins) {
           return [
