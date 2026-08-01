@@ -38,7 +38,7 @@
             :class="$style.icon"
             loading="lazy"
           >
-          <span>{{ itemLabel?.(item) ?? item.name_ru }}</span>
+          <span :class="$style.name">{{ itemLabel?.(item) ?? item.name_ru }}</span>
           <span :class="$style.add">+</span>
         </button>
       </li>
@@ -109,10 +109,14 @@ function onQuery(e: Event) {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  min-width: 0;
   min-height: 0;
 }
 
 .input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-ink);
@@ -133,14 +137,15 @@ function onQuery(e: Event) {
 
 .catalogFill {
   flex: 1;
-  height: auto;
+  height: 22rem;
   max-height: 22rem;
   min-height: 10rem;
 }
 
 .catalogTall {
   flex: 1;
-  height: auto;
+  /* Fixed box — filtering must not shrink the panel (avoids board ResizeObserver thrash). */
+  height: min(28rem, 48vh);
   max-height: min(28rem, 48vh);
   min-height: 10rem;
 }
@@ -152,10 +157,11 @@ function onQuery(e: Event) {
 
 .catalogBtn {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
   width: 100%;
+  min-width: 0;
   border: 0;
   background: transparent;
   color: var(--color-ink);
@@ -181,10 +187,19 @@ function onQuery(e: Event) {
 .icon {
   width: 1.6rem;
   height: 1.6rem;
+  flex-shrink: 0;
   object-fit: contain;
 }
 
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .add {
+  flex-shrink: 0;
   color: var(--color-gold);
   font-weight: 700;
 }
