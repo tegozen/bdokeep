@@ -25,11 +25,18 @@
           <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
         </template>
         <template #actions>
-          <ProposeGuideForm :class-slug="bundle.class.slug" section="summary" />
+          <ProposeGuideForm
+            :class-slug="bundle.class.slug"
+            section="summary"
+            :initial-text="bundle.guide?.summary"
+          />
         </template>
-        <p v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
-          {{ bundle.guide.summary }}
-        </p>
+        <div v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
+          <UiMarkdownPreview
+            id="class-summary-preview"
+            :model-value="bundle.guide.summary"
+          />
+        </div>
         <ShowEmptyGuide v-else />
         <PendingSectionDrafts
           v-if="isSuperadmin"
@@ -245,7 +252,7 @@ import {
   usePendingSummary,
   useSuperadmin,
 } from '@/shared/lib'
-import { UiSkeleton } from '@/shared/ui'
+import { UiMarkdownPreview, UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { GuideSection } from '@/widgets/guide-section'
@@ -471,7 +478,7 @@ const morphFilled = computed(() => {
 }
 
 .summary {
-  white-space: pre-wrap;
+  min-height: 1.5rem;
 }
 
 .fade {

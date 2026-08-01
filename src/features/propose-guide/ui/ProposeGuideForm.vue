@@ -7,11 +7,11 @@
     <Teleport to="body">
       <div
         v-if="open"
-        :class="[$style.backdrop, obscured && $style.obscured]"
+        :class="[$style.backdrop, isSummary && $style.backdropFull, obscured && $style.obscured]"
         @click.self="close"
       >
         <div
-          :class="$style.modal"
+          :class="[$style.modal, isSummary && $style.modalFull]"
           role="dialog"
           aria-modal="true"
           :aria-label="title"
@@ -41,7 +41,7 @@
             </button>
           </header>
 
-          <form :class="$style.form" @submit.prevent="onSubmit">
+          <form :class="[$style.form, isSummary && $style.formFull]" @submit.prevent="onSubmit">
             <input
               v-model="honeypot"
               type="text"
@@ -166,6 +166,18 @@
               </p>
             </template>
 
+            <template v-else-if="isSummary">
+              <div :class="[$style.label, $style.summaryEditor]">
+                <span>Markdown</span>
+                <UiMarkdownEditor
+                  id="propose-summary-editor"
+                  v-model="text"
+                  placeholder="Опишите суть класса в Markdown…"
+                  height="100%"
+                />
+              </div>
+            </template>
+
             <template v-else>
               <label :class="$style.label">
                 Текст
@@ -226,6 +238,7 @@ import {
   useSuperadmin,
   type CrystalPresetId,
 } from '@/shared/lib'
+import { UiMarkdownEditor } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
 
 type PickItem = { id: string; name_ru: string; icon_url: string | null }
@@ -249,10 +262,12 @@ const props = withDefaults(
     section: ProposalSection
     triggerLabel?: string
     initialBuffs?: GuideBuffRow[]
+    initialText?: string | null
   }>(),
   {
     triggerLabel: 'Предложить',
     initialBuffs: () => [],
+    initialText: null,
   },
 )
 
@@ -286,6 +301,7 @@ const isCombo = computed(
   () => props.section === 'combo_awakening' || props.section === 'combo_succession',
 )
 const isBuffs = computed(() => props.section === 'buffs')
+const isSummary = computed(() => props.section === 'summary')
 const isSuccessionCombo = computed(() => props.section === 'combo_succession')
 const maxPicked = computed(() => (isBuffs.value ? 20 : 30))
 
@@ -426,6 +442,9 @@ watch(open, async (v) => {
     formError.value = ''
     done.value = false
     doneMessage.value = ''
+    if (isSummary.value || (!isCombo.value && !isBuffs.value)) {
+      text.value = props.initialText?.trim() ? props.initialText : ''
+    }
     if (isBuffs.value) hydrateBuffsFromInitial()
     await refreshAdmin()
     if (isCombo.value && !skills.value.length) {
@@ -468,6 +487,10 @@ async function onSubmit() {
         formError.value = 'Добавьте хотя бы один баф'
         return
       }
+    }
+    if (isSummary.value && !text.value.trim()) {
+      formError.value = 'Введите текст сути'
+      return
     }
 
     let payload: Record<string, unknown>
@@ -557,6 +580,12 @@ async function onSubmit() {
   transition: filter 160ms ease;
 }
 
+.backdropFull {
+  padding: 1rem;
+  justify-items: center;
+  align-items: stretch;
+}
+
 .obscured {
   filter: blur(10px);
   pointer-events: none;
@@ -572,6 +601,33 @@ async function onSubmit() {
   border: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
   box-shadow: var(--shadow-glow);
+}
+
+.modalFull {
+  width: min(100%, 1920px);
+  height: 100%;
+  max-height: none;
+}
+
+.formFull {
+  overflow: hidden;
+}
+
+.formFull .actions {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.summaryEditor {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: auto 1fr;
+}
+
+.summaryEditor :global(.md-editor) {
+  min-height: 0;
+  height: 100% !important;
 }
 
 .head {

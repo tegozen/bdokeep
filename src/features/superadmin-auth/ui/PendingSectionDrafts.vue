@@ -12,10 +12,19 @@
         </span>
         <div :class="$style.actions">
           <button
+            v-if="item.section === 'summary'"
+            type="button"
+            :class="$style.edit"
+            :disabled="acting === item.id"
+            @click="startEdit(item)"
+          >
+            Редактировать
+          </button>
+          <button
             type="button"
             :class="$style.approve"
             :disabled="acting === item.id"
-            @click="onApprove(item.id)"
+            @click="onApprove(item)"
           >
             Одобрить
           </button>
@@ -32,9 +41,12 @@
 
       <div :class="$style.scrollCard">
         <!-- summary -->
-        <p v-if="item.section === 'summary'" :class="$style.text">
-          {{ String(payload(item).text || '') }}
-        </p>
+        <UiMarkdownPreview
+          v-if="item.section === 'summary'"
+          :id="`pending-summary-${item.id}`"
+          :model-value="String(payload(item).text || '')"
+          :class="$style.text"
+        />
 
         <!-- combo -->
         <template v-else-if="isCombo(item.section)">
@@ -152,6 +164,14 @@
         <pre v-else :class="$style.text">{{ JSON.stringify(item.payload, null, 2) }}</pre>
       </div>
     </article>
+
+    <ReviewSummaryModal
+      :open="!!editingId"
+      :proposal-id="editingId"
+      :initial-text="editText"
+      @close="cancelEdit"
+      @approved="onEditedApproved"
+    />
   </div>
 </template>
 
@@ -164,6 +184,7 @@ import {
   type PendingProposal,
 } from '@/features/superadmin-auth'
 import BorderSparkler from './BorderSparkler.vue'
+import ReviewSummaryModal from './ReviewSummaryModal.vue'
 import { resolveCatalogIds } from '@/shared/api/catalogResolve'
 import {
   CRYSTAL_PRESETS,
@@ -174,6 +195,7 @@ import {
   type MorphPresetId,
   type MorphSlotLevel,
 } from '@/shared/lib'
+import { UiMarkdownPreview } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
@@ -191,6 +213,8 @@ const emit = defineEmits<{
 const presets = CRYSTAL_PRESETS
 const specMode = useGuideSpecMode()
 const acting = ref<string | null>(null)
+const editingId = ref<string | null>(null)
+const editText = ref('')
 
 type Payload = {
   text?: string
@@ -452,10 +476,25 @@ async function hydrateMorphs(item: PendingProposal) {
   }
 }
 
-async function onApprove(id: string) {
-  acting.value = id
+function startEdit(item: PendingProposal) {
+  editingId.value = item.id
+  editText.value = String(payload(item).text || '')
+}
+
+function cancelEdit() {
+  editingId.value = null
+  editText.value = ''
+}
+
+function onEditedApproved() {
+  cancelEdit()
+  emit('changed', 'approve')
+}
+
+async function onApprove(item: PendingProposal) {
+  acting.value = item.id
   try {
-    await approveProposal(id)
+    await approveProposal(item.id)
     emit('changed', 'approve')
   } catch (e: unknown) {
     const msg =
@@ -472,6 +511,7 @@ async function onReject(id: string) {
   acting.value = id
   try {
     await rejectProposal(id)
+    if (editingId.value === id) cancelEdit()
     emit('changed', 'reject')
   } catch (e: unknown) {
     const msg =
@@ -487,6 +527,9 @@ async function onReject(id: string) {
 watch(
   () => props.proposals.map((p) => p.id).join(','),
   () => {
+    if (editingId.value && !props.proposals.some((p) => p.id === editingId.value)) {
+      cancelEdit()
+    }
     void hydrate()
   },
   { immediate: true },
@@ -611,7 +654,8 @@ watch(
 }
 
 .approve,
-.reject {
+.reject,
+.edit {
   border: 1px solid var(--color-border);
   background: transparent;
   cursor: pointer;
@@ -627,13 +671,18 @@ watch(
   color: var(--color-gold);
 }
 
+.edit {
+  color: var(--color-ink);
+}
+
 .reject {
   border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
   color: var(--color-danger);
 }
 
 .approve:disabled,
-.reject:disabled {
+.reject:disabled,
+.edit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

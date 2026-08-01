@@ -161,14 +161,29 @@
             </li>
             <li v-if="!(item.payload?.videos ?? []).length" :class="$style.muted">Нет видео</li>
           </ul>
+          <UiMarkdownPreview
+            v-else-if="item.section === 'summary'"
+            :id="`admin-summary-${item.id}`"
+            :model-value="textOf(item)"
+            :class="$style.text"
+          />
           <pre v-else :class="$style.text">{{ textOf(item) }}</pre>
 
           <div v-if="item.status === 'pending'" :class="$style.actions">
             <button
+              v-if="item.section === 'summary'"
+              type="button"
+              :class="$style.ghost"
+              :disabled="acting === item.id"
+              @click="startEdit(item)"
+            >
+              Редактировать
+            </button>
+            <button
               type="button"
               :class="$style.primary"
               :disabled="acting === item.id"
-              @click="approve(item.id)"
+              @click="approve(item)"
             >
               Одобрить
             </button>
@@ -184,6 +199,14 @@
           <p v-if="item.review_note" :class="$style.muted">Заметка: {{ item.review_note }}</p>
         </li>
       </ul>
+
+      <ReviewSummaryModal
+        :open="!!editingId"
+        :proposal-id="editingId"
+        :initial-text="editText"
+        @close="cancelEdit"
+        @approved="onEditedApproved"
+      />
     </template>
   </div>
 </template>
@@ -192,7 +215,9 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import type { Buff, Skill } from '@/entities/class'
 import { resolveCatalogIds } from '@/shared/api/catalogResolve'
+import { ReviewSummaryModal } from '@/features/superadmin-auth'
 import { CRYSTAL_PRESETS, type CrystalPresetId, usePendingSummary, useSuperadmin } from '@/shared/lib'
+import { UiMarkdownPreview } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
@@ -243,6 +268,8 @@ const classFilter = ref(
   typeof route.query.class === 'string' ? route.query.class.trim().toLowerCase() : '',
 )
 const acting = ref<string | null>(null)
+const editingId = ref<string | null>(null)
+const editText = ref('')
 const comboPreview = reactive<Record<string, Array<{ id: string; skills: Skill | null }> | null>>(
   {},
 )
@@ -570,10 +597,26 @@ async function hydrateRelicPreviews() {
   )
 }
 
-async function approve(id: string) {
-  acting.value = id
+function startEdit(item: Proposal) {
+  editingId.value = item.id
+  editText.value = textOf(item)
+}
+
+function cancelEdit() {
+  editingId.value = null
+  editText.value = ''
+}
+
+async function onEditedApproved() {
+  cancelEdit()
+  await load()
+  await refreshPendingSummary()
+}
+
+async function approve(item: Proposal) {
+  acting.value = item.id
   try {
-    await $fetch(`/api/admin/proposals/${id}/approve`, { method: 'POST' })
+    await $fetch(`/api/admin/proposals/${item.id}/approve`, { method: 'POST' })
     await load()
     await refreshPendingSummary()
   } catch (e: unknown) {
@@ -591,6 +634,7 @@ async function reject(id: string) {
   acting.value = id
   try {
     await $fetch(`/api/admin/proposals/${id}/reject`, { method: 'POST', body: {} })
+    if (editingId.value === id) cancelEdit()
     await load()
     await refreshPendingSummary()
   } catch (e: unknown) {

@@ -354,6 +354,7 @@ export async function applyProposal(
         update guide_proposals
         set
           status = 'approved',
+          payload = ${sql.json(payload)},
           reviewed_at = now(),
           review_note = ${opts?.reviewNote ?? null}
         where id = ${proposal.id}

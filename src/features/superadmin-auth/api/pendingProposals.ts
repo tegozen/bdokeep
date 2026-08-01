@@ -29,8 +29,14 @@ export async function fetchPendingForClass(classSlug: string): Promise<PendingPr
   return res.items ?? []
 }
 
-export async function approveProposal(id: string): Promise<void> {
-  await $fetch(`/api/admin/proposals/${id}/approve`, { method: 'POST' })
+export async function approveProposal(
+  id: string,
+  opts?: { payload?: { text: string } },
+): Promise<void> {
+  await $fetch(`/api/admin/proposals/${id}/approve`, {
+    method: 'POST',
+    body: opts?.payload ? { payload: opts.payload } : undefined,
+  })
 }
 
 export async function rejectProposal(id: string): Promise<void> {
