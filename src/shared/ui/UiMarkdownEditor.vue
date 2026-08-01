@@ -88,6 +88,7 @@ const toolbars: ToolbarNames[] = [
   'next',
   '=',
   'preview',
+  'previewOnly',
   'pageFullscreen',
   'fullscreen',
 ]
