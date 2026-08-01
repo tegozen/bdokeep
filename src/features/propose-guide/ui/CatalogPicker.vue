@@ -111,6 +111,7 @@ function onQuery(e: Event) {
   gap: 0.85rem;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .input {

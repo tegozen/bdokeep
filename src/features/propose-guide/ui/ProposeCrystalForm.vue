@@ -170,7 +170,8 @@ function syncBoardWidth() {
   requestAnimationFrame(() => {
     const h = rightMainEl.value?.getBoundingClientRect().height ?? 0
     if (h < 120) return
-    boardWidth.value = Math.max(220, Math.round((h - 20) * (6 / 7)))
+    // Cap so picked + board + catalog fit inside xl modal without horizontal crush.
+    boardWidth.value = Math.min(360, Math.max(220, Math.round((h - 20) * (6 / 7))))
   })
 }
 
@@ -397,20 +398,22 @@ async function onSubmit() {
 <style module>
 .workspace {
   display: grid;
-  grid-template-columns: auto minmax(18rem, 24rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
   gap: 0.75rem 1rem;
   align-items: start;
-  justify-content: start;
+  min-width: 0;
   min-height: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .boardSide {
   display: grid;
-  grid-template-columns: minmax(14.5rem, 18rem) auto;
+  grid-template-columns: minmax(0, 16rem) minmax(0, auto);
   gap: 1rem;
   align-items: stretch;
   min-width: 0;
+  overflow: hidden;
 }
 
 .picked {
@@ -476,9 +479,10 @@ async function onSubmit() {
   flex-direction: column;
   gap: 0.65rem;
   width: 100%;
-  max-width: 24rem;
+  max-width: 22rem;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 900px) {
