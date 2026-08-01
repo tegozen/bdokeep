@@ -291,32 +291,38 @@
         </template>
       </div>
 
-      <GuideSection
-        title="Видео"
-        anchor="videos"
-        :subtitle="sectionSubtitle('videos')"
-      >
-        <template v-if="sectionCount('videos')" #badge>
-          <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('videos') }}</span>
-        </template>
-        <template #actions>
-          
-            <ProposeVideosForm
-              :class-slug="bundle.class.slug"
-              :initial-videos="bundle.videos"
-            />
+      <div :class="$style.videoBlock">
+        <div :class="[$style.videoCell, $style.videoLive]">
+          <GuideSection
+            flush
+            title="Видео"
+            anchor="videos"
+            :subtitle="sectionSubtitle('videos')"
+          >
+            <template v-if="sectionCount('videos')" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('videos') }}</span>
+            </template>
+            <template #actions>
+              <ProposeVideosForm
+                :class-slug="bundle.class.slug"
+                :initial-videos="bundle.videos"
+              />
+            </template>
+            <VideoList :videos="bundle.videos" />
+          </GuideSection>
+        </div>
 
+        <template v-if="isSuperadmin && videoDraftsVisible">
+          <div :class="[$style.videoCell, $style.videoDraft]">
+            <PendingSectionDrafts
+              :proposals="pendingFor('videos')"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
+          </div>
         </template>
-        <VideoList :videos="bundle.videos" />
-        <template v-if="isSuperadmin">
-          <PendingSectionDrafts
-            :proposals="pendingFor('videos')"
-            @changed="onDraftChanged"
-            @optimistic-remove="onOptimisticRemove"
-            @optimistic-restore="onOptimisticRestore"
-          />
-        </template>
-      </GuideSection>
+      </div>
     </template>
   </div>
 </template>
@@ -480,6 +486,8 @@ const topDraftsVisible = computed(
     comboPendingCount.value > 0 ||
     sectionCount('morphs') > 0,
 )
+
+const videoDraftsVisible = computed(() => sectionCount('videos') > 0)
 
 async function onDraftChanged(action: 'approve' | 'reject') {
   if (action === 'approve' && props.bundle?.class.slug) {
@@ -905,6 +913,26 @@ const morphFilled = computed(() => {
 
 .relicStage {
   width: min(100%, 28rem);
+}
+
+.videoBlock {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  overflow: visible;
+}
+
+.videoCell {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  background: var(--color-bg);
+  overflow: visible;
+}
+
+.videoDraft {
+  overflow: visible;
 }
 
 @media (max-width: 1100px) {

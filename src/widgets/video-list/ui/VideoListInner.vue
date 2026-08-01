@@ -49,8 +49,10 @@ function safeUrl(url: string) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   list-style: none;
-  gap: 1rem;
+  gap: 1px;
   padding: 0;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
 }
 
 .fade {
@@ -62,6 +64,8 @@ function safeUrl(url: string) {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+  padding: 0.75rem;
+  background: var(--color-bg-panel);
 }
 
 .link {
