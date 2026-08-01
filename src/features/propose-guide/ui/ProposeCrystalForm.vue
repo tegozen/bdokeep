@@ -8,7 +8,7 @@
       <div
         v-if="open"
         :class="[$style.backdrop, obscured && $style.obscured]"
-        @click.self="close"
+        @click.self="requestClose"
       >
         <div
           :class="$style.modal"
@@ -31,7 +31,7 @@
                 {{ p.label }}
               </button>
             </div>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="close">
+            <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
               ×
             </button>
           </header>
@@ -46,6 +46,21 @@
               :class="$style.honey"
               aria-hidden="true"
             >
+
+            <SuperadminAuth>
+              <label :class="$style.label">
+                Игровой ник
+                <input
+                  v-model="author"
+                  type="text"
+                  :class="$style.input"
+                  maxlength="80"
+                  required
+                  autocomplete="nickname"
+                  placeholder="Как вас зовут в игре"
+                >
+              </label>
+            </SuperadminAuth>
 
             <div :class="$style.workspace">
               <div :class="$style.boardSide">
@@ -139,27 +154,12 @@
                   }}{{ query ? ' по поиску' : '' }}.
                 </p>
 
-                <SuperadminAuth />
-
-                <label v-if="!isSuperadmin" :class="$style.label">
-                  Игровой ник
-                  <input
-                    v-model="author"
-                    type="text"
-                    :class="$style.input"
-                    maxlength="80"
-                    required
-                    autocomplete="nickname"
-                    placeholder="Как вас зовут в игре"
-                  >
-                </label>
-
                 <p v-if="formError" :class="$style.error">{{ formError }}</p>
                 <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
               </div>
 
               <div :class="$style.actions">
-                <button type="button" :class="$style.secondary" @click="close">Отмена</button>
+                <button type="button" :class="$style.secondary" @click="requestClose">Отмена</button>
                 <button type="submit" :class="$style.primary" :disabled="submitting || done">
                   {{
                     submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
@@ -189,8 +189,8 @@ import {
   isDawnCrystalName,
   isDawnSlotId,
   isSpiritCrystalName,
-  useModalEscape,
   useSuperadmin,
+  useUnsavedGuard,
   type CrystalPresetId,
   type CrystalTabId,
 } from '@/shared/lib'
@@ -236,9 +236,35 @@ const done = ref(false)
 const doneMessage = ref('')
 const rightMainEl = ref<HTMLElement | null>(null)
 const boardWidth = ref(360)
+const baseline = ref('')
 let rightMainObserver: ResizeObserver | null = null
 
-const { obscured } = useModalEscape(open, close)
+function serializeState() {
+  return JSON.stringify(
+    Object.fromEntries(
+      CRYSTAL_PRESET_IDS.map((p) => [
+        p,
+        Object.fromEntries(
+          Object.entries(presets.value[p]).map(([slot, item]) => [slot, item.id]),
+        ),
+      ]),
+    ),
+  )
+}
+
+const dirty = computed(
+  () => open.value && !done.value && baseline.value !== '' && serializeState() !== baseline.value,
+)
+
+function close() {
+  open.value = false
+}
+
+const { requestClose, obscured } = useUnsavedGuard({
+  active: open,
+  dirty,
+  onClose: close,
+})
 
 function hydrateFromInitial() {
   const next = emptyPresets()
@@ -340,29 +366,34 @@ const filteredCatalog = computed(() => {
 })
 
 watch(open, async (v) => {
-  if (!v) {
+  if (v) {
+    baseline.value = ''
+    formError.value = ''
+    done.value = false
+    hydrateFromInitial()
+    await refreshAdmin()
+    await nextTick()
+    bindRightMainObserver()
+    if (!crystals.value.length) {
+      catalogPending.value = true
+      catalogError.value = false
+      try {
+        crystals.value = await fetchCrystals()
+      } catch {
+        catalogError.value = true
+      } finally {
+        catalogPending.value = false
+        await nextTick()
+        syncBoardWidth()
+      }
+    }
+    await nextTick()
+    baseline.value = serializeState()
+  } else {
+    baseline.value = ''
     rightMainObserver?.disconnect()
     rightMainObserver = null
-    return
-  }
-  formError.value = ''
-  done.value = false
-  hydrateFromInitial()
-  await refreshAdmin()
-  await nextTick()
-  bindRightMainObserver()
-  if (!crystals.value.length) {
-    catalogPending.value = true
-    catalogError.value = false
-    try {
-      crystals.value = await fetchCrystals()
-    } catch {
-      catalogError.value = true
-    } finally {
-      catalogPending.value = false
-      await nextTick()
-      syncBoardWidth()
-    }
+    reset()
   }
 })
 
@@ -424,11 +455,6 @@ function reset() {
   done.value = false
   doneMessage.value = ''
   submitting.value = false
-}
-
-function close() {
-  open.value = false
-  reset()
 }
 
 async function onSubmit() {

@@ -1,44 +1,60 @@
 <template>
-  <div v-if="isSuperadmin" :class="[$style.banner, compact && $style.compact]">
-    <span>{{ compact ? 'Суперадмин' : 'Суперадмин — правка опубликуется сразу' }}</span>
-    <button type="button" :class="$style.linkish" @click="onLogout">Выйти</button>
-  </div>
+  <div :class="[$style.row, compact && $style.rowCompact]">
+    <div v-if="!isSuperadmin && $slots.default" :class="$style.leading">
+      <slot />
+    </div>
 
-  <template v-else>
-    <button type="button" :class="[$style.trigger, !compact && $style.triggerWide]" @click="openLogin = true">
-      Войти как суперадмин
-    </button>
-
-    <Teleport to="body">
-      <div
-        v-if="openLogin"
-        :class="[$style.backdrop, obscured && $style.obscured]"
-        @click.self="closeLogin"
-      >
-        <div
-          :class="$style.modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Вход суперадмина"
-        >
-          <header :class="$style.head">
-            <h3 :class="$style.title">Войти как суперадмин</h3>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="closeLogin">
-              ×
-            </button>
-          </header>
-          <div :class="$style.modalBody">
-            <LoginFields
-              v-model:password="password"
-              :busy="busy"
-              :error="error"
-              @login="onLogin"
-            />
-          </div>
-        </div>
+    <div :class="[$style.trailing, isSuperadmin && $style.trailingFull]">
+      <div v-if="isSuperadmin" :class="[$style.banner, compact && $style.compact]">
+        <span>{{ compact ? 'Суперадмин' : 'Суперадмин — правка опубликуется сразу' }}</span>
+        <button type="button" :class="$style.linkish" @click="onLogout">Выйти</button>
       </div>
-    </Teleport>
-  </template>
+
+      <template v-else>
+        <button
+          type="button"
+          :class="[
+            $style.trigger,
+            compact && $style.triggerCompact,
+            !$slots.default && !compact && $style.triggerWide,
+          ]"
+          @click="openLogin = true"
+        >
+          Войти как суперадмин
+        </button>
+
+        <Teleport to="body">
+          <div
+            v-if="openLogin"
+            :class="[$style.backdrop, obscured && $style.obscured]"
+            @click.self="closeLogin"
+          >
+            <div
+              :class="$style.modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Вход суперадмина"
+            >
+              <header :class="$style.head">
+                <h3 :class="$style.title">Войти как суперадмин</h3>
+                <button type="button" :class="$style.close" aria-label="Закрыть" @click="closeLogin">
+                  ×
+                </button>
+              </header>
+              <div :class="$style.modalBody">
+                <LoginFields
+                  v-model:password="password"
+                  :busy="busy"
+                  :error="error"
+                  @login="onLogin"
+                />
+              </div>
+            </div>
+          </div>
+        </Teleport>
+      </template>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -87,12 +103,40 @@ async function onLogout() {
 </script>
 
 <style module>
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 0.85rem;
+}
+
+.rowCompact {
+  align-items: center;
+  gap: 0;
+}
+
+.leading {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.trailing {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.trailingFull {
+  flex: 1 1 100%;
+}
+
 .banner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  width: 100%;
   border: 1px solid var(--color-border-strong);
   background: var(--color-gold-dim);
   color: var(--color-gold-soft);
@@ -103,6 +147,7 @@ async function onLogout() {
 .compact.banner {
   box-sizing: border-box;
   height: 2rem;
+  width: auto;
   font-size: 0.82rem;
   gap: 0.75rem;
   padding: 0 0.65rem;
@@ -120,14 +165,22 @@ async function onLogout() {
   color: var(--color-muted);
   cursor: pointer;
   font: inherit;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+  line-height: 1.25;
+}
+
+.triggerCompact {
+  box-sizing: border-box;
+  height: 2rem;
   font-size: 0.82rem;
-  padding: 0.35rem 0.65rem;
+  padding: 0 0.65rem;
+  line-height: 1;
 }
 
 .triggerWide {
   width: 100%;
-  font-size: 0.88rem;
-  padding: 0.45rem 0.65rem;
   text-align: left;
 }
 
@@ -167,9 +220,9 @@ async function onLogout() {
 
 .modal {
   width: min(100%, 22rem);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-glow);
 }
 
 .head {
@@ -183,10 +236,7 @@ async function onLogout() {
 
 .title {
   margin: 0;
-  font-family: var(--font-display);
   font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-ink);
 }
 
 .close {

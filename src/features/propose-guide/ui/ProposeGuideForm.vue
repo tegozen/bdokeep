@@ -8,7 +8,7 @@
       <div
         v-if="open"
         :class="[$style.backdrop, isSummary && $style.backdropFull, obscured && $style.obscured]"
-        @click.self="close"
+        @click.self="requestClose"
       >
         <div
           :class="[$style.modal, isSummary && $style.modalFull]"
@@ -36,7 +36,7 @@
                 {{ p.label }}
               </button>
             </div>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="close">
+            <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
               ×
             </button>
           </header>
@@ -52,7 +52,20 @@
               aria-hidden="true"
             >
 
-            <SuperadminAuth />
+            <SuperadminAuth>
+              <label :class="$style.label">
+                Игровой ник
+                <input
+                  v-model="author"
+                  type="text"
+                  :class="$style.input"
+                  maxlength="80"
+                  required
+                  autocomplete="nickname"
+                  placeholder="Как вас зовут в игре"
+                >
+              </label>
+            </SuperadminAuth>
 
             <template v-if="isCombo || isBuffs">
               <p :class="$style.hint">
@@ -192,24 +205,11 @@
               </label>
             </template>
 
-            <label v-if="!isSuperadmin" :class="$style.label">
-              Игровой ник
-              <input
-                v-model="author"
-                type="text"
-                :class="$style.input"
-                maxlength="80"
-                required
-                autocomplete="nickname"
-                placeholder="Как вас зовут в игре"
-              >
-            </label>
-
             <p v-if="formError" :class="$style.error">{{ formError }}</p>
             <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
 
             <div :class="$style.actions">
-              <button type="button" :class="$style.secondary" @click="close">Отмена</button>
+              <button type="button" :class="$style.secondary" @click="requestClose">Отмена</button>
               <button type="submit" :class="$style.primary" :disabled="submitting || done">
                 {{
                   submitting
@@ -228,7 +228,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import {
   fetchBuffs,
   fetchClassSkills,
@@ -242,8 +242,8 @@ import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
   isCrystalPresetId,
-  useModalEscape,
   useSuperadmin,
+  useUnsavedGuard,
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiMarkdownEditor } from '@/shared/ui'
@@ -302,8 +302,32 @@ const done = ref(false)
 const doneMessage = ref('')
 const dragFrom = ref<number | null>(null)
 const dragOver = ref<number | null>(null)
+const baseline = ref('')
 
-const { obscured } = useModalEscape(open, close)
+function serializeState() {
+  return JSON.stringify({
+    text: text.value,
+    author: author.value,
+    combo: comboPicked.value.map((p) => p.id),
+    buffs: Object.fromEntries(
+      CRYSTAL_PRESET_IDS.map((p) => [p, buffByPreset.value[p].map((b) => b.id)]),
+    ),
+  })
+}
+
+const dirty = computed(
+  () => open.value && !done.value && baseline.value !== '' && serializeState() !== baseline.value,
+)
+
+function close() {
+  open.value = false
+}
+
+const { requestClose, obscured } = useUnsavedGuard({
+  active: open,
+  dirty,
+  onClose: close,
+})
 
 const isCombo = computed(
   () => props.section === 'combo_awakening' || props.section === 'combo_succession',
@@ -424,10 +448,6 @@ function onDragEnd() {
   dragOver.value = null
 }
 
-function close() {
-  open.value = false
-}
-
 function reset() {
   text.value = ''
   author.value = ''
@@ -447,6 +467,7 @@ function reset() {
 
 watch(open, async (v) => {
   if (v) {
+    baseline.value = ''
     formError.value = ''
     done.value = false
     doneMessage.value = ''
@@ -476,7 +497,10 @@ watch(open, async (v) => {
         catalogPending.value = false
       }
     }
+    await nextTick()
+    baseline.value = serializeState()
   } else {
+    baseline.value = ''
     reset()
   }
 })

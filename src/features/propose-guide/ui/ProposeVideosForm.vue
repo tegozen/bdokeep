@@ -8,7 +8,7 @@
       <div
         v-if="open"
         :class="[$style.backdrop, obscured && $style.obscured]"
-        @click.self="close"
+        @click.self="requestClose"
       >
         <div
           :class="$style.modal"
@@ -18,7 +18,7 @@
         >
           <header :class="$style.head">
             <h3 :class="$style.title">Предложить видео</h3>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="close">
+            <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
               ×
             </button>
           </header>
@@ -33,6 +33,21 @@
               :class="$style.honey"
               aria-hidden="true"
             >
+
+            <SuperadminAuth>
+              <label :class="$style.label">
+                Игровой ник
+                <input
+                  v-model="author"
+                  type="text"
+                  :class="$style.input"
+                  maxlength="80"
+                  required
+                  autocomplete="nickname"
+                  placeholder="Как вас зовут в игре"
+                >
+              </label>
+            </SuperadminAuth>
 
             <p :class="$style.hint">До 3 ссылок на YouTube. Пустые слоты не сохранятся.</p>
 
@@ -63,26 +78,11 @@
               </label>
             </div>
 
-            <SuperadminAuth />
-
-            <label v-if="!isSuperadmin" :class="$style.label">
-              Игровой ник
-              <input
-                v-model="author"
-                type="text"
-                :class="$style.input"
-                maxlength="80"
-                required
-                autocomplete="nickname"
-                placeholder="Как вас зовут в игре"
-              >
-            </label>
-
             <p v-if="formError" :class="$style.error">{{ formError }}</p>
             <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
 
             <div :class="$style.actions">
-              <button type="button" :class="$style.secondary" @click="close">Отмена</button>
+              <button type="button" :class="$style.secondary" @click="requestClose">Отмена</button>
               <button type="submit" :class="$style.primary" :disabled="submitting || done">
                 {{
                   submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
@@ -97,10 +97,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import type { ClassVideo } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
-import { sanitizeYoutubeUrl, useModalEscape, useSuperadmin, youtubeEmbedUrl } from '@/shared/lib'
+import { sanitizeYoutubeUrl, useSuperadmin, useUnsavedGuard, youtubeEmbedUrl } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
 
 const MAX = 3
@@ -129,8 +129,25 @@ const submitting = ref(false)
 const formError = ref('')
 const done = ref(false)
 const doneMessage = ref('')
+const baseline = ref('')
 
-const { obscured } = useModalEscape(open, close)
+function serializeState() {
+  return JSON.stringify(slots.map((s) => s.url))
+}
+
+const dirty = computed(
+  () => open.value && !done.value && baseline.value !== '' && serializeState() !== baseline.value,
+)
+
+function close() {
+  open.value = false
+}
+
+const { requestClose, obscured } = useUnsavedGuard({
+  active: open,
+  dirty,
+  onClose: close,
+})
 
 function embedOf(url: string) {
   return youtubeEmbedUrl(url)
@@ -154,17 +171,19 @@ function reset() {
   submitting.value = false
 }
 
-function close() {
-  open.value = false
-  reset()
-}
-
 watch(open, async (v) => {
-  if (!v) return
-  formError.value = ''
-  done.value = false
-  hydrateFromInitial()
-  await refreshAdmin()
+  if (v) {
+    baseline.value = ''
+    formError.value = ''
+    done.value = false
+    hydrateFromInitial()
+    await refreshAdmin()
+    await nextTick()
+    baseline.value = serializeState()
+  } else {
+    baseline.value = ''
+    reset()
+  }
 })
 
 async function onSubmit() {

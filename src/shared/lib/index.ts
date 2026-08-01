@@ -7,6 +7,7 @@ export { useSuperadmin } from './useSuperadmin'
 export { usePendingSummary } from './usePendingSummary'
 export { useConfirm, type ConfirmOptions } from './useConfirm'
 export { useModalEscape } from './useModalEscape'
+export { useUnsavedGuard } from './useUnsavedGuard'
 export {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_BOARD_SLOTS,

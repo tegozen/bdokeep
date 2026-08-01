@@ -3,7 +3,7 @@
     <div
       v-if="open"
       :class="[$style.backdrop, obscured && $style.obscured]"
-      @click.self="close"
+      @click.self="requestClose"
     >
       <div
         :class="$style.modal"
@@ -13,7 +13,7 @@
       >
         <header :class="$style.head">
           <h3 :class="$style.title">Редактировать суть</h3>
-          <button type="button" :class="$style.close" aria-label="Закрыть" @click="close">
+          <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
             ×
           </button>
         </header>
@@ -32,7 +32,7 @@
           <p v-if="error" :class="$style.error">{{ error }}</p>
 
           <div :class="$style.actions">
-            <button type="button" :class="$style.secondary" :disabled="submitting" @click="close">
+            <button type="button" :class="$style.secondary" :disabled="submitting" @click="requestClose">
               Отмена
             </button>
             <button
@@ -51,9 +51,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { approveProposal } from '../api/pendingProposals'
-import { useModalEscape } from '@/shared/lib'
+import { useUnsavedGuard } from '@/shared/lib'
 import { UiMarkdownEditor } from '@/shared/ui'
 
 const props = defineProps<{
@@ -71,17 +71,20 @@ const text = ref('')
 const error = ref('')
 const submitting = ref(false)
 const openRef = ref(props.open)
+const baseline = ref('')
 
-watch(
-  () => props.open,
-  (v) => {
-    openRef.value = v
-    if (v) {
-      text.value = props.initialText || ''
-      error.value = ''
-      submitting.value = false
-    }
-  },
+const active = computed(() => props.open)
+
+function serializeState() {
+  return JSON.stringify({ text: text.value })
+}
+
+const dirty = computed(
+  () =>
+    active.value &&
+    !submitting.value &&
+    baseline.value !== '' &&
+    serializeState() !== baseline.value,
 )
 
 function close() {
@@ -89,7 +92,28 @@ function close() {
   emit('close')
 }
 
-const { obscured } = useModalEscape(openRef, close)
+const { requestClose, obscured } = useUnsavedGuard({
+  active: openRef,
+  dirty,
+  onClose: close,
+})
+
+watch(
+  () => props.open,
+  async (v) => {
+    openRef.value = v
+    if (v) {
+      text.value = props.initialText || ''
+      error.value = ''
+      submitting.value = false
+      baseline.value = ''
+      await nextTick()
+      baseline.value = serializeState()
+    } else {
+      baseline.value = ''
+    }
+  },
+)
 
 async function onApprove() {
   const id = props.proposalId

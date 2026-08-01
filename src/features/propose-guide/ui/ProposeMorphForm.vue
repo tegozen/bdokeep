@@ -8,7 +8,7 @@
       <div
         v-if="open"
         :class="[$style.backdrop, obscured && $style.obscured]"
-        @click.self="close"
+        @click.self="requestClose"
       >
         <div
           :class="$style.modal"
@@ -31,7 +31,7 @@
                 {{ p.label }}
               </button>
             </div>
-            <button type="button" :class="$style.close" aria-label="Закрыть" @click="close">
+            <button type="button" :class="$style.close" aria-label="Закрыть" @click="requestClose">
               ×
             </button>
           </header>
@@ -46,6 +46,21 @@
               :class="$style.honey"
               aria-hidden="true"
             >
+
+            <SuperadminAuth>
+              <label :class="$style.label">
+                Игровой ник
+                <input
+                  v-model="author"
+                  type="text"
+                  :class="$style.input"
+                  maxlength="80"
+                  required
+                  autocomplete="nickname"
+                  placeholder="Как вас зовут в игре"
+                >
+              </label>
+            </SuperadminAuth>
 
             <div :class="$style.workspace">
               <div :class="$style.left">
@@ -134,26 +149,11 @@
                 </p>
                 <p v-else-if="!activeLevel" :class="$style.muted">Выберите слот слева.</p>
 
-                <SuperadminAuth />
-
-                <label v-if="!isSuperadmin" :class="$style.label">
-                  Игровой ник
-                  <input
-                    v-model="author"
-                    type="text"
-                    :class="$style.input"
-                    maxlength="80"
-                    required
-                    autocomplete="nickname"
-                    placeholder="Как вас зовут в игре"
-                  >
-                </label>
-
                 <p v-if="formError" :class="$style.error">{{ formError }}</p>
                 <p v-if="done" :class="$style.ok">{{ doneMessage }}</p>
 
                 <div :class="$style.actions">
-                  <button type="button" :class="$style.secondary" @click="close">Отмена</button>
+                  <button type="button" :class="$style.secondary" @click="requestClose">Отмена</button>
                   <button type="submit" :class="$style.primary" :disabled="submitting || done">
                     {{
                       submitting ? 'Отправка…' : isSuperadmin ? 'Опубликовать' : 'Отправить'
@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import {
   fetchClassSkills,
   fetchSkillAddonEffects,
@@ -192,8 +192,8 @@ import {
   resolveAddonLabel,
   useGuidePreset,
   useGuideSpecMode,
-  useModalEscape,
   useSuperadmin,
+  useUnsavedGuard,
   type MorphPresetId,
   type MorphSlotLevel,
 } from '@/shared/lib'
@@ -244,8 +244,38 @@ const submitting = ref(false)
 const formError = ref('')
 const done = ref(false)
 const doneMessage = ref('')
+const baseline = ref('')
 
-const { obscured } = useModalEscape(open, close)
+function serializeState() {
+  return JSON.stringify(
+    Object.fromEntries(
+      MORPH_PRESET_IDS.map((preset) => [
+        preset,
+        Object.fromEntries(
+          MORPH_SLOT_LEVELS.map((level) => {
+            const slot = presets.value[preset][level]
+            if (!slot?.skill) return [level, null]
+            return [level, { skill_id: slot.skill.id, effects: slot.effectIds }]
+          }),
+        ),
+      ]),
+    ),
+  )
+}
+
+const dirty = computed(
+  () => open.value && !done.value && baseline.value !== '' && serializeState() !== baseline.value,
+)
+
+function close() {
+  open.value = false
+}
+
+const { requestClose, obscured } = useUnsavedGuard({
+  active: open,
+  dirty,
+  onClose: close,
+})
 
 function hydrateFromInitial() {
   const next = emptyPresets()
@@ -367,31 +397,48 @@ function assignEffect(fx: SkillAddonEffect) {
   presets.value = { ...presets.value, [activePreset.value]: board }
 }
 
-function close() {
-  open.value = false
+function reset() {
+  honeypot.value = ''
+  author.value = ''
+  query.value = ''
+  catalogTab.value = 'skills'
+  activeGuidePreset.value = 't1'
+  activeLevel.value = null
+  presets.value = emptyPresets()
+  formError.value = ''
+  done.value = false
+  doneMessage.value = ''
+  submitting.value = false
 }
 
 watch(open, async (v) => {
-  if (!v) return
-  formError.value = ''
-  done.value = false
-  hydrateFromInitial()
-  await refreshAdmin()
-  if (!skills.value.length || !effects.value.length) {
-    catalogPending.value = true
-    catalogError.value = false
-    try {
-      const [s, e] = await Promise.all([
-        fetchClassSkills(props.classSlug),
-        fetchSkillAddonEffects(),
-      ])
-      skills.value = s
-      effects.value = e
-    } catch {
-      catalogError.value = true
-    } finally {
-      catalogPending.value = false
+  if (v) {
+    baseline.value = ''
+    formError.value = ''
+    done.value = false
+    hydrateFromInitial()
+    await refreshAdmin()
+    if (!skills.value.length || !effects.value.length) {
+      catalogPending.value = true
+      catalogError.value = false
+      try {
+        const [s, e] = await Promise.all([
+          fetchClassSkills(props.classSlug),
+          fetchSkillAddonEffects(),
+        ])
+        skills.value = s
+        effects.value = e
+      } catch {
+        catalogError.value = true
+      } finally {
+        catalogPending.value = false
+      }
     }
+    await nextTick()
+    baseline.value = serializeState()
+  } else {
+    baseline.value = ''
+    reset()
   }
 })
 
