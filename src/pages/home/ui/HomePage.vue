@@ -12,7 +12,8 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { fetchPublishedClasses, type BdoClass } from '@/entities/class'
+import { fetchPublishedClasses } from '@/entities/class/api/classApi'
+import type { BdoClass } from '@/entities/class/model/types'
 import { useHomeClassFilters, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { ClassGrid } from '@/widgets/class-grid'
 
@@ -57,6 +58,30 @@ watch(
     if (ok) void refreshPending()
   },
   { immediate: true },
+)
+
+const lcpPortrait = computed(() => {
+  const url = filteredClasses.value[0]?.portrait_url
+  return url ? url.replace(/portrait\.png$/i, 'portrait-card.webp') : null
+})
+
+useHead(() =>
+  lcpPortrait.value
+    ? {
+        link: [
+          {
+            key: 'lcp-portrait',
+            rel: 'preload',
+            as: 'image',
+            href: lcpPortrait.value,
+            type: 'image/webp',
+            // Force ahead of Nuxt entry stylesheets for LCP discovery.
+            tagPriority: -200,
+            fetchpriority: 'high',
+          },
+        ],
+      }
+    : {},
 )
 </script>
 

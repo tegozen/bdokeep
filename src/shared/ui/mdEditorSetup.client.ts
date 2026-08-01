@@ -5,7 +5,6 @@ import json from 'highlight.js/lib/languages/json'
 import typescript from 'highlight.js/lib/languages/typescript'
 import xml from 'highlight.js/lib/languages/xml'
 import { config, en_US, XSSPlugin } from 'md-editor-v3'
-import screenfull from 'screenfull'
 import 'highlight.js/styles/github-dark.css'
 
 hljs.registerLanguage('bash', bash)
@@ -34,12 +33,9 @@ const ru = {
     link: 'Ссылка',
     image: 'Изображение',
     table: 'Таблица',
-    mermaid: 'Mermaid',
-    katex: 'Формула',
     revoke: 'Отменить',
     next: 'Повторить',
     save: 'Сохранить',
-    prettier: 'Форматировать',
     pageFullscreen: 'На всю страницу',
     fullscreen: 'Полный экран',
     preview: 'Превью',
@@ -82,24 +78,12 @@ let ready: Promise<void> | null = null
 /**
  * Idempotent md-editor-v3 config; call before first MdEditor/MdPreview mount.
  * Local npm instances only — never let md-editor fall back to unpkg (CSP blocks it).
+ * katex/mermaid/echarts/prettier omitted: not in toolbar and blocked by CSP policy.
  */
 export function ensureMdEditorConfigured(): Promise<void> {
   if (!ready) {
     ready = (async () => {
-      const [
-        { default: katex },
-        { default: mermaid },
-        echarts,
-        prettier,
-        prettierMarkdown,
-      ] = await Promise.all([
-        import('katex'),
-        import('mermaid'),
-        import('echarts'),
-        import('prettier/standalone'),
-        import('prettier/plugins/markdown'),
-      ])
-      await import('katex/dist/katex.min.css')
+      const { default: screenfull } = await import('screenfull')
 
       config({
         editorConfig: {
@@ -117,13 +101,6 @@ export function ensureMdEditorConfigured(): Promise<void> {
             },
           },
           screenfull: { instance: screenfull },
-          katex: { instance: katex },
-          mermaid: { instance: mermaid },
-          echarts: { instance: echarts },
-          prettier: {
-            prettierInstance: prettier,
-            parserMarkdownInstance: prettierMarkdown,
-          },
         },
         markdownItPlugins(plugins) {
           return [

@@ -19,7 +19,7 @@
 
     <div v-else :class="[$style.grid, $style.fade]">
       <NuxtLink
-        v-for="klass in classes"
+        v-for="(klass, index) in classes"
         :key="klass.id"
         :to="`/class/${klass.slug}`"
         :class="[$style.card, !klass.has_content && $style.cardEmpty]"
@@ -27,9 +27,14 @@
         <div :class="$style.media">
           <img
             v-if="klass.portrait_url"
-            :src="klass.portrait_url"
+            :src="cardPortraitUrl(klass.portrait_url)"
             :alt="klass.name_ru"
-            loading="lazy"
+            width="240"
+            height="320"
+            sizes="(max-width: 767px) 45vw, 170px"
+            :loading="index < EAGER_COUNT ? 'eager' : 'lazy'"
+            :fetchpriority="index === 0 ? 'high' : undefined"
+            decoding="async"
             :class="$style.img"
           >
           <div :class="$style.veil" />
@@ -69,8 +74,13 @@
 </template>
 
 <script setup lang="ts">
-import { ClassIcon, ClassTierStars, type BdoClass } from '@/entities/class'
-import { UiSkeleton } from '@/shared/ui'
+import type { BdoClass } from '@/entities/class/model/types'
+import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
+import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
+import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
+
+/** First row only — avoid competing with the LCP image. */
+const EAGER_COUNT = 2
 
 withDefaults(
   defineProps<{
@@ -85,6 +95,11 @@ withDefaults(
     emptyMessage: null,
   },
 )
+
+/** `/classes/x/portrait.png` → `/classes/x/portrait-card.webp` for the home grid. */
+function cardPortraitUrl(portraitUrl: string) {
+  return portraitUrl.replace(/portrait\.png$/i, 'portrait-card.webp')
+}
 </script>
 
 <style module>

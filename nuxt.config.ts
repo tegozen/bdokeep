@@ -88,7 +88,8 @@ export default defineNuxtConfig({
     },
     workbox: {
       cleanupOutdatedCaches: true,
-      clientsClaim: true,
+      // Avoid claiming clients immediately — helps bfcache on soft navigations.
+      clientsClaim: false,
       // SSR app — do not fall back navigations to a static index.html
       navigateFallback: null,
       // Shell only — skip large class portraits under public/classes/
@@ -104,6 +105,31 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/_nuxt/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    },
+    '/classes/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+      },
+    },
+    '/android-chrome-*.png': {
+      headers: {
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+      },
+    },
+    '/favicon*': {
+      headers: {
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+      },
+    },
+    '/apple-touch-icon.png': {
+      headers: {
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+      },
+    },
     '/**': {
       headers: {
         'X-Content-Type-Options': 'nosniff',

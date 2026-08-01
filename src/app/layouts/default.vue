@@ -112,9 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { ClassIcon, ClassTierStars } from '@/entities/class'
-import { SuperadminAuth } from '@/features/superadmin-auth'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import {
   useGuideSpecMode,
   useHeaderClass,
@@ -123,8 +121,15 @@ import {
   useSuperadmin,
 } from '@/shared/lib'
 import { UiConfirm } from '@/shared/ui'
-import GuideModePresetTabs from './GuideModePresetTabs.vue'
 import HomeClassFilters from './HomeClassFilters.vue'
+
+/** Keep class-header / auth CSS off the home critical path until needed. */
+const ClassIcon = defineAsyncComponent(() => import('@/entities/class/ui/ClassIcon.vue'))
+const ClassTierStars = defineAsyncComponent(() => import('@/entities/class/ui/ClassTierStars.vue'))
+const SuperadminAuth = defineAsyncComponent(
+  () => import('@/features/superadmin-auth/ui/SuperadminAuth.vue'),
+)
+const GuideModePresetTabs = defineAsyncComponent(() => import('./GuideModePresetTabs.vue'))
 
 const route = useRoute()
 /** @vite-pwa/nuxt injects $pwa at runtime; types may be absent until prepare. */
