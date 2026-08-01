@@ -10,7 +10,7 @@
     </div>
 
     <div v-else-if="error" :class="$style.error">
-      Не удалось загрузить классы. Проверьте API и настройки окружения.
+      Не удалось загрузить классы. Проверьте API и обновите страницу.
     </div>
 
     <div v-else :class="[$style.grid, $style.fade]">
@@ -36,6 +36,9 @@
           >
             {{ pendingByClass[klass.slug] }}
           </span>
+          <div v-if="klass.tier" :class="$style.tier">
+            <ClassTierStars :tier="klass.tier" size="sm" />
+          </div>
         </div>
         <div :class="$style.meta">
           <ClassIcon
@@ -52,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ClassIcon, type BdoClass } from '@/entities/class'
+import { ClassIcon, ClassTierStars, type BdoClass } from '@/entities/class'
 import { UiSkeleton } from '@/shared/ui'
 
 withDefaults(
@@ -152,6 +155,21 @@ withDefaults(
   text-align: center;
   pointer-events: none;
   user-select: none;
+}
+
+.tier {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.45rem;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
+  border-radius: 999px;
+  background: rgba(10, 11, 16, 0.82);
+  line-height: 0;
 }
 
 .meta {

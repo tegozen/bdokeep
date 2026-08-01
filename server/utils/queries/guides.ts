@@ -14,6 +14,7 @@ export async function listPublishedClasses(sql: Sql) {
       c.succession_name,
       c.sort_order,
       c.published,
+      c.tier,
       (
         (g.id is not null and coalesce(trim(g.summary), '') <> '')
         or exists (select 1 from guide_buffs x where x.guide_id = g.id)
@@ -33,12 +34,16 @@ export async function listPublishedClasses(sql: Sql) {
 
   const mapped = rows.map((row) => ({
     ...row,
+    tier: row.tier == null ? null : Number(row.tier),
     has_content: Boolean(row.has_content),
   }))
 
   mapped.sort((a, b) => {
     const byContent = Number(Boolean(b.has_content)) - Number(Boolean(a.has_content))
     if (byContent !== 0) return byContent
+    const tierA = a.tier == null ? -1 : Number(a.tier)
+    const tierB = b.tier == null ? -1 : Number(b.tier)
+    if (tierA !== tierB) return tierB - tierA
     return Number(a.sort_order) - Number(b.sort_order)
   })
 
@@ -62,8 +67,12 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     where slug = ${slug} and published = true
     limit 1
   `
-  const klass = klassRows[0]
-  if (!klass) return null
+  const klassRow = klassRows[0]
+  if (!klassRow) return null
+  const klass = {
+    ...klassRow,
+    tier: klassRow.tier == null ? null : Number(klassRow.tier),
+  }
 
   const [guideRows, videoRows] = await Promise.all([
     sql`select * from class_guides where class_id = ${klass.id} limit 1`,

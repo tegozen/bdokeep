@@ -4,6 +4,16 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   return $fetch<BdoClass[]>('/api/classes')
 }
 
+export async function updateClassTier(
+  slug: string,
+  tier: number | null,
+): Promise<{ ok: boolean; slug: string; tier: number | null }> {
+  return $fetch(`/api/admin/classes/${encodeURIComponent(slug)}/tier`, {
+    method: 'PATCH',
+    body: { tier },
+  })
+}
+
 export async function fetchClassSkills(classSlug: string): Promise<Skill[]> {
   return $fetch<Skill[]>(`/api/classes/${encodeURIComponent(classSlug)}/skills`)
 }

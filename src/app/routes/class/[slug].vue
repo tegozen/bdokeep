@@ -3,6 +3,7 @@
     :bundle="bundle"
     :pending="pending"
     :error="!!error"
+    @tier-change="onTierChange"
   />
 </template>
 
@@ -36,6 +37,7 @@ watch(
         slug: b.class.slug,
         name_ru: b.class.name_ru,
         icon_url: b.class.icon_url,
+        tier: b.class.tier ?? null,
       }
       headerToc.value = CLASS_GUIDE_TOC
     } else {
@@ -45,6 +47,14 @@ watch(
   },
   { immediate: true },
 )
+
+function onTierChange(tier: number | null) {
+  if (!bundle.value?.class) return
+  bundle.value = {
+    ...bundle.value,
+    class: { ...bundle.value.class, tier },
+  }
+}
 
 onBeforeUnmount(() => {
   headerClass.value = null

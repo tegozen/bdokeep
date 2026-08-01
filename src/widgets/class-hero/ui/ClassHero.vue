@@ -29,20 +29,40 @@
         />
         <h1 :class="$style.title">{{ klass.name_ru }}</h1>
       </div>
-      <p v-if="pvpRole" :class="$style.role">{{ pvpRole }}</p>
-      <p v-else :class="[$style.role, $style.roleMuted]">Роль в PvP ещё не указана</p>
+      <div v-if="klass.tier || editable" :class="$style.tierRow">
+        <ClassTierStars
+          :tier="klass.tier"
+          :editable="editable"
+          :saving="saving"
+          @change="(tier) => $emit('tier-change', tier)"
+        />
+      </div>
+      <p v-else :class="[$style.role, $style.roleMuted]">Тир ещё не указан</p>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ClassIcon, type BdoClass } from '@/entities/class'
+import { ClassIcon, ClassTierStars, type BdoClass } from '@/entities/class'
 import { UiSkeleton } from '@/shared/ui'
 
-defineProps<{
-  klass?: BdoClass | null
-  pvpRole?: string | null
-  pending?: boolean
+withDefaults(
+  defineProps<{
+    klass?: BdoClass | null
+    pending?: boolean
+    editable?: boolean
+    saving?: boolean
+  }>(),
+  {
+    klass: null,
+    pending: false,
+    editable: false,
+    saving: false,
+  },
+)
+
+defineEmits<{
+  'tier-change': [tier: number | null]
 }>()
 </script>
 
@@ -96,6 +116,10 @@ defineProps<{
 .title {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 2.6rem);
+}
+
+.tierRow {
+  margin-top: 0.65rem;
 }
 
 .role {

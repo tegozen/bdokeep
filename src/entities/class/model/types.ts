@@ -8,6 +8,8 @@ export type BdoClass = {
   succession_name: string | null
   sort_order: number
   published: boolean
+  /** PvP tier 1–5 (admin-set). Null = not rated. */
+  tier?: number | null
   /** Guide has any filled content (summary / sections / videos) */
   has_content?: boolean
 }

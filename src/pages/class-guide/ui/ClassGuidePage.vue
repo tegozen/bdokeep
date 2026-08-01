@@ -26,6 +26,14 @@
             <template v-if="sectionCount('summary')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
             </template>
+            <template v-if="isSuperadmin || bundle.class.tier" #beside>
+              <ClassTierStars
+                :tier="bundle.class.tier"
+                :editable="isSuperadmin"
+                :saving="tierSaving"
+                @change="onTierChange"
+              />
+            </template>
             <template #actions>
               
                 <ProposeSummaryForm
@@ -280,7 +288,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { ClassGuideBundle } from '@/entities/class'
+import { ClassTierStars, updateClassTier, type ClassGuideBundle } from '@/entities/class'
 import {
   fetchPendingForClass,
   type PendingProposal,
@@ -303,6 +311,7 @@ import {
   resolveAddonLabel,
   useGuidePreset,
   useGuideSpecMode,
+  useHeaderClass,
   usePendingSummary,
   useSuperadmin,
 } from '@/shared/lib'
@@ -321,10 +330,40 @@ const props = defineProps<{
   error?: boolean
 }>()
 
+const emit = defineEmits<{
+  'tier-change': [tier: number | null]
+}>()
+
 const { isSuperadmin } = useSuperadmin()
+const headerClass = useHeaderClass()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 const classPending = ref<PendingProposal[]>([])
 const pendingRestoreAt = new Map<string, number>()
+const tierSaving = ref(false)
+
+async function onTierChange(tier: number | null) {
+  const klass = props.bundle?.class
+  if (!klass || !isSuperadmin.value || tierSaving.value) return
+
+  const prev = klass.tier ?? null
+  emit('tier-change', tier)
+  if (headerClass.value?.slug === klass.slug) {
+    headerClass.value = { ...headerClass.value, tier }
+  }
+
+  tierSaving.value = true
+  try {
+    await updateClassTier(klass.slug, tier)
+    clearNuxtData('classes')
+  } catch {
+    emit('tier-change', prev)
+    if (headerClass.value?.slug === klass.slug) {
+      headerClass.value = { ...headerClass.value, tier: prev }
+    }
+  } finally {
+    tierSaving.value = false
+  }
+}
 
 async function loadClassPending() {
   if (!isSuperadmin.value || !props.bundle?.class.slug) {
