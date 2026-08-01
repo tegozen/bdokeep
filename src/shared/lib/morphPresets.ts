@@ -1,7 +1,16 @@
+import {
+  MAX_MORPHS_ALL_PRESETS,
+  MORPH_PRESET_IDS as DOMAIN_MORPH_PRESET_IDS,
+  MORPH_SLOT_LEVELS as DOMAIN_MORPH_SLOT_LEVELS,
+  isMorphPresetId,
+  isMorphSlotLevel,
+  type MorphPresetId,
+} from '@domain'
 import { CRYSTAL_PRESET_IDS, type CrystalPresetId } from './crystalPresets'
 
 export type MorphSpecPrefix = 'aw' | 'succ'
-export type MorphPresetId = `${MorphSpecPrefix}_${CrystalPresetId}`
+export type { MorphPresetId }
+export type MorphSlotLevel = (typeof DOMAIN_MORPH_SLOT_LEVELS)[number]
 
 export const MORPH_PRESETS: ReadonlyArray<{ id: MorphPresetId; label: string }> = [
   { id: 'aw_t1', label: 'T1 — проб' },
@@ -14,20 +23,9 @@ export const MORPH_PRESETS: ReadonlyArray<{ id: MorphPresetId; label: string }> 
   { id: 'succ_sub', label: 'Субботка — насл' },
 ]
 
-export const MORPH_PRESET_IDS: MorphPresetId[] = MORPH_PRESETS.map((p) => p.id)
-
-export const MORPH_SLOT_LEVELS = [50, 52, 54, 56, 58, 60] as const
-export type MorphSlotLevel = (typeof MORPH_SLOT_LEVELS)[number]
-
-export const MAX_MORPHS_ALL_PRESETS = MORPH_SLOT_LEVELS.length * MORPH_PRESET_IDS.length
-
-export function isMorphPresetId(v: string): v is MorphPresetId {
-  return (MORPH_PRESET_IDS as string[]).includes(v)
-}
-
-export function isMorphSlotLevel(v: number): v is MorphSlotLevel {
-  return (MORPH_SLOT_LEVELS as readonly number[]).includes(v)
-}
+export const MORPH_PRESET_IDS: MorphPresetId[] = [...DOMAIN_MORPH_PRESET_IDS]
+export const MORPH_SLOT_LEVELS = DOMAIN_MORPH_SLOT_LEVELS
+export { MAX_MORPHS_ALL_PRESETS, isMorphPresetId, isMorphSlotLevel }
 
 export function morphGuidePreset(preset: MorphPresetId): CrystalPresetId {
   return preset.slice(preset.indexOf('_') + 1) as CrystalPresetId

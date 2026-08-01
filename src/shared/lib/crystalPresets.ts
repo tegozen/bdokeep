@@ -1,4 +1,12 @@
-export type CrystalPresetId = 't1' | 't2' | 'besp' | 'sub'
+import {
+  CRYSTAL_PRESET_IDS as DOMAIN_PRESET_IDS,
+  MAX_CRYSTALS_ALL_PRESETS,
+  isCrystalPresetId,
+  type CrystalPresetId,
+} from '@domain'
+
+export type { CrystalPresetId }
+export { isCrystalPresetId, MAX_CRYSTALS_ALL_PRESETS }
 
 export const CRYSTAL_PRESETS: ReadonlyArray<{ id: CrystalPresetId; label: string }> = [
   { id: 't1', label: 'T1' },
@@ -7,11 +15,4 @@ export const CRYSTAL_PRESETS: ReadonlyArray<{ id: CrystalPresetId; label: string
   { id: 'sub', label: 'Субботка' },
 ]
 
-export const CRYSTAL_PRESET_IDS: CrystalPresetId[] = CRYSTAL_PRESETS.map((p) => p.id)
-
-export function isCrystalPresetId(id: string): id is CrystalPresetId {
-  return (CRYSTAL_PRESET_IDS as string[]).includes(id)
-}
-
-/** Max crystal rows across all presets (17 board + 6 dawn) × 3. */
-export const MAX_CRYSTALS_ALL_PRESETS = 23 * CRYSTAL_PRESET_IDS.length
+export const CRYSTAL_PRESET_IDS: CrystalPresetId[] = [...DOMAIN_PRESET_IDS]

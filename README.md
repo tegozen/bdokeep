@@ -56,9 +56,9 @@
 ### Ops / безопасность
 
 - Два сервиса: `web` (сайт + API) и `db` (Postgres)
-- Отдельная роль `bdokeep_app` + RLS (не суперпользователь Postgres)
+- Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
 - Postgres только на `127.0.0.1`, наружу — только сайт
-- Same-origin / cookie-сессия админа; слабые пароли (`changeme` и т.п.) в production запрещены
+- Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
 - За reverse proxy — `TRUST_PROXY=1` для корректного rate limit по `X-Forwarded-For`
 
 ## Сервисы
@@ -72,14 +72,15 @@
 
 ```bash
 cp .env.example .env
-# Заполни POSTGRES_PASSWORD, BDOKEEP_APP_PASSWORD, DATABASE_URL, ADMIN_PASSWORD
+# Заполни POSTGRES_PASSWORD, BDOKEEP_APP_PASSWORD, DATABASE_URL,
+# ADMIN_PASSWORD, ADMIN_SESSION_SECRET (openssl rand -base64 48)
 # ADMIN_PASSWORD в production не может быть changeme / password / admin / 123456
 npm install
 npm run docker:up
 npm run dev   # или сразу сайт с compose: http://127.0.0.1:3000
 ```
 
-Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (отдельно от `POSTGRES_PASSWORD`) и `ADMIN_PASSWORD`.
+Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля).
 
 SQL к БД: `docker compose exec db psql -U postgres -d bdokeep`.
 

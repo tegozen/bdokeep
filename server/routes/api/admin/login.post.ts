@@ -3,6 +3,8 @@ const LOGIN_MAX_HITS = 5
 const FAIL_DELAY_MS = 400
 
 export default defineEventHandler(async (event) => {
+  assertSameOrigin(event)
+
   const ip = clientIp(event)
   if (!checkRateLimit(`login:${ip}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)) {
     throw createError({

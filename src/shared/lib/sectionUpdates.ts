@@ -1,3 +1,5 @@
+import { uiSectionFromProposal as mapProposalSection } from '@domain'
+
 export type SectionUpdateMeta = {
   updated_at: string
   updated_by: string | null
@@ -17,26 +19,7 @@ export type GuideUiSection =
 
 /** Map proposal section → UI section meta key (for shared sections). */
 export function uiSectionFromProposal(section: string): string | null {
-  switch (section) {
-    case 'summary_awakening':
-    case 'summary_succession':
-    case 'videos_awakening':
-    case 'videos_succession':
-      return section
-    case 'combo_awakening':
-    case 'combo_succession':
-      return 'combo'
-    case 'morphs':
-      return 'morphs'
-    case 'crystals':
-      return 'crystals'
-    case 'relics':
-      return 'relics'
-    case 'buffs':
-      return 'buffs'
-    default:
-      return null
-  }
+  return mapProposalSection(section)
 }
 
 /** Resolve section_updates key for a guide UI block given active spec mode. */

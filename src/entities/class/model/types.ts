@@ -125,14 +125,4 @@ export type ClassGuideBundle = {
   morphs: GuideMorphRow[]
 }
 
-export type ProposalSection =
-  | 'summary_awakening'
-  | 'summary_succession'
-  | 'buffs'
-  | 'combo_awakening'
-  | 'combo_succession'
-  | 'crystals'
-  | 'relics'
-  | 'videos_awakening'
-  | 'videos_succession'
-  | 'morphs'
+export type { ProposalSection } from '@domain'

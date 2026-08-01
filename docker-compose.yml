@@ -66,6 +66,7 @@ services:
       DATABASE_URL: postgres://bdokeep_app:${BDOKEEP_APP_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
       # Required — no default. Refuse weak values in production (see adminAuth).
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?Set ADMIN_SESSION_SECRET in .env}
       # Set to 1 only behind a reverse proxy that controls X-Forwarded-For
       TRUST_PROXY: ${TRUST_PROXY:-0}
     ports:

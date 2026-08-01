@@ -1,20 +1,19 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createHmac, scryptSync, timingSafeEqual } from 'node:crypto'
 
 const COOKIE_NAME = 'bdo_admin'
-const MAX_AGE_SEC = 60 * 60 * 24 * 7 // 7 days
+const MAX_AGE_SEC = 60 * 60 * 24 // 1 day
 
 const WEAK_ADMIN_PASSWORDS = new Set(['changeme', 'password', 'admin', '123456'])
 
-function adminSecret(): string {
+/** Login password only — never used as HMAC key. */
+function adminPassword(): string {
   const config = useRuntimeConfig()
-  // Prefer plain ADMIN_PASSWORD (compose / .env); NUXT_* only if someone set it
   const password = String(
     config.adminPassword || process.env.ADMIN_PASSWORD || process.env.NUXT_ADMIN_PASSWORD || '',
   )
   if (!password) {
     throw createError({ statusCode: 500, statusMessage: 'ADMIN_PASSWORD не задан' })
   }
-  // Fail closed in production: refuse well-known defaults
   if (process.env.NODE_ENV === 'production' && WEAK_ADMIN_PASSWORDS.has(password.toLowerCase())) {
     throw createError({
       statusCode: 500,
@@ -24,8 +23,35 @@ function adminSecret(): string {
   return password
 }
 
+/** Dedicated cookie signing secret (not the login password). */
+function sessionSecret(): string {
+  const config = useRuntimeConfig()
+  const secret = String(
+    config.adminSessionSecret ||
+      process.env.ADMIN_SESSION_SECRET ||
+      process.env.NUXT_ADMIN_SESSION_SECRET ||
+      '',
+  ).trim()
+  if (!secret) {
+    throw createError({ statusCode: 500, statusMessage: 'ADMIN_SESSION_SECRET не задан' })
+  }
+  if (process.env.NODE_ENV === 'production' && secret.length < 32) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'ADMIN_SESSION_SECRET слишком короткий (минимум 32 символа)',
+    })
+  }
+  if (secret === adminPassword()) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'ADMIN_SESSION_SECRET должен отличаться от ADMIN_PASSWORD',
+    })
+  }
+  return secret
+}
+
 function sign(payload: string): string {
-  return createHmac('sha256', adminSecret()).update(payload).digest('base64url')
+  return createHmac('sha256', sessionSecret()).update(payload).digest('base64url')
 }
 
 function buildToken(exp: number): string {
@@ -80,10 +106,14 @@ export function isAdminSession(event: Parameters<typeof getCookie>[0]): boolean 
   return Boolean(token && parseToken(token).ok)
 }
 
+/**
+ * Constant-time password check via scrypt digests (fixed 32-byte compare).
+ * Avoids length short-circuit on the plaintext password.
+ */
 export function verifyAdminPassword(password: string): boolean {
-  const expected = adminSecret()
-  const a = Buffer.from(password)
-  const b = Buffer.from(expected)
-  if (a.length !== b.length) return false
+  const expected = adminPassword()
+  const salt = createHmac('sha256', sessionSecret()).update('admin-password-salt').digest()
+  const a = scryptSync(password, salt, 32, { N: 16384, r: 8, p: 1 })
+  const b = scryptSync(expected, salt, 32, { N: 16384, r: 8, p: 1 })
   return timingSafeEqual(a, b)
 }

@@ -13,7 +13,6 @@ hljs.registerLanguage('javascript', javascript)
 hljs.registerLanguage('json', json)
 hljs.registerLanguage('typescript', typescript)
 hljs.registerLanguage('xml', xml)
-hljs.registerLanguage('html', xml)
 
 const ru = {
   ...en_US,
@@ -76,27 +75,57 @@ const ru = {
   },
 }
 
+/** Tight XSS whitelist for guild guide prose (no scriptable embeds). */
+const XSS_OPTIONS = {
+  whiteList: {
+    h1: ['id'],
+    h2: ['id'],
+    h3: ['id'],
+    h4: ['id'],
+    h5: ['id'],
+    h6: ['id'],
+    p: [],
+    br: [],
+    hr: [],
+    strong: [],
+    b: [],
+    em: [],
+    i: [],
+    u: [],
+    s: [],
+    del: [],
+    blockquote: [],
+    ul: [],
+    ol: [],
+    li: [],
+    code: ['class'],
+    pre: ['class'],
+    a: ['href', 'title', 'target', 'rel'],
+    table: [],
+    thead: [],
+    tbody: [],
+    tr: [],
+    th: [],
+    td: [],
+    input: ['type', 'disabled', 'checked'],
+    span: ['class'],
+  },
+  stripIgnoreTag: true,
+  stripIgnoreTagBody: ['script', 'style', 'iframe', 'object', 'embed', 'svg', 'math'],
+  css: false,
+}
+
 let configured = false
 
-/** Idempotent md-editor-v3 config; call before first MdEditor/MdPreview mount. */
+/** Read-only markdown preview — no mermaid/katex/echarts (XSS surface). */
 export async function ensureMdEditorConfigured() {
   if (configured) return
   configured = true
 
-  const [
-    { default: katex },
-    { default: mermaid },
-    echarts,
-    prettier,
-    prettierMarkdown,
-  ] = await Promise.all([
-    import('katex'),
-    import('mermaid'),
-    import('echarts'),
+  const [prettier, prettierMarkdown] = await Promise.all([
     import('prettier/standalone'),
     import('prettier/plugins/markdown'),
   ])
-  await import('katex/dist/katex.min.css')
 
   config({
     editorConfig: {
@@ -106,21 +135,23 @@ export async function ensureMdEditorConfigured() {
     editorExtensions: {
       highlight: { instance: hljs },
       screenfull: { instance: screenfull },
-      katex: { instance: katex },
-      mermaid: { instance: mermaid },
-      echarts: { instance: echarts },
       prettier: {
         prettierInstance: prettier,
         parserMarkdownInstance: prettierMarkdown,
       },
     },
     markdownItPlugins(plugins) {
+      // Drop mermaid / katex / echarts markdown-it plugins if present.
+      const safe = plugins.filter((p) => {
+        const t = String((p as { type?: string }).type || '').toLowerCase()
+        return !t.includes('mermaid') && !t.includes('katex') && !t.includes('echarts')
+      })
       return [
-        ...plugins,
+        ...safe,
         {
           type: 'xss',
           plugin: XSSPlugin,
-          options: {},
+          options: XSS_OPTIONS,
         },
       ]
     },

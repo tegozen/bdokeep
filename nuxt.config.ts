@@ -19,7 +19,9 @@ export default defineNuxtConfig({
 
   alias: {
     '@': `${import.meta.dirname}/src`,
+    '@domain': `${rootDir}/domain`,
   },
+
 
   css: ['@/app/styles/main.css'],
 
@@ -28,17 +30,23 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Filled at runtime from DATABASE_URL / ADMIN_PASSWORD (see server/utils)
+    // Filled at runtime from DATABASE_URL / ADMIN_* (see server/utils/adminAuth)
     databaseUrl: '',
     adminPassword: '',
+    adminSessionSecret: '',
     public: {
       siteName: 'BDO Keep',
     },
   },
 
+
   nitro: {
     preset: 'node-server',
+    alias: {
+      '@domain': `${rootDir}/domain`,
+    },
   },
+
 
   routeRules: {
     '/**': {
@@ -49,8 +57,8 @@ export default defineNuxtConfig({
         'Permissions-Policy':
           'camera=(), microphone=(), geolocation=(), compute-pressure=*',
         // script-src/style-src 'unsafe-inline': required by Nuxt/Vue hydration + Tailwind.
-        // Markdown XSS is mitigated by server sanitizeMarkdown + client XSSPlugin.
-        // img-src https: allows remote images in approved markdown (hotlink/tracking risk).
+        // Markdown: server sanitizeMarkdown + client XSSPlugin whitelist (no mermaid/katex/echarts).
+        // img-src https: needed for catalog/class icons (BDO CDN). Markdown XSSPlugin strips remote <img>.
         'Content-Security-Policy': [
           "default-src 'self'",
           "script-src 'self' 'unsafe-inline'",
@@ -58,7 +66,7 @@ export default defineNuxtConfig({
           "font-src 'self' data:",
           "img-src 'self' data: blob: https:",
           "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
-          "connect-src 'self' http://127.0.0.1:* http://localhost:* https:",
+          "connect-src 'self' http://127.0.0.1:* http://localhost:*",
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self'",

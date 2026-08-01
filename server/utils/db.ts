@@ -1,6 +1,6 @@
 import postgres from 'postgres'
 
-type Sql = ReturnType<typeof postgres>
+export type Sql = ReturnType<typeof postgres>
 
 let sqlSingleton: Sql | null = null
 

@@ -1,3 +1,5 @@
+import { MAX_TEXT_LEN, UUID_RE, isSummarySection, type ProposalSection } from '@domain'
+
 export default defineEventHandler(async (event) => {
   requireAdmin(event)
   const id = getRouterParam(event, 'id')
@@ -15,14 +17,11 @@ export default defineEventHandler(async (event) => {
 
   if (!proposal) throw createError({ statusCode: 404, statusMessage: 'Не найдено' })
 
-  const section = String(proposal.section)
+  const section = String(proposal.section) as ProposalSection
   let payload = (proposal.payload || {}) as Record<string, unknown>
   let reviewNote: string | null = null
 
-  const isSummary =
-    section === 'summary_awakening' || section === 'summary_succession'
-
-  if (isSummary && body?.payload && 'text' in body.payload) {
+  if (isSummarySection(section) && body?.payload && 'text' in body.payload) {
     const raw = String(body.payload.text ?? '').trim()
     const text = sanitizeMarkdown(raw)
     if (!text) {
@@ -39,18 +38,13 @@ export default defineEventHandler(async (event) => {
     if (raw !== original) {
       reviewNote = 'отредактировано перед одобрением'
     }
-  } else if (isSummary) {
-    const text = sanitizeMarkdown(String(payload.text || '').trim())
-    if (!text) {
-      throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
-    }
-    payload = { ...payload, text }
   }
 
   await applyProposal(
     {
       id: String(proposal.id),
       class_id: String(proposal.class_id),
+      class_slug: proposal.class_slug == null ? undefined : String(proposal.class_slug),
       section,
       payload,
       status: String(proposal.status),

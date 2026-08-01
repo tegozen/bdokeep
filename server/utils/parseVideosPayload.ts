@@ -1,5 +1,4 @@
-import { MAX_VIDEOS } from './proposals'
-import { sanitizeYoutubeUrl, youtubeVideoId } from './youtube'
+import { MAX_VIDEOS, sanitizeYoutubeUrl, youtubeVideoId } from '@domain'
 import { youtubeVideoHasThumb } from './youtubeThumb'
 
 export type ParsedGuideVideo = {

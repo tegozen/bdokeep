@@ -1,16 +1,28 @@
+import {
+  PROPOSAL_SECTIONS,
+  comboModeFromSection,
+  isBuffsSection,
+  isComboSection,
+  isCrystalsSection,
+  isMorphsSection,
+  isRelicsSection,
+  isSummarySection,
+  isVideosSection,
+  summaryModeFromSection,
+  uiSectionFromProposal,
+  videoModeFromSection,
+  type ProposalSection,
+} from '@domain'
+import type { ParsedGuideVideo } from './parseVideosPayload'
+
 type ProposalRow = {
   id: string
   class_id: string
+  class_slug?: string
   section: string
   payload: Record<string, unknown> | null
   status: string
   author_label?: string | null
-}
-
-/** Proposal section → UI section key for section_updates. */
-function uiSectionKey(section: string): string {
-  if (section === 'combo_awakening' || section === 'combo_succession') return 'combo'
-  return section
 }
 
 /** Apply a pending proposal to live guide tables and mark approved (one transaction). */
@@ -22,19 +34,39 @@ export async function applyProposal(
     throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
   }
 
-  const section = proposal.section as (typeof PROPOSAL_SECTIONS)[number]
-  let payload = (proposal.payload || {}) as Record<string, unknown>
+  if (!(PROPOSAL_SECTIONS as readonly string[]).includes(proposal.section)) {
+    throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
+  }
+  const section = proposal.section as ProposalSection
   const sql = useDb()
 
-  // Network probe before DB tx — don't hold locks while talking to ytimg.
-  let verifiedVideos: ParsedGuideVideo[] | null = null
-  if (isVideosSection(section)) {
-    verifiedVideos = await parseVideosPayload(payload.videos)
+  let classSlug = String(proposal.class_slug || '').trim()
+  if (!classSlug) {
+    const rows = await withDbError(async () => {
+      return await sql`
+        select slug from classes where id = ${proposal.class_id} limit 1
+      `
+    })
+    classSlug = String(rows[0]?.slug || '')
   }
+  if (!classSlug) {
+    throw createError({ statusCode: 400, statusMessage: 'Класс не найден' })
+  }
+
+  // Re-validate (+ ytimg probe) before claiming the row / holding locks.
+  const parsed = await withDbError(() =>
+    parseAndValidatePayload({
+      sql,
+      classSlug,
+      section,
+      rawPayload: proposal.payload,
+    }),
+  )
+  const payload = parsed.payload
+  const verifiedVideos: ParsedGuideVideo[] | null = parsed.verifiedVideos
 
   await withDbError(async () => {
     await sql.begin(async (tx) => {
-      // Claim pending row first so concurrent approves serialize / roll back cleanly
       const claimed = await tx`
         update guide_proposals
         set
@@ -72,10 +104,6 @@ export async function applyProposal(
           ? payload.skill_ids.map((x) => String(x))
           : []
 
-        if (!skillIds.length || skillIds.some((sid) => !UUID_RE.test(sid))) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные комбы' })
-        }
-
         await tx`
           delete from guide_combo_steps
           where guide_id = ${guide.id} and mode = ${mode}
@@ -91,51 +119,20 @@ export async function applyProposal(
           insert into guide_combo_steps ${tx(rows, 'guide_id', 'mode', 'skill_id', 'sort_order')}
         `
       } else if (isBuffsSection(section)) {
-        const rawBuffs = Array.isArray(payload.buffs) ? payload.buffs : null
-        const legacyIds = Array.isArray(payload.buff_ids)
-          ? payload.buff_ids.map((x) => String(x))
-          : []
-
-        const rows: Array<{
-          guide_id: string
-          buff_id: string
-          preset: string
-          sort_order: number
-        }> = []
-
-        if (rawBuffs?.length) {
-          for (let i = 0; i < rawBuffs.length; i++) {
-            const entry = rawBuffs[i] as {
-              preset?: unknown
-              buff_id?: unknown
-              sort_order?: unknown
-            }
-            const preset = String(entry?.preset || 't1')
-            const buffId = String(entry?.buff_id || '')
-            if (!isCrystalPresetId(preset) || !UUID_RE.test(buffId)) {
-              throw createError({ statusCode: 400, statusMessage: 'Некорректные данные забафа' })
-            }
-            rows.push({
-              guide_id: guide.id,
-              buff_id: buffId,
-              preset,
-              sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
-            })
+        const rawBuffs = Array.isArray(payload.buffs) ? payload.buffs : []
+        const rows = rawBuffs.map((entry, i) => {
+          const e = entry as {
+            preset?: unknown
+            buff_id?: unknown
+            sort_order?: unknown
           }
-        } else if (legacyIds.length && !legacyIds.some((bid) => !UUID_RE.test(bid))) {
-          for (let i = 0; i < legacyIds.length; i++) {
-            rows.push({
-              guide_id: guide.id,
-              buff_id: legacyIds[i]!,
-              preset: 't1',
-              sort_order: i,
-            })
+          return {
+            guide_id: guide.id,
+            buff_id: String(e.buff_id || ''),
+            preset: String(e.preset || 't1'),
+            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
-        }
-
-        if (!rows.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные забафа' })
-        }
+        })
 
         await tx`delete from guide_buffs where guide_id = ${guide.id}`
         await tx`
@@ -143,41 +140,21 @@ export async function applyProposal(
         `
       } else if (isCrystalsSection(section)) {
         const raw = Array.isArray(payload.crystals) ? payload.crystals : []
-        if (!raw.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные инкрустации' })
-        }
-
-        const rows: Array<{
-          guide_id: string
-          item_id: string
-          slot: string
-          preset: string
-          sort_order: number
-        }> = []
-        for (let i = 0; i < raw.length; i++) {
-          const entry = raw[i] as {
+        const rows = raw.map((entry, i) => {
+          const e = entry as {
             preset?: unknown
             slot?: unknown
             item_id?: unknown
             sort_order?: unknown
           }
-          const preset = String(entry?.preset || '')
-          const slot = String(entry?.slot || '')
-          const itemId = String(entry?.item_id || '')
-          if (!isCrystalPresetId(preset) || !isCrystalSlotId(slot) || !UUID_RE.test(itemId)) {
-            throw createError({
-              statusCode: 400,
-              statusMessage: 'Некорректный пресет, слот или кристалл',
-            })
-          }
-          rows.push({
+          return {
             guide_id: guide.id,
-            item_id: itemId,
-            slot,
-            preset,
-            sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
-          })
-        }
+            item_id: String(e.item_id || ''),
+            slot: String(e.slot || ''),
+            preset: String(e.preset || ''),
+            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
+          }
+        })
 
         await tx`delete from guide_crystals where guide_id = ${guide.id}`
         await tx`
@@ -186,70 +163,38 @@ export async function applyProposal(
       } else if (isRelicsSection(section)) {
         const rawRelics = Array.isArray(payload.relics) ? payload.relics : []
         const rawLights = Array.isArray(payload.lightstones) ? payload.lightstones : []
-        if (!rawRelics.length && !rawLights.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные реликвий' })
-        }
 
-        const relicRows: Array<{
-          guide_id: string
-          item_id: string
-          slot: string
-          preset: string
-          sort_order: number
-        }> = []
-        for (let i = 0; i < rawRelics.length; i++) {
-          const entry = rawRelics[i] as {
+        const relicRows = rawRelics.map((entry, i) => {
+          const e = entry as {
             preset?: unknown
             slot?: unknown
             item_id?: unknown
             sort_order?: unknown
           }
-          const preset = String(entry?.preset || '')
-          const slot = String(entry?.slot || '')
-          const itemId = String(entry?.item_id || '')
-          if (!isCrystalPresetId(preset) || !isRelicSlotId(slot) || !UUID_RE.test(itemId)) {
-            throw createError({ statusCode: 400, statusMessage: 'Некорректная реликвия' })
-          }
-          relicRows.push({
+          return {
             guide_id: guide.id,
-            item_id: itemId,
-            slot,
-            preset,
-            sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
-          })
-        }
+            item_id: String(e.item_id || ''),
+            slot: String(e.slot || ''),
+            preset: String(e.preset || ''),
+            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
+          }
+        })
 
-        const lightRows: Array<{
-          guide_id: string
-          item_id: string
-          slot: string
-          preset: string
-          sort_order: number
-        }> = []
-        for (let i = 0; i < rawLights.length; i++) {
-          const entry = rawLights[i] as {
+        const lightRows = rawLights.map((entry, i) => {
+          const e = entry as {
             preset?: unknown
             slot?: unknown
             item_id?: unknown
             sort_order?: unknown
           }
-          const preset = String(entry?.preset || '')
-          const slot = String(entry?.slot || '')
-          const itemId = String(entry?.item_id || '')
-          if (!isCrystalPresetId(preset) || !isLightstoneSlotId(slot) || !UUID_RE.test(itemId)) {
-            throw createError({
-              statusCode: 400,
-              statusMessage: 'Некорректный светящийся камень',
-            })
-          }
-          lightRows.push({
+          return {
             guide_id: guide.id,
-            item_id: itemId,
-            slot,
-            preset,
-            sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
-          })
-        }
+            item_id: String(e.item_id || ''),
+            slot: String(e.slot || ''),
+            preset: String(e.preset || ''),
+            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
+          }
+        })
 
         await tx`delete from guide_relics where guide_id = ${guide.id}`
         await tx`delete from guide_lightstones where guide_id = ${guide.id}`
@@ -287,54 +232,25 @@ export async function applyProposal(
         `
       } else if (isMorphsSection(section)) {
         const raw = Array.isArray(payload.morphs) ? payload.morphs : []
-        if (!raw.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные морфов' })
-        }
-
-        const rows: Array<{
-          guide_id: string
-          preset: string
-          slot_level: number
-          skill_id: string
-          effect_id_1: string
-          effect_id_2: string
-          sort_order: number
-        }> = []
-
-        for (let i = 0; i < raw.length; i++) {
-          const entry = raw[i] as {
+        const rows = raw.map((entry, i) => {
+          const e = entry as {
             preset?: unknown
             slot_level?: unknown
             skill_id?: unknown
             effect_ids?: unknown
             sort_order?: unknown
           }
-          const preset = String(entry?.preset || '')
-          const slotLevel = Number(entry?.slot_level)
-          const skillId = String(entry?.skill_id || '')
-          const effectIds = Array.isArray(entry?.effect_ids)
-            ? entry.effect_ids.map((x) => String(x))
-            : []
-          if (
-            !isMorphPresetId(preset) ||
-            !isMorphSlotLevel(slotLevel) ||
-            !UUID_RE.test(skillId) ||
-            effectIds.length !== 2 ||
-            !UUID_RE.test(effectIds[0] || '') ||
-            !UUID_RE.test(effectIds[1] || '')
-          ) {
-            throw createError({ statusCode: 400, statusMessage: 'Некорректный слот морфа' })
-          }
-          rows.push({
+          const effectIds = Array.isArray(e.effect_ids) ? e.effect_ids.map((x) => String(x)) : []
+          return {
             guide_id: guide.id,
-            preset,
-            slot_level: slotLevel,
-            skill_id: skillId,
+            preset: String(e.preset || ''),
+            slot_level: Number(e.slot_level),
+            skill_id: String(e.skill_id || ''),
             effect_id_1: effectIds[0]!,
             effect_id_2: effectIds[1]!,
-            sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
-          })
-        }
+            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
+          }
+        })
 
         await tx`delete from guide_morphs where guide_id = ${guide.id}`
         await tx`
@@ -350,10 +266,7 @@ export async function applyProposal(
           )}
         `
       } else if (isSummarySection(section)) {
-        const text = sanitizeMarkdown(String(payload.text || '').trim())
-        if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
-        payload = { ...payload, text }
-
+        const text = String(payload.text || '').trim()
         if (summaryModeFromSection(section) === 'succession') {
           await tx`
             update class_guides
@@ -371,7 +284,10 @@ export async function applyProposal(
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
       }
 
-      const metaKey = uiSectionKey(section)
+      const metaKey = uiSectionFromProposal(section)
+      if (!metaKey) {
+        throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
+      }
       const updatedBy = String(proposal.author_label || '').trim() || null
       const patch = {
         [metaKey]: {

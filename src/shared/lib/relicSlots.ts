@@ -1,18 +1,19 @@
 /** Relic board: 2 relics × 2 lightstones — mirrors BDO relic UI. */
 
-export const RELIC_SLOT_IDS = ['r0', 'r1'] as const
+import {
+  LIGHTSTONE_SLOT_IDS as DOMAIN_LIGHTSTONE_SLOT_IDS,
+  RELIC_SLOT_IDS as DOMAIN_RELIC_SLOT_IDS,
+  isLightstoneSlotId,
+  isRelicSlotId,
+} from '@domain'
+
+export const RELIC_SLOT_IDS = DOMAIN_RELIC_SLOT_IDS
 export type RelicSlotId = (typeof RELIC_SLOT_IDS)[number]
 
-export const LIGHTSTONE_SLOT_IDS = ['r0_a', 'r0_b', 'r1_a', 'r1_b'] as const
+export const LIGHTSTONE_SLOT_IDS = DOMAIN_LIGHTSTONE_SLOT_IDS
 export type LightstoneSlotId = (typeof LIGHTSTONE_SLOT_IDS)[number]
 
-export function isRelicSlotId(id: string): id is RelicSlotId {
-  return (RELIC_SLOT_IDS as readonly string[]).includes(id)
-}
-
-export function isLightstoneSlotId(id: string): id is LightstoneSlotId {
-  return (LIGHTSTONE_SLOT_IDS as readonly string[]).includes(id)
-}
+export { isRelicSlotId, isLightstoneSlotId }
 
 export function lightstoneSlotsForRelic(relic: RelicSlotId): LightstoneSlotId[] {
   return relic === 'r0' ? ['r0_a', 'r0_b'] : ['r1_a', 'r1_b']
