@@ -81,6 +81,7 @@ const {
   isSuperadmin,
   runSubmit,
 } = useProposeModal({
+  classSlug: () => props.classSlug,
   serialize: () => JSON.stringify(slots.map((s) => s.url)),
   onOpen: () => {
     hydrateFromInitial()

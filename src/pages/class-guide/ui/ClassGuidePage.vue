@@ -27,10 +27,15 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
             </template>
             <template #actions>
-              <ProposeSummaryForm
-                :class-slug="bundle.class.slug"
-                :initial-text="bundle.guide?.summary"
-              />
+              <Suspense>
+                <ProposeSummaryForm
+                  :class-slug="bundle.class.slug"
+                  :initial-text="bundle.guide?.summary"
+                />
+                <template #fallback>
+                  <span :class="$style.asyncFallback">…</span>
+                </template>
+              </Suspense>
             </template>
             <div v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
               <UiMarkdownPreview
@@ -48,11 +53,16 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ comboPendingCount }}</span>
             </template>
             <template #actions>
-              <ProposeComboForm
-                :key="comboSection"
-                :class-slug="bundle.class.slug"
-                :section="comboSection"
-              />
+              <Suspense>
+                <ProposeComboForm
+                  :key="comboSection"
+                  :class-slug="bundle.class.slug"
+                  :section="comboSection"
+                />
+                <template #fallback>
+                  <span :class="$style.asyncFallback">…</span>
+                </template>
+              </Suspense>
             </template>
 
             <div v-if="activeComboSteps.length" :class="[$style.comboBlock, $style.fade]">
@@ -71,10 +81,15 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('morphs') }}</span>
             </template>
             <template #actions>
-              <ProposeMorphForm
-                :class-slug="bundle.class.slug"
-                :initial-morphs="bundle.morphs"
-              />
+              <Suspense>
+                <ProposeMorphForm
+                  :class-slug="bundle.class.slug"
+                  :initial-morphs="bundle.morphs"
+                />
+                <template #fallback>
+                  <span :class="$style.asyncFallback">…</span>
+                </template>
+              </Suspense>
             </template>
             <div :class="[$style.morphStage, $style.fade]">
               <MorphBoard :filled="morphFilled" />
@@ -84,22 +99,43 @@
 
         <template v-if="isSuperadmin && topDraftsVisible">
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-            <PendingSectionDrafts
-              :proposals="pendingFor('summary')"
-              @changed="onDraftChanged"
-            />
+            <Suspense>
+              <PendingSectionDrafts
+                :proposals="pendingFor('summary')"
+                @changed="onDraftChanged"
+                @optimistic-remove="onOptimisticRemove"
+                @optimistic-restore="onOptimisticRestore"
+              />
+              <template #fallback>
+                <p :class="$style.asyncFallback">Загрузка…</p>
+              </template>
+            </Suspense>
           </div>
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-            <PendingSectionDrafts
-              :proposals="comboPending"
-              @changed="onDraftChanged"
-            />
+            <Suspense>
+              <PendingSectionDrafts
+                :proposals="comboPending"
+                @changed="onDraftChanged"
+                @optimistic-remove="onOptimisticRemove"
+                @optimistic-restore="onOptimisticRestore"
+              />
+              <template #fallback>
+                <p :class="$style.asyncFallback">Загрузка…</p>
+              </template>
+            </Suspense>
           </div>
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-            <PendingSectionDrafts
-              :proposals="pendingFor('morphs')"
-              @changed="onDraftChanged"
-            />
+            <Suspense>
+              <PendingSectionDrafts
+                :proposals="pendingFor('morphs')"
+                @changed="onDraftChanged"
+                @optimistic-remove="onOptimisticRemove"
+                @optimistic-restore="onOptimisticRestore"
+              />
+              <template #fallback>
+                <p :class="$style.asyncFallback">Загрузка…</p>
+              </template>
+            </Suspense>
           </div>
         </template>
       </div>
@@ -111,10 +147,15 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('crystals') }}</span>
             </template>
             <template #actions>
-              <ProposeCrystalForm
-                :class-slug="bundle.class.slug"
-                :initial-crystals="bundle.crystals"
-              />
+              <Suspense>
+                <ProposeCrystalForm
+                  :class-slug="bundle.class.slug"
+                  :initial-crystals="bundle.crystals"
+                />
+                <template #fallback>
+                  <span :class="$style.asyncFallback">…</span>
+                </template>
+              </Suspense>
             </template>
             <div :class="[$style.crystalLayout, $style.fade]">
               <div :class="$style.picked">
@@ -146,11 +187,16 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('relics') }}</span>
             </template>
             <template #actions>
-              <ProposeRelicForm
-                :class-slug="bundle.class.slug"
-                :initial-relics="bundle.relics"
-                :initial-lightstones="bundle.lightstones"
-              />
+              <Suspense>
+                <ProposeRelicForm
+                  :class-slug="bundle.class.slug"
+                  :initial-relics="bundle.relics"
+                  :initial-lightstones="bundle.lightstones"
+                />
+                <template #fallback>
+                  <span :class="$style.asyncFallback">…</span>
+                </template>
+              </Suspense>
             </template>
             <div :class="[$style.relicStage, $style.fade]">
               <RelicBoard :filled="relicFilled" />
@@ -167,10 +213,15 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('buffs') }}</span>
             </template>
             <template #actions>
-              <ProposeBuffsForm
-                :class-slug="bundle.class.slug"
-                :initial-buffs="bundle.buffs"
-              />
+              <Suspense>
+                <ProposeBuffsForm
+                  :class-slug="bundle.class.slug"
+                  :initial-buffs="bundle.buffs"
+                />
+                <template #fallback>
+                  <span :class="$style.asyncFallback">…</span>
+                </template>
+              </Suspense>
             </template>
             <div :class="$style.scrollCard">
               <ul v-if="activeBuffs.length" :class="[$style.buffList, $style.fade]">
@@ -196,22 +247,43 @@
 
         <template v-if="isSuperadmin && gearDraftsVisible">
           <div :class="[$style.gearCell, $style.gearDraft]">
-            <PendingSectionDrafts
-              :proposals="pendingFor('crystals')"
-              @changed="onDraftChanged"
-            />
+            <Suspense>
+              <PendingSectionDrafts
+                :proposals="pendingFor('crystals')"
+                @changed="onDraftChanged"
+                @optimistic-remove="onOptimisticRemove"
+                @optimistic-restore="onOptimisticRestore"
+              />
+              <template #fallback>
+                <p :class="$style.asyncFallback">Загрузка…</p>
+              </template>
+            </Suspense>
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
-            <PendingSectionDrafts
-              :proposals="pendingFor('relics')"
-              @changed="onDraftChanged"
-            />
+            <Suspense>
+              <PendingSectionDrafts
+                :proposals="pendingFor('relics')"
+                @changed="onDraftChanged"
+                @optimistic-remove="onOptimisticRemove"
+                @optimistic-restore="onOptimisticRestore"
+              />
+              <template #fallback>
+                <p :class="$style.asyncFallback">Загрузка…</p>
+              </template>
+            </Suspense>
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
-            <PendingSectionDrafts
-              :proposals="pendingFor('buffs')"
-              @changed="onDraftChanged"
-            />
+            <Suspense>
+              <PendingSectionDrafts
+                :proposals="pendingFor('buffs')"
+                @changed="onDraftChanged"
+                @optimistic-remove="onOptimisticRemove"
+                @optimistic-restore="onOptimisticRestore"
+              />
+              <template #fallback>
+                <p :class="$style.asyncFallback">Загрузка…</p>
+              </template>
+            </Suspense>
           </div>
         </template>
       </div>
@@ -221,39 +293,40 @@
           <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('videos') }}</span>
         </template>
         <template #actions>
-          <ProposeVideosForm
-            :class-slug="bundle.class.slug"
-            :initial-videos="bundle.videos"
-          />
+          <Suspense>
+            <ProposeVideosForm
+              :class-slug="bundle.class.slug"
+              :initial-videos="bundle.videos"
+            />
+            <template #fallback>
+              <span :class="$style.asyncFallback">…</span>
+            </template>
+          </Suspense>
         </template>
         <VideoList :videos="bundle.videos" />
-        <PendingSectionDrafts
-          v-if="isSuperadmin"
-          :proposals="pendingFor('videos')"
-          @changed="onDraftChanged"
-        />
+        <Suspense v-if="isSuperadmin">
+          <PendingSectionDrafts
+            :proposals="pendingFor('videos')"
+            @changed="onDraftChanged"
+            @optimistic-remove="onOptimisticRemove"
+            @optimistic-restore="onOptimisticRestore"
+          />
+          <template #fallback>
+            <p :class="$style.asyncFallback">Загрузка…</p>
+          </template>
+        </Suspense>
       </GuideSection>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { ClassGuideBundle } from '@/entities/class'
 import {
   fetchPendingForClass,
-  PendingSectionDrafts,
   type PendingProposal,
-} from '@/features/superadmin-auth'
-import {
-  ProposeBuffsForm,
-  ProposeComboForm,
-  ProposeCrystalForm,
-  ProposeMorphForm,
-  ProposeRelicForm,
-  ProposeSummaryForm,
-  ProposeVideosForm,
-} from '@/features/propose-guide'
+} from '@/features/superadmin-auth/api/pendingProposals'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
 import {
   CRYSTAL_ALL_SLOTS,
@@ -272,6 +345,31 @@ import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
 
+const ProposeBuffsForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeBuffsForm.vue'),
+)
+const ProposeComboForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeComboForm.vue'),
+)
+const ProposeCrystalForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeCrystalForm.vue'),
+)
+const ProposeMorphForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeMorphForm.vue'),
+)
+const ProposeRelicForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeRelicForm.vue'),
+)
+const ProposeSummaryForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeSummaryForm.vue'),
+)
+const ProposeVideosForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeVideosForm.vue'),
+)
+const PendingSectionDrafts = defineAsyncComponent(
+  () => import('@/features/superadmin-auth/ui/PendingSectionDrafts.vue'),
+)
+
 const props = defineProps<{
   bundle: ClassGuideBundle | null
   pending: boolean
@@ -279,8 +377,9 @@ const props = defineProps<{
 }>()
 
 const { isSuperadmin } = useSuperadmin()
-const { refresh: refreshPendingSummary } = usePendingSummary()
+const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 const classPending = ref<PendingProposal[]>([])
+const pendingRestoreAt = new Map<string, number>()
 
 async function loadClassPending() {
   if (!isSuperadmin.value || !props.bundle?.class.slug) {
@@ -292,6 +391,23 @@ async function loadClassPending() {
   } catch {
     classPending.value = []
   }
+}
+
+function onOptimisticRemove(item: PendingProposal) {
+  const index = classPending.value.findIndex((p) => p.id === item.id)
+  if (index >= 0) pendingRestoreAt.set(item.id, index)
+  classPending.value = classPending.value.filter((p) => p.id !== item.id)
+  adjustPendingSummary(-1, item.class_slug)
+}
+
+function onOptimisticRestore(item: PendingProposal) {
+  if (classPending.value.some((p) => p.id === item.id)) return
+  const index = pendingRestoreAt.get(item.id) ?? classPending.value.length
+  pendingRestoreAt.delete(item.id)
+  const next = [...classPending.value]
+  next.splice(Math.min(index, next.length), 0, item)
+  classPending.value = next
+  adjustPendingSummary(1, item.class_slug)
 }
 
 function pendingFor(section: string) {
@@ -324,11 +440,11 @@ const topDraftsVisible = computed(
 )
 
 async function onDraftChanged(action: 'approve' | 'reject') {
-  await loadClassPending()
-  await refreshPendingSummary()
-  if (action === 'approve') {
-    await reloadNuxtApp({ force: true })
+  if (action === 'approve' && props.bundle?.class.slug) {
+    await refreshNuxtData(`class-${props.bundle.class.slug}`)
   }
+  // Quiet reconcile badge with server (list already updated optimistically)
+  void refreshPendingSummary()
 }
 
 watch(
@@ -520,6 +636,11 @@ const morphFilled = computed(() => {
   text-align: center;
   pointer-events: none;
   user-select: none;
+}
+
+.asyncFallback {
+  color: var(--color-muted);
+  font-size: 0.85rem;
 }
 
 .list {

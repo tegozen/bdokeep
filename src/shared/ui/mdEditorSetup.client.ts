@@ -1,7 +1,19 @@
-import highlight from 'highlight.js'
+import hljs from 'highlight.js/lib/core'
+import bash from 'highlight.js/lib/languages/bash'
+import javascript from 'highlight.js/lib/languages/javascript'
+import json from 'highlight.js/lib/languages/json'
+import typescript from 'highlight.js/lib/languages/typescript'
+import xml from 'highlight.js/lib/languages/xml'
 import { config, en_US, XSSPlugin } from 'md-editor-v3'
 import screenfull from 'screenfull'
 import 'highlight.js/styles/github-dark.css'
+
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('typescript', typescript)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('html', xml)
 
 const ru = {
   ...en_US,
@@ -64,23 +76,31 @@ const ru = {
   },
 }
 
-config({
-  editorConfig: {
-    languageUserDefined: { ru },
-    zIndex: 40000,
-  },
-  editorExtensions: {
-    highlight: { instance: highlight },
-    screenfull: { instance: screenfull },
-  },
-  markdownItPlugins(plugins) {
-    return [
-      ...plugins,
-      {
-        type: 'xss',
-        plugin: XSSPlugin,
-        options: {},
-      },
-    ]
-  },
-})
+let configured = false
+
+/** Idempotent md-editor-v3 config; call before first MdEditor/MdPreview mount. */
+export async function ensureMdEditorConfigured() {
+  if (configured) return
+  configured = true
+
+  config({
+    editorConfig: {
+      languageUserDefined: { ru },
+      zIndex: 40000,
+    },
+    editorExtensions: {
+      highlight: { instance: hljs },
+      screenfull: { instance: screenfull },
+    },
+    markdownItPlugins(plugins) {
+      return [
+        ...plugins,
+        {
+          type: 'xss',
+          plugin: XSSPlugin,
+          options: {},
+        },
+      ]
+    },
+  })
+}

@@ -221,6 +221,7 @@ const {
   isSuperadmin,
   runSubmit,
 } = useProposeModal({
+  classSlug: () => props.classSlug,
   serialize: serializeState,
   onOpen: async () => {
     hydrateFromInitial()

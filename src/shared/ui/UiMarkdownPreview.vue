@@ -1,14 +1,19 @@
 <template>
   <ClientOnly>
-    <MdPreview
-      :id="id"
-      :model-value="modelValue"
-      theme="dark"
-      language="ru"
-      preview-theme="github"
-      code-theme="github"
-      :class="[$style.preview, attrs.class]"
-    />
+    <Suspense>
+      <AsyncMdPreview
+        :id="id"
+        :model-value="modelValue"
+        theme="dark"
+        language="ru"
+        preview-theme="github"
+        code-theme="github"
+        :class="[$style.preview, attrs.class]"
+      />
+      <template #fallback>
+        <div :class="[$style.fallback, attrs.class]">{{ modelValue }}</div>
+      </template>
+    </Suspense>
     <template #fallback>
       <div :class="[$style.fallback, attrs.class]">{{ modelValue }}</div>
     </template>
@@ -16,9 +21,15 @@
 </template>
 
 <script setup lang="ts">
-import { useAttrs } from 'vue'
-import { MdPreview } from 'md-editor-v3'
-import 'md-editor-v3/lib/preview.css'
+import { defineAsyncComponent, useAttrs } from 'vue'
+
+const AsyncMdPreview = defineAsyncComponent(async () => {
+  const { ensureMdEditorConfigured } = await import('./mdEditorSetup.client')
+  await ensureMdEditorConfigured()
+  await import('md-editor-v3/lib/preview.css')
+  const { MdPreview } = await import('md-editor-v3')
+  return MdPreview
+})
 
 defineOptions({ inheritAttrs: false })
 

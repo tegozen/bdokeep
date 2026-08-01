@@ -110,6 +110,7 @@ const {
   isSuperadmin,
   runSubmit,
 } = useProposeModal({
+  classSlug: () => props.classSlug,
   serialize: () => JSON.stringify({ combo: picked.value.map((p) => p.id) }),
   onOpen: async () => {
     if (skills.value.length) return

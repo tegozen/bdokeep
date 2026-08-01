@@ -172,6 +172,7 @@ const {
   isSuperadmin,
   runSubmit,
 } = useProposeModal({
+  classSlug: () => props.classSlug,
   serialize: () =>
     JSON.stringify({
       buffs: Object.fromEntries(

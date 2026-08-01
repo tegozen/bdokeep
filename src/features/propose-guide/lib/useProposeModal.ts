@@ -1,17 +1,18 @@
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
 import { useSuperadmin, useUnsavedGuard } from '@/shared/lib'
 import { parseSubmitError } from './parseSubmitError'
-import { reloadAfterApprove } from './reloadAfterApprove'
+import { refreshGuideAfterApprove } from './refreshGuideAfterApprove'
 
 export type ProposeSubmitResult = { autoApproved?: boolean }
 
 /**
  * Shared lifecycle for propose-guide modals: open/close, dirty guard,
- * author/honeypot, submit wrapper with error parse + auto-approve reload.
+ * author/honeypot, submit wrapper with error parse + auto-approve refresh.
  */
 export function useProposeModal(opts: {
   /** Domain-only snapshot (author/honeypot are tracked automatically). */
   serialize: () => string
+  classSlug: MaybeRefOrGetter<string>
   onOpen?: () => void | Promise<void>
   onReset?: () => void
 }) {
@@ -70,7 +71,7 @@ export function useProposeModal(opts: {
 
   /**
    * Run submit body. Return `null` to abort (caller sets `formError`).
-   * On success, closes modal and reloads if auto-approved.
+   * On success, closes modal and refreshes guide if auto-approved.
    */
   async function runSubmit(
     fn: () => Promise<ProposeSubmitResult | null>,
@@ -86,7 +87,7 @@ export function useProposeModal(opts: {
       if (res == null) return
       close()
       if (res.autoApproved) {
-        await reloadAfterApprove()
+        await refreshGuideAfterApprove(toValue(opts.classSlug))
       }
     } catch (e: unknown) {
       formError.value = parseSubmitError(e)

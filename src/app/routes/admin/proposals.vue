@@ -249,7 +249,7 @@ type Proposal = {
 const route = useRoute()
 const router = useRouter()
 const { isSuperadmin } = useSuperadmin()
-const { refresh: refreshPendingSummary } = usePendingSummary()
+const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 
 const crystalPresetTabs = CRYSTAL_PRESETS
 const authed = ref(false)
@@ -607,18 +607,31 @@ function cancelEdit() {
 }
 
 async function onEditedApproved() {
+  const id = editingId.value
+  const idx = id ? items.value.findIndex((i) => i.id === id) : -1
+  const removed = idx >= 0 ? items.value[idx]! : undefined
   cancelEdit()
-  await load()
-  await refreshPendingSummary()
+  if (removed && idx >= 0) {
+    items.value.splice(idx, 1)
+    adjustPendingSummary(-1, removed.class_slug)
+  }
+  void refreshPendingSummary()
 }
 
 async function approve(item: Proposal) {
   acting.value = item.id
+  const idx = items.value.findIndex((i) => i.id === item.id)
+  const removed = idx >= 0 ? items.value[idx]! : undefined
+  if (idx >= 0) items.value.splice(idx, 1)
+  adjustPendingSummary(-1, item.class_slug)
   try {
     await $fetch(`/api/admin/proposals/${item.id}/approve`, { method: 'POST' })
-    await load()
-    await refreshPendingSummary()
+    void refreshPendingSummary()
   } catch (e: unknown) {
+    if (removed && idx >= 0) {
+      items.value.splice(idx, 0, removed)
+      adjustPendingSummary(1, item.class_slug)
+    }
     const msg =
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
@@ -631,12 +644,19 @@ async function approve(item: Proposal) {
 
 async function reject(id: string) {
   acting.value = id
+  const idx = items.value.findIndex((i) => i.id === id)
+  const removed = idx >= 0 ? items.value[idx]! : undefined
+  if (idx >= 0) items.value.splice(idx, 1)
+  if (removed) adjustPendingSummary(-1, removed.class_slug)
   try {
     await $fetch(`/api/admin/proposals/${id}/reject`, { method: 'POST', body: {} })
     if (editingId.value === id) cancelEdit()
-    await load()
-    await refreshPendingSummary()
+    void refreshPendingSummary()
   } catch (e: unknown) {
+    if (removed && idx >= 0) {
+      items.value.splice(idx, 0, removed)
+      adjustPendingSummary(1, removed.class_slug)
+    }
     const msg =
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')

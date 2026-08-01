@@ -57,6 +57,7 @@ const {
   isSuperadmin,
   runSubmit,
 } = useProposeModal({
+  classSlug: () => props.classSlug,
   serialize: () => JSON.stringify({ text: text.value }),
   onOpen: () => {
     text.value = props.initialText?.trim() ? props.initialText : ''

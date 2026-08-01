@@ -209,6 +209,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   changed: [action: 'approve' | 'reject']
+  'optimistic-remove': [item: PendingProposal]
+  'optimistic-restore': [item: PendingProposal]
 }>()
 
 const presets = CRYSTAL_PRESETS
@@ -488,16 +490,21 @@ function cancelEdit() {
 }
 
 function onEditedApproved() {
+  const id = editingId.value
+  const item = id ? props.proposals.find((p) => p.id === id) : undefined
   cancelEdit()
+  if (item) emit('optimistic-remove', item)
   emit('changed', 'approve')
 }
 
 async function onApprove(item: PendingProposal) {
   acting.value = item.id
+  emit('optimistic-remove', item)
   try {
     await approveProposal(item.id)
     emit('changed', 'approve')
   } catch (e: unknown) {
+    emit('optimistic-restore', item)
     const msg =
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
@@ -510,11 +517,14 @@ async function onApprove(item: PendingProposal) {
 
 async function onReject(id: string) {
   acting.value = id
+  const item = props.proposals.find((p) => p.id === id)
+  if (item) emit('optimistic-remove', item)
   try {
     await rejectProposal(id)
     if (editingId.value === id) cancelEdit()
     emit('changed', 'reject')
   } catch (e: unknown) {
+    if (item) emit('optimistic-restore', item)
     const msg =
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')

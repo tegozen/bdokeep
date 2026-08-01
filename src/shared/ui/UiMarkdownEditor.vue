@@ -1,19 +1,31 @@
 <template>
   <ClientOnly>
-    <MdEditor
-      :id="id"
-      v-model="text"
-      theme="dark"
-      language="ru"
-      preview-theme="github"
-      code-theme="github"
-      :toolbars="toolbars"
-      :footers="footers"
-      :no-upload-img="true"
-      :placeholder="placeholder"
-      :style="{ height }"
-      :class="$style.editor"
-    />
+    <Suspense>
+      <AsyncMdEditor
+        :id="id"
+        v-model="text"
+        theme="dark"
+        language="ru"
+        preview-theme="github"
+        code-theme="github"
+        :toolbars="toolbars"
+        :footers="footers"
+        :no-upload-img="true"
+        :placeholder="placeholder"
+        :style="{ height }"
+        :class="$style.editor"
+      />
+      <template #fallback>
+        <textarea
+          v-model="text"
+          :class="$style.fallback"
+          :rows="12"
+          :placeholder="placeholder"
+          required
+          maxlength="8000"
+        />
+      </template>
+    </Suspense>
     <template #fallback>
       <textarea
         v-model="text"
@@ -28,8 +40,16 @@
 </template>
 
 <script setup lang="ts">
-import { MdEditor, type Footers, type ToolbarNames } from 'md-editor-v3'
-import 'md-editor-v3/lib/style.css'
+import { defineAsyncComponent } from 'vue'
+import type { Footers, ToolbarNames } from 'md-editor-v3'
+
+const AsyncMdEditor = defineAsyncComponent(async () => {
+  const { ensureMdEditorConfigured } = await import('./mdEditorSetup.client')
+  await ensureMdEditorConfigured()
+  await import('md-editor-v3/lib/style.css')
+  const { MdEditor } = await import('md-editor-v3')
+  return MdEditor
+})
 
 const text = defineModel<string>({ default: '' })
 
