@@ -2,16 +2,15 @@
 
 Гильдейские PvP-гайды по классам Black Desert Online (только RU).
 
-Стек: **Nuxt 4.5+** (FSD) + Postgres + PostgREST + Adminer. Один `docker-compose.yml`.
+Стек: **Nuxt 4.5+** (FSD) + Postgres + PostgREST. Один `docker-compose.yml`.
 
-## Сервисы (всего 4)
+## Сервисы (всего 3)
 
 | Сервис | Зачем | Порт |
 |--------|--------|------|
 | `web` | сайт Nuxt | `HOST_PORT` (3000) |
 | `rest` | PostgREST API для фронта | `API_PORT` (8000) |
-| `db` | Postgres | `POSTGRES_PORT` (5432) |
-| `adminer` | правки таблиц в браузере | `ADMINER_PORT` (3001) |
+| `db` | Postgres | внутренний (без публикации) |
 
 Полный self-hosted Supabase (Kong, Auth, Realtime, Storage, Studio…) **не используем** — для гайда это оверхед.
 
@@ -26,7 +25,7 @@ npm run dev   # или сразу сайт с compose: http://127.0.0.1:3000
 
 Env только в корне: `.env` / `.env.example`.
 
-Adminer: система `PostgreSQL`, сервер `db`, пользователь `postgres`, пароль из `.env`, БД `bdokeep`.
+SQL к БД при необходимости: `docker compose exec db psql -U postgres -d bdokeep`.
 
 ## Модерация предложений
 
@@ -46,7 +45,7 @@ Adminer: система `PostgreSQL`, сервер `db`, пользовател�
 
 ## Nginx (внешний)
 
-Проксируй только сайт (`HOST_PORT`). Adminer и Postgres наружу не отдавай.
+Проксируй только сайт (`HOST_PORT`). Postgres наружу не отдавай.
 
 ```nginx
 location / {

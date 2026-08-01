@@ -1,5 +1,5 @@
 # BDO Keep — один compose, минимум сервисов
-# db (Postgres) + rest (PostgREST API) + adminer (редактор таблиц) + web (Nuxt)
+# db (Postgres) + rest (PostgREST API) + web (Nuxt)
 # Studio/Kong/Auth/Realtime/Storage НЕ нужны для гильдейского гайда
 
 name: bdokeep
@@ -40,7 +40,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-    # Postgres только во внутренней сети compose (Adminer ходит на db:5432)
+    # Postgres только во внутренней сети compose
 
   rest:
     image: postgrest/postgrest:v12.2.12
@@ -57,18 +57,6 @@ services:
       PGRST_SERVER_CORS_ALLOWED_ORIGINS: '*'
     ports:
       - '${API_PORT:-8000}:3000'
-
-  # Редактор БД вместо тяжёлого Supabase Studio
-  adminer:
-    image: adminer:4
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      ADMINER_DEFAULT_SERVER: db
-    ports:
-      - '${ADMINER_PORT:-3001}:8080'
 
   web:
     build:
