@@ -6,6 +6,7 @@ export const PROPOSAL_SECTIONS = [
   'crystals',
   'relics',
   'videos',
+  'morphs',
 ] as const
 
 export type ProposalSection = (typeof PROPOSAL_SECTIONS)[number]
@@ -22,10 +23,16 @@ export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
 export const MAX_RELICS_ALL_PRESETS = 2 * 4
 export const MAX_LIGHTSTONES_ALL_PRESETS = 4 * 4
 export const MAX_VIDEOS = 3
+export const MAX_MORPHS_ALL_PRESETS = 6 * 4
 export const MAX_AUTHOR_LEN = 80
 
 export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub'] as const
 export type CrystalPresetId = (typeof CRYSTAL_PRESET_IDS)[number]
+
+export const MORPH_PRESET_IDS = ['aw_cut', 'aw_besp', 'succ_cut', 'succ_besp'] as const
+export type MorphPresetId = (typeof MORPH_PRESET_IDS)[number]
+
+export const MORPH_SLOT_LEVELS = [50, 52, 54, 56, 58, 60] as const
 
 export const RELIC_SLOT_IDS = ['r0', 'r1'] as const
 export const LIGHTSTONE_SLOT_IDS = ['r0_a', 'r0_b', 'r1_a', 'r1_b'] as const
@@ -76,6 +83,10 @@ export function isVideosSection(section: ProposalSection): boolean {
   return section === 'videos'
 }
 
+export function isMorphsSection(section: ProposalSection): boolean {
+  return section === 'morphs'
+}
+
 export function comboModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
   return section === 'combo_succession' ? 'succession' : 'awakening'
 }
@@ -86,6 +97,14 @@ export function isCrystalSlotId(id: string): boolean {
 
 export function isCrystalPresetId(id: string): id is CrystalPresetId {
   return (CRYSTAL_PRESET_IDS as readonly string[]).includes(id)
+}
+
+export function isMorphPresetId(id: string): id is MorphPresetId {
+  return (MORPH_PRESET_IDS as readonly string[]).includes(id)
+}
+
+export function isMorphSlotLevel(v: number): boolean {
+  return (MORPH_SLOT_LEVELS as readonly number[]).includes(v)
 }
 
 export function isRelicSlotId(id: string): boolean {

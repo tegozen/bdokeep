@@ -38,54 +38,95 @@
         />
       </GuideSection>
 
-      <GuideSection title="Комба" anchor="combo">
-        <template v-if="comboPendingCount" #badge>
-          <span :class="$style.pendingBadge" title="На модерации">{{ comboPendingCount }}</span>
-        </template>
-        <template #beside>
-          <div :class="$style.comboTabs" role="tablist" aria-label="Тип комбы">
-            <button
-              type="button"
-              role="tab"
-              :aria-selected="comboTab === 'awakening'"
-              :class="[$style.comboTab, comboTab === 'awakening' && $style.comboTabOn]"
-              @click="comboTab = 'awakening'"
-            >
-              Пробуждение
-            </button>
-            <button
-              type="button"
-              role="tab"
-              :aria-selected="comboTab === 'succession'"
-              :class="[$style.comboTab, comboTab === 'succession' && $style.comboTabOn]"
-              @click="comboTab = 'succession'"
-            >
-              Наследие
-            </button>
-          </div>
-        </template>
-        <template #actions>
-          <ProposeGuideForm
-            :key="comboSection"
-            :class-slug="bundle.class.slug"
-            :section="comboSection"
-            trigger-label="Предложить комбу"
-          />
-        </template>
+      <div :class="$style.comboMorphRow">
+        <div :class="$style.comboMorphCell">
+          <GuideSection flush title="Комба" anchor="combo">
+            <template v-if="comboPendingCount" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ comboPendingCount }}</span>
+            </template>
+            <template #beside>
+              <div :class="$style.comboTabs" role="tablist" aria-label="Тип комбы">
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="comboTab === 'awakening'"
+                  :class="[$style.comboTab, comboTab === 'awakening' && $style.comboTabOn]"
+                  @click="comboTab = 'awakening'"
+                >
+                  Пробуждение
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  :aria-selected="comboTab === 'succession'"
+                  :class="[$style.comboTab, comboTab === 'succession' && $style.comboTabOn]"
+                  @click="comboTab = 'succession'"
+                >
+                  Наследие
+                </button>
+              </div>
+            </template>
+            <template #actions>
+              <ProposeGuideForm
+                :key="comboSection"
+                :class-slug="bundle.class.slug"
+                :section="comboSection"
+                trigger-label="Предложить комбу"
+              />
+            </template>
 
-        <div v-if="activeComboSteps.length" :class="[$style.comboBlock, $style.fade]">
-          <ComboChain
-            :steps="activeComboSteps"
-            :label="comboTab === 'succession' ? 'Комба наследия' : 'Комба пробуждения'"
-          />
+            <div v-if="activeComboSteps.length" :class="[$style.comboBlock, $style.fade]">
+              <ComboChain
+                :steps="activeComboSteps"
+                :label="comboTab === 'succession' ? 'Комба наследия' : 'Комба пробуждения'"
+              />
+            </div>
+            <ShowEmptyGuide v-else />
+            <PendingSectionDrafts
+              v-if="isSuperadmin"
+              :proposals="comboPending"
+              @changed="onDraftChanged"
+            />
+          </GuideSection>
         </div>
-        <ShowEmptyGuide v-else />
-        <PendingSectionDrafts
-          v-if="isSuperadmin"
-          :proposals="comboPending"
-          @changed="onDraftChanged"
-        />
-      </GuideSection>
+
+        <div :class="$style.comboMorphCell">
+          <GuideSection flush title="Морфы" anchor="morphs">
+            <template v-if="sectionCount('morphs')" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('morphs') }}</span>
+            </template>
+            <template #beside>
+              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет морфов">
+                <button
+                  v-for="p in morphPresets"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :aria-selected="activeMorphPreset === p.id"
+                  :class="[$style.presetTab, activeMorphPreset === p.id && $style.presetTabOn]"
+                  @click="activeMorphPreset = p.id"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
+            </template>
+            <template #actions>
+              <ProposeMorphForm
+                :class-slug="bundle.class.slug"
+                :initial-morphs="bundle.morphs"
+              />
+            </template>
+            <div :class="[$style.morphStage, $style.fade]">
+              <MorphBoard :filled="morphFilled" />
+            </div>
+            <PendingSectionDrafts
+              v-if="isSuperadmin"
+              :proposals="pendingFor('morphs')"
+              @changed="onDraftChanged"
+            />
+          </GuideSection>
+        </div>
+      </div>
 
       <div :class="$style.gearBlock">
         <div ref="crystalColRef" :class="[$style.gearCell, $style.gearLive]">
@@ -275,13 +316,23 @@ import {
   PendingSectionDrafts,
   type PendingProposal,
 } from '@/features/superadmin-auth'
-import { ProposeCrystalForm, ProposeGuideForm, ProposeRelicForm, ProposeVideosForm } from '@/features/propose-guide'
+import { ProposeCrystalForm, ProposeGuideForm, ProposeMorphForm, ProposeRelicForm, ProposeVideosForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
-import { CRYSTAL_ALL_SLOTS, CRYSTAL_PRESETS, type CrystalPresetId, usePendingSummary, useSuperadmin } from '@/shared/lib'
+import {
+  CRYSTAL_ALL_SLOTS,
+  CRYSTAL_PRESETS,
+  MORPH_PRESETS,
+  resolveAddonLabel,
+  type CrystalPresetId,
+  type MorphPresetId,
+  usePendingSummary,
+  useSuperadmin,
+} from '@/shared/lib'
 import { UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { GuideSection } from '@/widgets/guide-section'
+import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
 
@@ -347,9 +398,11 @@ watch(
 
 const comboTab = ref<'awakening' | 'succession'>('awakening')
 const crystalPresets = CRYSTAL_PRESETS
+const morphPresets = MORPH_PRESETS
 const activeCrystalPreset = ref<CrystalPresetId>('t1')
 const activeRelicPreset = ref<CrystalPresetId>('t1')
 const activeBuffPreset = ref<CrystalPresetId>('t1')
+const activeMorphPreset = ref<MorphPresetId>('aw_cut')
 const crystalColRef = ref<HTMLElement | null>(null)
 const buffMaxHeight = ref<number | null>(null)
 let crystalObserver: ResizeObserver | null = null
@@ -460,6 +513,32 @@ const relicFilled = computed(() => {
     const item = row.items
     if (!slot || !item) continue
     map[slot] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
+  }
+  return map
+})
+
+const morphFilled = computed(() => {
+  const map: Partial<Record<50 | 52 | 54 | 56 | 58 | 60, MorphSlotFill>> = {}
+  for (const row of props.bundle?.morphs ?? []) {
+    if (row.preset !== activeMorphPreset.value) continue
+    const level = row.slot_level as 50 | 52 | 54 | 56 | 58 | 60
+    const tier = row.skills?.addon_tier ?? 2
+    map[level] = {
+      skill: row.skills
+        ? {
+            id: row.skills.id,
+            name_ru: row.skills.name_ru,
+            icon_url: row.skills.icon_url,
+            addon_tier: row.skills.addon_tier,
+          }
+        : null,
+      effect1Label: row.effect1
+        ? resolveAddonLabel(row.effect1.tier_labels, tier, row.effect1.name_ru)
+        : null,
+      effect2Label: row.effect2
+        ? resolveAddonLabel(row.effect2.tier_labels, tier, row.effect2.name_ru)
+        : null,
+    }
   }
   return map
 })
@@ -581,6 +660,26 @@ const relicFilled = computed(() => {
   border: 1px solid var(--color-border);
   background: var(--color-bg-panel);
   padding: 1rem 1.15rem;
+}
+
+.comboMorphRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin-bottom: 2.5rem;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+}
+
+.comboMorphCell {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  background: var(--color-bg);
+}
+
+.morphStage {
+  width: 100%;
+  min-width: 0;
 }
 
 .comboTabs {
@@ -737,6 +836,7 @@ const relicFilled = computed(() => {
 }
 
 @media (max-width: 1100px) {
+  .comboMorphRow,
   .gearBlock {
     grid-template-columns: 1fr;
   }

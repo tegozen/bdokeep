@@ -36,6 +36,12 @@ export type SubmitProposalInput = {
       youtube_url: string
       sort_order?: number
     }>
+    morphs?: Array<{
+      preset: string
+      slot_level: number
+      skill_id: string
+      effect_ids: [string, string]
+    }>
   }
   author_label?: string
   website?: string

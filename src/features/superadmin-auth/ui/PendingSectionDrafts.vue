@@ -127,6 +127,28 @@
           :videos="videosFor(item)"
         />
 
+        <!-- morphs -->
+        <template v-else-if="item.section === 'morphs'">
+          <div v-if="morphByPreset[item.id]" :class="$style.presetTabs" role="tablist">
+            <button
+              v-for="p in morphPresets"
+              :key="p.id"
+              type="button"
+              role="tab"
+              :class="[$style.presetTab, morphPreset[item.id] === p.id && $style.presetTabOn]"
+              @click="morphPreset[item.id] = p.id"
+            >
+              {{ p.label }}
+            </button>
+          </div>
+          <MorphBoard
+            v-if="morphFilled(item.id) && Object.keys(morphFilled(item.id)!).length"
+            :filled="morphFilled(item.id)!"
+          />
+          <p v-else-if="morphByPreset[item.id] === undefined" :class="$style.muted">Загрузка…</p>
+          <p v-else :class="$style.muted">Нет морфов в этом пресете</p>
+        </template>
+
         <pre v-else :class="$style.text">{{ JSON.stringify(item.payload, null, 2) }}</pre>
       </div>
     </article>
@@ -135,7 +157,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
-import type { Buff, ClassVideo, Skill } from '@/entities/class'
+import type { Buff, ClassVideo, Skill, SkillAddonEffect } from '@/entities/class'
 import {
   approveProposal,
   rejectProposal,
@@ -143,9 +165,17 @@ import {
 } from '@/features/superadmin-auth'
 import BorderSparkler from './BorderSparkler.vue'
 import { getSupabase } from '@/shared/api'
-import { CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
+import {
+  CRYSTAL_PRESETS,
+  MORPH_PRESETS,
+  resolveAddonLabel,
+  type CrystalPresetId,
+  type MorphPresetId,
+  type MorphSlotLevel,
+} from '@/shared/lib'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
+import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
 
@@ -158,6 +188,7 @@ const emit = defineEmits<{
 }>()
 
 const presets = CRYSTAL_PRESETS
+const morphPresets = MORPH_PRESETS
 const acting = ref<string | null>(null)
 
 type Payload = {
@@ -169,6 +200,12 @@ type Payload = {
   relics?: Array<{ preset?: string; slot: string; item_id: string }>
   lightstones?: Array<{ preset?: string; slot: string; item_id: string }>
   videos?: Array<{ title?: string; youtube_url: string }>
+  morphs?: Array<{
+    preset?: string
+    slot_level: number
+    skill_id: string
+    effect_ids: string[]
+  }>
 }
 
 const comboSteps = reactive<Record<string, Array<{ id: string; skills: Skill | null }> | null>>({})
@@ -184,6 +221,10 @@ const relicByPreset = reactive<
   Record<string, Partial<Record<CrystalPresetId, Record<string, RelicFill>>> | null>
 >({})
 const relicPreset = reactive<Record<string, CrystalPresetId>>({})
+const morphByPreset = reactive<
+  Record<string, Partial<Record<MorphPresetId, Partial<Record<MorphSlotLevel, MorphSlotFill>>>> | null>
+>({})
+const morphPreset = reactive<Record<string, MorphPresetId>>({})
 
 function payload(item: PendingProposal): Payload {
   return (item.payload ?? {}) as Payload
@@ -222,6 +263,11 @@ function relicFilled(id: string): Record<string, RelicFill> {
   return relicByPreset[id]?.[preset] || {}
 }
 
+function morphFilled(id: string): Partial<Record<MorphSlotLevel, MorphSlotFill>> {
+  const preset = morphPreset[id] || 'aw_cut'
+  return morphByPreset[id]?.[preset] || {}
+}
+
 function videosFor(item: PendingProposal): ClassVideo[] {
   return (payload(item).videos ?? []).map((v, i) => ({
     id: `${item.id}-${i}`,
@@ -237,6 +283,7 @@ async function hydrate() {
   for (const key of Object.keys(buffByPreset)) delete buffByPreset[key]
   for (const key of Object.keys(crystalByPreset)) delete crystalByPreset[key]
   for (const key of Object.keys(relicByPreset)) delete relicByPreset[key]
+  for (const key of Object.keys(morphByPreset)) delete morphByPreset[key]
 
   await Promise.all(
     props.proposals.map(async (item) => {
@@ -244,6 +291,7 @@ async function hydrate() {
       else if (item.section === 'buffs') await hydrateBuffs(item)
       else if (item.section === 'crystals') await hydrateCrystals(item)
       else if (item.section === 'relics') await hydrateRelics(item)
+      else if (item.section === 'morphs') await hydrateMorphs(item)
     }),
   )
 }
@@ -371,6 +419,61 @@ async function hydrateRelics(item: PendingProposal) {
     relicByPreset[item.id] = byPreset
   } catch {
     relicByPreset[item.id] = {}
+  }
+}
+
+async function hydrateMorphs(item: PendingProposal) {
+  morphPreset[item.id] = 'aw_cut'
+  const entries = payload(item).morphs ?? []
+  if (!entries.length) {
+    morphByPreset[item.id] = {}
+    return
+  }
+  try {
+    const skillIds = [...new Set(entries.map((e) => e.skill_id))]
+    const effectIds = [...new Set(entries.flatMap((e) => e.effect_ids ?? []))]
+    const sb = getSupabase()
+    const [{ data: skills, error: sErr }, { data: fx, error: fErr }] = await Promise.all([
+      sb
+        .from('skills')
+        .select('id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier')
+        .in('id', skillIds),
+      sb
+        .from('skill_addon_effects')
+        .select('id, key, name_ru, effect_group, tier_labels')
+        .in('id', effectIds),
+    ])
+    if (sErr) throw sErr
+    if (fErr) throw fErr
+    const skillById = new Map((skills ?? []).map((s) => [s.id, s as Skill]))
+    const fxById = new Map((fx ?? []).map((e) => [e.id, e as SkillAddonEffect]))
+    const byPreset: Partial<
+      Record<MorphPresetId, Partial<Record<MorphSlotLevel, MorphSlotFill>>>
+    > = {}
+    for (const entry of entries) {
+      const preset = (entry.preset || 'aw_cut') as MorphPresetId
+      const level = entry.slot_level as MorphSlotLevel
+      const skill = skillById.get(entry.skill_id) ?? null
+      const tier = skill?.addon_tier ?? 2
+      const e1 = fxById.get(entry.effect_ids?.[0] || '')
+      const e2 = fxById.get(entry.effect_ids?.[1] || '')
+      if (!byPreset[preset]) byPreset[preset] = {}
+      byPreset[preset]![level] = {
+        skill: skill
+          ? {
+              id: skill.id,
+              name_ru: skill.name_ru,
+              icon_url: skill.icon_url,
+              addon_tier: skill.addon_tier,
+            }
+          : null,
+        effect1Label: e1 ? resolveAddonLabel(e1.tier_labels, tier, e1.name_ru) : null,
+        effect2Label: e2 ? resolveAddonLabel(e2.tier_labels, tier, e2.name_ru) : null,
+      }
+    }
+    morphByPreset[item.id] = byPreset
+  } catch {
+    morphByPreset[item.id] = {}
   }
 }
 

@@ -33,6 +33,17 @@ export type Skill = {
   icon_url: string | null
   class_slug: string | null
   skill_type?: string | null
+  supports_addon?: boolean | null
+  addon_tier?: number | null
+}
+
+export type SkillAddonEffect = {
+  id: string
+  key: string
+  name_ru: string
+  effect_group: string
+  tier_labels: Record<string, string> | null
+  sort_order?: number
 }
 
 export type Buff = {
@@ -78,6 +89,16 @@ export type GuideItemRow = {
   items: Item | null
 }
 
+export type GuideMorphRow = {
+  id: string
+  preset: string
+  slot_level: number
+  sort_order: number
+  skills: Skill | null
+  effect1: SkillAddonEffect | null
+  effect2: SkillAddonEffect | null
+}
+
 export type ClassGuideBundle = {
   class: BdoClass
   guide: ClassGuide | null
@@ -88,6 +109,7 @@ export type ClassGuideBundle = {
   lightstones: GuideItemRow[]
   crystals: GuideItemRow[]
   essence: GuideItemRow[]
+  morphs: GuideMorphRow[]
 }
 
 export type ProposalSection =
@@ -98,3 +120,4 @@ export type ProposalSection =
   | 'crystals'
   | 'relics'
   | 'videos'
+  | 'morphs'

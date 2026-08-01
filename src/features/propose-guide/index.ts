@@ -1,5 +1,6 @@
 export { default as ProposeGuideForm } from './ui/ProposeGuideForm.vue'
 export { default as ProposeCrystalForm } from './ui/ProposeCrystalForm.vue'
+export { default as ProposeMorphForm } from './ui/ProposeMorphForm.vue'
 export { default as ProposeRelicForm } from './ui/ProposeRelicForm.vue'
 export { default as ProposeVideosForm } from './ui/ProposeVideosForm.vue'
 export { submitGuideProposal } from './api/submitProposal'

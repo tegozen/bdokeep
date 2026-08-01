@@ -25,6 +25,15 @@ services:
       - ./supabase/migrations/009_drop_guide_skills.sql:/docker-entrypoint-initdb.d/90-drop-guide-skills.sql:ro
       - ./supabase/migrations/010_seed_crystals.sql:/docker-entrypoint-initdb.d/91-seed-crystals.sql:ro
       - ./supabase/migrations/011_crystals_proposals.sql:/docker-entrypoint-initdb.d/92-crystals-proposals.sql:ro
+      - ./supabase/migrations/012_crystal_presets.sql:/docker-entrypoint-initdb.d/93-crystal-presets.sql:ro
+      - ./supabase/migrations/013_crystal_preset_sub.sql:/docker-entrypoint-initdb.d/94-crystal-preset-sub.sql:ro
+      - ./supabase/migrations/014_relic_presets.sql:/docker-entrypoint-initdb.d/95-relic-presets.sql:ro
+      - ./supabase/migrations/015_seed_relics_lightstones.sql:/docker-entrypoint-initdb.d/96-seed-relics.sql:ro
+      - ./supabase/migrations/016_buff_presets.sql:/docker-entrypoint-initdb.d/97-buff-presets.sql:ro
+      - ./supabase/migrations/017_videos_proposals.sql:/docker-entrypoint-initdb.d/98-videos.sql:ro
+      - ./supabase/migrations/018_morphs.sql:/docker-entrypoint-initdb.d/99-morphs.sql:ro
+      - ./supabase/migrations/019_seed_skill_addon_effects.sql:/docker-entrypoint-initdb.d/99b-seed-addon-effects.sql:ro
+      - ./supabase/migrations/020_morph_grants.sql:/docker-entrypoint-initdb.d/99c-morph-grants.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s

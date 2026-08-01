@@ -349,6 +349,98 @@ export default defineEventHandler(async (event) => {
     }
 
     payload = { videos }
+  } else if (isMorphsSection(section)) {
+    const raw = body.payload?.morphs
+    if (!Array.isArray(raw) || raw.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот морфа' })
+    }
+    if (raw.length > MAX_MORPHS_ALL_PRESETS) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Максимум ${MAX_MORPHS_ALL_PRESETS} слотов`,
+      })
+    }
+
+    const morphs: Array<{
+      preset: string
+      slot_level: number
+      skill_id: string
+      effect_ids: [string, string]
+      sort_order: number
+    }> = []
+    const used = new Set<string>()
+
+    for (let i = 0; i < raw.length; i++) {
+      const entry = raw[i] as {
+        preset?: unknown
+        slot_level?: unknown
+        skill_id?: unknown
+        effect_ids?: unknown
+        sort_order?: unknown
+      }
+      const preset = String(entry?.preset || '')
+      const slotLevel = Number(entry?.slot_level)
+      const skillId = String(entry?.skill_id || '')
+      const effectIds = Array.isArray(entry?.effect_ids)
+        ? entry.effect_ids.map((x) => String(x))
+        : []
+      if (!isMorphPresetId(preset)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет морфов' })
+      }
+      if (!isMorphSlotLevel(slotLevel)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный слот морфа' })
+      }
+      const key = `${preset}:${slotLevel}`
+      if (used.has(key)) {
+        throw createError({ statusCode: 400, statusMessage: 'Дубликат слота морфа' })
+      }
+      used.add(key)
+      if (!UUID_RE.test(skillId)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный skill id' })
+      }
+      if (
+        effectIds.length !== 2 ||
+        effectIds[0] === effectIds[1] ||
+        !effectIds.every((id) => UUID_RE.test(id))
+      ) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Нужно ровно 2 разных эффекта на слот',
+        })
+      }
+      morphs.push({
+        preset,
+        slot_level: slotLevel,
+        skill_id: skillId,
+        effect_ids: [effectIds[0]!, effectIds[1]!],
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const skillIds = [...new Set(morphs.map((m) => m.skill_id))]
+    const { data: skillRows, error: skillErr } = await rest
+      .from('skills')
+      .select('id')
+      .eq('class_slug', slug)
+      .in('id', skillIds)
+    if (skillErr) throw createError({ statusCode: 502, statusMessage: skillErr.message })
+    const allowedSkills = new Set((skillRows ?? []).map((s: { id: string }) => s.id))
+    if (skillIds.some((id) => !allowedSkills.has(id))) {
+      throw createError({ statusCode: 400, statusMessage: 'Неизвестный скилл класса' })
+    }
+
+    const effectIds = [...new Set(morphs.flatMap((m) => m.effect_ids))]
+    const { data: fxRows, error: fxErr } = await rest
+      .from('skill_addon_effects')
+      .select('id')
+      .in('id', effectIds)
+    if (fxErr) throw createError({ statusCode: 502, statusMessage: fxErr.message })
+    const allowedFx = new Set((fxRows ?? []).map((s: { id: string }) => s.id))
+    if (effectIds.some((id) => !allowedFx.has(id))) {
+      throw createError({ statusCode: 400, statusMessage: 'Неизвестный эффект морфа' })
+    }
+
+    payload = { morphs }
   } else {
     const text = String(body.payload?.text ?? '').trim()
     if (!text) {

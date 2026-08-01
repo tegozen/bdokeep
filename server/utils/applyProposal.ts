@@ -274,6 +274,62 @@ export async function applyProposal(
 
     const { error: insErr } = await rest.from('class_videos').insert(rows)
     if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
+  } else if (isMorphsSection(section)) {
+    const raw = Array.isArray(payload.morphs) ? payload.morphs : []
+    if (!raw.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный payload морфов' })
+    }
+
+    const rows: Array<{
+      guide_id: string
+      preset: string
+      slot_level: number
+      skill_id: string
+      effect_id_1: string
+      effect_id_2: string
+      sort_order: number
+    }> = []
+
+    for (let i = 0; i < raw.length; i++) {
+      const entry = raw[i] as {
+        preset?: unknown
+        slot_level?: unknown
+        skill_id?: unknown
+        effect_ids?: unknown
+        sort_order?: unknown
+      }
+      const preset = String(entry?.preset || '')
+      const slotLevel = Number(entry?.slot_level)
+      const skillId = String(entry?.skill_id || '')
+      const effectIds = Array.isArray(entry?.effect_ids)
+        ? entry.effect_ids.map((x) => String(x))
+        : []
+      if (
+        !isMorphPresetId(preset) ||
+        !isMorphSlotLevel(slotLevel) ||
+        !UUID_RE.test(skillId) ||
+        effectIds.length !== 2 ||
+        !UUID_RE.test(effectIds[0] || '') ||
+        !UUID_RE.test(effectIds[1] || '')
+      ) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный слот морфа' })
+      }
+      rows.push({
+        guide_id: guide.id,
+        preset,
+        slot_level: slotLevel,
+        skill_id: skillId,
+        effect_id_1: effectIds[0]!,
+        effect_id_2: effectIds[1]!,
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const { error: delErr } = await rest.from('guide_morphs').delete().eq('guide_id', guide.id)
+    if (delErr) throw createError({ statusCode: 502, statusMessage: delErr.message })
+
+    const { error: insErr } = await rest.from('guide_morphs').insert(rows)
+    if (insErr) throw createError({ statusCode: 502, statusMessage: insErr.message })
   } else if (section === 'summary') {
     const text = String(payload.text || '').trim()
     if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })

@@ -49,3 +49,15 @@ export {
   type RelicBoardSlotKind,
   type RelicSlotId,
 } from './relicSlots'
+export {
+  MAX_MORPHS_ALL_PRESETS,
+  MORPH_PRESETS,
+  MORPH_PRESET_IDS,
+  MORPH_SLOT_LEVELS,
+  isMorphPresetId,
+  isMorphSlotLevel,
+  morphPresetSkillMode,
+  resolveAddonLabel,
+  type MorphPresetId,
+  type MorphSlotLevel,
+} from './morphPresets'

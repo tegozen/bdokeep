@@ -292,6 +292,8 @@ function sectionLabel(section: string) {
       return 'Реликвии'
     case 'videos':
       return 'Видео'
+    case 'morphs':
+      return 'Морфы'
     case 'combo_awakening':
       return 'Комба · пробуждение'
     case 'combo_succession':

@@ -15,7 +15,8 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
         guide_lightstones(count),
         guide_crystals(count),
         guide_essence(count),
-        guide_combo_steps(count)
+        guide_combo_steps(count),
+        guide_morphs(count)
       ),
       class_videos(count)
     `,
@@ -34,6 +35,7 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
     guide_crystals: CountRow[] | null
     guide_essence: CountRow[] | null
     guide_combo_steps: CountRow[] | null
+    guide_morphs: CountRow[] | null
   }
   type Row = BdoClass & {
     class_guides: GuideEmbed | GuideEmbed[] | null
@@ -54,7 +56,8 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
             countOf(guide.guide_lightstones) > 0 ||
             countOf(guide.guide_crystals) > 0 ||
             countOf(guide.guide_essence) > 0 ||
-            countOf(guide.guide_combo_steps) > 0),
+            countOf(guide.guide_combo_steps) > 0 ||
+            countOf(guide.guide_morphs) > 0),
       ) || countOf(row.class_videos) > 0
 
     const { class_guides: _g, class_videos: _v, ...klass } = row
@@ -75,12 +78,25 @@ export async function fetchClassSkills(classSlug: string): Promise<Skill[]> {
   const supabase = getSupabase()
   const { data, error } = await supabase
     .from('skills')
-    .select('id, name_ru, icon_url, class_slug, skill_type')
+    .select('id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier')
     .eq('class_slug', classSlug)
     .order('name_ru', { ascending: true })
 
   if (error) throw error
   return (data ?? []) as Skill[]
+}
+
+export async function fetchSkillAddonEffects(): Promise<
+  import('../model/types').SkillAddonEffect[]
+> {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('skill_addon_effects')
+    .select('id, key, name_ru, effect_group, tier_labels, sort_order')
+    .order('sort_order', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as import('../model/types').SkillAddonEffect[]
 }
 
 export async function fetchBuffs(): Promise<Buff[]> {
@@ -138,6 +154,7 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
     lightstones: [] as ClassGuideBundle['lightstones'],
     crystals: [] as ClassGuideBundle['crystals'],
     essence: [] as ClassGuideBundle['essence'],
+    morphs: [] as ClassGuideBundle['morphs'],
   }
 
   const supabase = getSupabase()
@@ -175,7 +192,7 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
 
   const guideId = guide.id
 
-  const [comboSteps, buffs, relics, lightstones, crystals, essence] = await Promise.all([
+  const [comboSteps, buffs, relics, lightstones, crystals, essence, morphs] = await Promise.all([
     supabase
       .from('guide_combo_steps')
       .select('id, mode, notes, sort_order, skills(id, name_ru, icon_url, class_slug)')
@@ -206,9 +223,19 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
       .select('id, slot, notes, sort_order, items(id, name_ru, icon_url, item_type)')
       .eq('guide_id', guideId)
       .order('sort_order', { ascending: true }),
+    supabase
+      .from('guide_morphs')
+      .select(
+        `id, preset, slot_level, sort_order,
+         skills(id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier),
+         effect1:skill_addon_effects!guide_morphs_effect_id_1_fkey(id, key, name_ru, effect_group, tier_labels),
+         effect2:skill_addon_effects!guide_morphs_effect_id_2_fkey(id, key, name_ru, effect_group, tier_labels)`,
+      )
+      .eq('guide_id', guideId)
+      .order('slot_level', { ascending: true }),
   ])
 
-  for (const res of [comboSteps, buffs, relics, lightstones, crystals, essence]) {
+  for (const res of [comboSteps, buffs, relics, lightstones, crystals, essence, morphs]) {
     if (res.error) throw res.error
   }
 
@@ -222,5 +249,6 @@ export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBun
     lightstones: (lightstones.data ?? []) as ClassGuideBundle['lightstones'],
     crystals: (crystals.data ?? []) as ClassGuideBundle['crystals'],
     essence: (essence.data ?? []) as ClassGuideBundle['essence'],
+    morphs: (morphs.data ?? []) as ClassGuideBundle['morphs'],
   }
 }

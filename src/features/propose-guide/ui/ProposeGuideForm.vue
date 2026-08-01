@@ -63,32 +63,7 @@
                 </template>
               </p>
               <div
-                v-if="isCombo"
-                :class="$style.tabs"
-                role="tablist"
-                aria-label="Тип скиллов"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  :aria-selected="catalogTab === 'main'"
-                  :class="[$style.tab, catalogTab === 'main' && $style.tabOn]"
-                  @click="catalogTab = 'main'"
-                >
-                  Основные
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  :aria-selected="catalogTab === 'spec'"
-                  :class="[$style.tab, catalogTab === 'spec' && $style.tabOn]"
-                  @click="catalogTab = 'spec'"
-                >
-                  {{ isSuccessionCombo ? 'Наследие' : 'Пробуждение' }}
-                </button>
-              </div>
-              <div
-                v-else-if="isBuffs"
+                v-if="isBuffs"
                 :class="[$style.tabs, $style.tabsBuff]"
                 role="tablist"
                 aria-label="Категория бафов"
@@ -252,7 +227,6 @@ import {
   type CrystalPresetId,
 } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
-import { skillCatalogBucket } from '../lib/skillBucket'
 
 type PickItem = { id: string; name_ru: string; icon_url: string | null }
 type BuffTabId = 'camp' | 'cron' | 'balm' | 'elixir'
@@ -289,7 +263,6 @@ const honeypot = ref('')
 const text = ref('')
 const author = ref('')
 const query = ref('')
-const catalogTab = ref<'main' | 'spec'>('main')
 const buffTab = ref<BuffTabId>('camp')
 const buffTabs = BUFF_TABS
 const guidePresets = CRYSTAL_PRESETS
@@ -371,15 +344,13 @@ const filteredCatalog = computed(() => {
       return b.name_ru.toLowerCase().includes(q)
     })
   }
-  const want = catalogTab.value === 'main' ? 'main' : isSuccessionCombo.value ? 'succession' : 'awakening'
   return skills.value.filter((s) => {
-    if (skillCatalogBucket(s) !== want) return false
     if (!q) return true
     return s.name_ru.toLowerCase().includes(q)
   })
 })
 
-watch([catalogTab, buffTab], () => {
+watch(buffTab, () => {
   formError.value = ''
 })
 
@@ -438,7 +409,6 @@ function reset() {
   author.value = ''
   honeypot.value = ''
   query.value = ''
-  catalogTab.value = 'main'
   buffTab.value = 'camp'
   activeBuffPreset.value = 't1'
   buffByPreset.value = emptyBuffPresets()
