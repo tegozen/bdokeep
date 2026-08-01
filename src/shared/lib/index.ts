@@ -6,9 +6,28 @@ export {
   YOUTUBE_IFRAME_ALLOW,
 } from './youtube'
 export { useHeaderClass, type HeaderClassInfo } from './useHeaderClass'
-export { useHeaderToc, CLASS_GUIDE_TOC, type HeaderTocItem } from './useHeaderToc'
+export { useHeaderPresetFill } from './useHeaderPresetFill'
+export {
+  useHomeClassFilters,
+  HOME_TIER_OPTIONS,
+  type HomeTierMin,
+} from './useHomeClassFilters'
+export {
+  displayAuthorLabel,
+  formatSectionUpdated,
+  parseSectionUpdates,
+  uiSectionFromProposal,
+  type GuideUiSection,
+  type SectionUpdateMeta,
+  type SectionUpdatesMap,
+} from './sectionUpdates'
 export { useGuideSpecMode, type GuideSpecMode } from './useGuideSpecMode'
 export { useGuidePreset } from './useGuidePreset'
+export {
+  computePresetFill,
+  emptyPresetFill,
+  type PresetFillMap,
+} from './presetHasContent'
 export { useSuperadmin } from './useSuperadmin'
 export { usePendingSummary } from './usePendingSummary'
 export { useConfirm, type ConfirmOptions } from './useConfirm'

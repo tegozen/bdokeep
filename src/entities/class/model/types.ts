@@ -14,11 +14,18 @@ export type BdoClass = {
   has_content?: boolean
 }
 
+export type SectionUpdateMeta = {
+  updated_at: string
+  updated_by: string | null
+}
+
 export type ClassGuide = {
   id: string
   class_id: string
   summary: string | null
   updated_at: string
+  /** Per UI-section last update: summary/combo/morphs/crystals/relics/buffs/videos */
+  section_updates?: Record<string, SectionUpdateMeta> | null
 }
 
 export type ClassVideo = {

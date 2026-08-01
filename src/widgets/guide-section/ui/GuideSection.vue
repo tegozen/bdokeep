@@ -107,8 +107,8 @@ withDefaults(
 }
 
 .subtitle {
-  margin: 0.375rem 0 0;
-  font-size: 0.95rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
   color: var(--color-muted);
 }
 </style>

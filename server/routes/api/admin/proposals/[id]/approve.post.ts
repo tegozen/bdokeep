@@ -51,6 +51,7 @@ export default defineEventHandler(async (event) => {
       section,
       payload,
       status: String(proposal.status),
+      author_label: proposal.author_label == null ? null : String(proposal.author_label),
     },
     { reviewNote },
   )

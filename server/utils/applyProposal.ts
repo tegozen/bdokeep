@@ -4,6 +4,13 @@ type ProposalRow = {
   section: string
   payload: Record<string, unknown> | null
   status: string
+  author_label?: string | null
+}
+
+/** Proposal section → UI section key for section_updates. */
+function uiSectionKey(section: string): string {
+  if (section === 'combo_awakening' || section === 'combo_succession') return 'combo'
+  return section
 }
 
 /** Apply a pending proposal to live guide tables and mark approved (one transaction). */
@@ -344,12 +351,29 @@ export async function applyProposal(
 
         await tx`
           update class_guides
-          set summary = ${text}, updated_at = now()
+          set summary = ${text}
           where id = ${guide.id}
         `
       } else {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
       }
+
+      const metaKey = uiSectionKey(section)
+      const updatedBy = String(proposal.author_label || '').trim() || null
+      const patch = {
+        [metaKey]: {
+          updated_at: new Date().toISOString(),
+          updated_by: updatedBy,
+        },
+      }
+
+      await tx`
+        update class_guides
+        set
+          updated_at = now(),
+          section_updates = coalesce(section_updates, '{}'::jsonb) || ${sql.json(patch)}
+        where id = ${guide.id}
+      `
 
       await tx`
         update guide_proposals

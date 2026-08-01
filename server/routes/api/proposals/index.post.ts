@@ -417,7 +417,7 @@ export default defineEventHandler(async (event) => {
         ${authorLabel},
         'pending'
       )
-      returning id, class_id, section, payload, status
+      returning id, class_id, section, payload, status, author_label
     `
     return rows[0]!
   })
@@ -430,6 +430,7 @@ export default defineEventHandler(async (event) => {
         section: String(inserted.section),
         payload: (inserted.payload || {}) as Record<string, unknown>,
         status: String(inserted.status),
+        author_label: inserted.author_label == null ? null : String(inserted.author_label),
       },
       { reviewNote: 'auto-approved (superadmin)' },
     )

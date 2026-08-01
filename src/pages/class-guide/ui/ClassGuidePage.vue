@@ -22,7 +22,12 @@
     <template v-else>
       <div :class="$style.comboMorphRow">
         <div :class="$style.comboMorphCell">
-          <GuideSection flush title="Суть" anchor="summary">
+          <GuideSection
+            flush
+            title="Суть"
+            anchor="summary"
+            :subtitle="sectionSubtitle('summary')"
+          >
             <template v-if="sectionCount('summary')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
             </template>
@@ -53,7 +58,12 @@
         </div>
 
         <div :class="$style.comboMorphCell">
-          <GuideSection flush title="Комба" anchor="combo">
+          <GuideSection
+            flush
+            title="Комба"
+            anchor="combo"
+            :subtitle="sectionSubtitle('combo')"
+          >
             <template v-if="comboPendingCount" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ comboPendingCount }}</span>
             </template>
@@ -78,7 +88,12 @@
         </div>
 
         <div :class="$style.comboMorphCell">
-          <GuideSection flush title="Морфы" anchor="morphs">
+          <GuideSection
+            flush
+            title="Морфы"
+            anchor="morphs"
+            :subtitle="sectionSubtitle('morphs')"
+          >
             <template v-if="sectionCount('morphs')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('morphs') }}</span>
             </template>
@@ -132,7 +147,12 @@
 
       <div :class="$style.gearBlock">
         <div ref="crystalColRef" :class="[$style.gearCell, $style.gearLive]">
-          <GuideSection flush title="Инкрустация" anchor="crystals">
+          <GuideSection
+            flush
+            title="Инкрустация"
+            anchor="crystals"
+            :subtitle="sectionSubtitle('crystals')"
+          >
             <template v-if="sectionCount('crystals')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('crystals') }}</span>
             </template>
@@ -169,7 +189,12 @@
         </div>
 
         <div :class="[$style.gearCell, $style.gearLive]">
-          <GuideSection flush title="Реликвии" anchor="relics">
+          <GuideSection
+            flush
+            title="Реликвии"
+            anchor="relics"
+            :subtitle="sectionSubtitle('relics')"
+          >
             <template v-if="sectionCount('relics')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('relics') }}</span>
             </template>
@@ -192,7 +217,13 @@
           :class="[$style.gearCell, $style.gearLive, $style.buffCol]"
           :style="buffColStyle"
         >
-          <GuideSection fill flush title="Забаф" anchor="buffs">
+          <GuideSection
+            fill
+            flush
+            title="Забаф"
+            anchor="buffs"
+            :subtitle="sectionSubtitle('buffs')"
+          >
             <template v-if="sectionCount('buffs')" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('buffs') }}</span>
             </template>
@@ -260,7 +291,11 @@
         </template>
       </div>
 
-      <GuideSection title="Видео" anchor="videos">
+      <GuideSection
+        title="Видео"
+        anchor="videos"
+        :subtitle="sectionSubtitle('videos')"
+      >
         <template v-if="sectionCount('videos')" #badge>
           <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('videos') }}</span>
         </template>
@@ -307,13 +342,19 @@ import { PendingSectionDrafts } from '@/features/superadmin-auth'
 
 import {
   CRYSTAL_ALL_SLOTS,
+  computePresetFill,
+  emptyPresetFill,
+  formatSectionUpdated,
   morphPresetFrom,
+  parseSectionUpdates,
   resolveAddonLabel,
   useGuidePreset,
   useGuideSpecMode,
   useHeaderClass,
+  useHeaderPresetFill,
   usePendingSummary,
   useSuperadmin,
+  type GuideUiSection,
 } from '@/shared/lib'
 import { UiMarkdownPreview, UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
@@ -336,10 +377,27 @@ const emit = defineEmits<{
 
 const { isSuperadmin } = useSuperadmin()
 const headerClass = useHeaderClass()
+const headerPresetFill = useHeaderPresetFill()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 const classPending = ref<PendingProposal[]>([])
 const pendingRestoreAt = new Map<string, number>()
 const tierSaving = ref(false)
+
+const sectionUpdates = computed(() =>
+  parseSectionUpdates(props.bundle?.guide?.section_updates),
+)
+
+function sectionSubtitle(key: GuideUiSection) {
+  return formatSectionUpdated(sectionUpdates.value[key])
+}
+
+watch(
+  () => props.bundle,
+  (b) => {
+    headerPresetFill.value = computePresetFill(b)
+  },
+  { immediate: true, deep: true },
+)
 
 async function onTierChange(tier: number | null) {
   const klass = props.bundle?.class
@@ -496,6 +554,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   crystalObserver?.disconnect()
   crystalObserver = null
+  headerPresetFill.value = emptyPresetFill()
 })
 
 const awakeningSteps = computed(

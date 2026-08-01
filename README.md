@@ -12,14 +12,18 @@
 
 - Сетка классов на главной → страница `/class/[slug]`
 - Разделы: **Суть**, **Комба**, **Морфы**, **Инкрустация**, **Реликвии**, **Забаф**, **Видео**
-- Sticky-хедер: класс, TOC по якорям, переключатели режима/пресета, вход суперадмина
+- Sticky-хедер: класс, переключатели режима/пресета, вход суперадмина
 - Пустые секции явно помечены («Пока пусто»), а не выглядят сломанными
+- **Тир 1–5 ★** — сила класса в гильдейском PvP; видят все, ставит только суперадмин (в хедере «Суть»)
+- На главной: фильтр по тиру / «Скрыть пустые»; заполненные классы сортируются от большего тира
+- У каждого раздела: «Обновлено ДД.ММ.ГГГГ · ник/админ»; точки у пресетов с данными в хедере
 
 ### Режимы и пресеты
 
 - **Пробуждение / Наследие** — отдельная комба и морфы
 - Пресеты гайда: **T1**, **T2**, **Беспорезки**, **Субботка**
 - Один переключатель пресета крутит кристаллы, реликвии, забаф и морфы
+- В табах пресета — маркер, если в пресете уже есть контент
 
 ### Доски как в BDO
 
@@ -84,6 +88,14 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep`.
 ```bash
 docker compose exec db psql -U postgres -d bdokeep -c "alter role bdokeep_app with password 'YOUR_APP_PASSWORD';"
 docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/023_guide_morphs_rls.sql
+```
+
+Для уже существующей БД без колонки тира / section_updates:
+
+```bash
+docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/024_class_tier.sql
+docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/025_section_updates.sql
+docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/026_backfill_section_updates.sql
 ```
 
 Затем выставь тот же пароль в `BDOKEEP_APP_PASSWORD` / `DATABASE_URL` и перезапусти `web`.

@@ -84,7 +84,16 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     `,
   ])
 
-  const guide = guideRows[0] ?? null
+  const guideRow = guideRows[0] ?? null
+  const guide = guideRow
+    ? {
+        ...guideRow,
+        section_updates:
+          guideRow.section_updates && typeof guideRow.section_updates === 'object'
+            ? guideRow.section_updates
+            : {},
+      }
+    : null
   const videos = videoRows
 
   if (!guide) {

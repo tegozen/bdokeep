@@ -13,6 +13,10 @@
       Не удалось загрузить классы. Проверьте API и обновите страницу.
     </div>
 
+    <div v-else-if="emptyMessage" :class="[$style.empty, $style.fade]">
+      {{ emptyMessage }}
+    </div>
+
     <div v-else :class="[$style.grid, $style.fade]">
       <NuxtLink
         v-for="klass in classes"
@@ -64,8 +68,12 @@ withDefaults(
     pending: boolean
     error: boolean
     pendingByClass?: Record<string, number>
+    emptyMessage?: string | null
   }>(),
-  { pendingByClass: () => ({}) },
+  {
+    pendingByClass: () => ({}),
+    emptyMessage: null,
+  },
 )
 </script>
 
@@ -196,5 +204,14 @@ withDefaults(
   background: color-mix(in srgb, var(--color-danger) 10%, transparent);
   padding: 1.5rem;
   color: var(--color-danger);
+}
+
+.empty {
+  animation: fade-in 320ms ease both;
+  border: 1px dashed var(--color-border);
+  background: var(--color-gold-dim);
+  padding: 1.5rem;
+  color: var(--color-gold-soft);
+  text-align: center;
 }
 </style>

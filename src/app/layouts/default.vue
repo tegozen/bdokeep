@@ -7,79 +7,49 @@
             <span :class="$style.brandMark">BDO</span>
             <span :class="$style.brandName">Keep</span>
           </NuxtLink>
+          <HomeClassFilters v-if="showHomeFilters" />
           <!--
             headerClass is set from the page child after layout render starts on SSR,
             so keep this client-only to avoid hydration mismatches.
           -->
           <ClientOnly>
-            <a
-              v-if="headerClass"
-              href="#summary"
-              :class="$style.classMeta"
-              :aria-label="`${headerClass.name_ru} — суть`"
-            >
-              <ClassIcon
-                :slug="headerClass.slug"
-                :icon-url="headerClass.icon_url"
-                :label="headerClass.name_ru"
+            <div v-if="headerClass" :class="$style.classBlock">
+              <a
+                href="#summary"
+                :class="$style.classMeta"
+                :aria-label="`${headerClass.name_ru} — суть`"
+              >
+                <ClassIcon
+                  :slug="headerClass.slug"
+                  :icon-url="headerClass.icon_url"
+                  :label="headerClass.name_ru"
+                  size="sm"
+                />
+                <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
+              </a>
+              <ClassTierStars
+                v-if="headerClass.tier"
+                :tier="headerClass.tier"
                 size="sm"
               />
-              <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
-            </a>
-            <nav
-              v-if="headerToc?.length"
-              :class="$style.toc"
-              aria-label="Разделы гайда"
-            >
-              <a v-for="item in headerToc" :key="item.id" :href="`#${item.id}`">{{ item.label }}</a>
-            </nav>
+            </div>
           </ClientOnly>
         </div>
         <div :class="$style.auth">
           <ClientOnly>
-            <div v-if="headerClass" :class="$style.filters">
-              <div
-                :class="$style.modeTabs"
-                role="tablist"
-                aria-label="Пробуждение или наследие"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  :aria-selected="specMode === 'awakening'"
-                  :class="[$style.modeTab, specMode === 'awakening' && $style.modeTabOn]"
-                  @click="specMode = 'awakening'"
-                >
-                  Пробуждение
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  :aria-selected="specMode === 'succession'"
-                  :class="[$style.modeTab, specMode === 'succession' && $style.modeTabOn]"
-                  @click="specMode = 'succession'"
-                >
-                  Наследие
-                </button>
-              </div>
-              <div
-                :class="$style.modeTabs"
-                role="tablist"
-                aria-label="Пресет гайда"
-              >
-                <button
-                  v-for="p in guidePresets"
-                  :key="p.id"
-                  type="button"
-                  role="tab"
-                  :aria-selected="guidePreset === p.id"
-                  :class="[$style.modeTab, guidePreset === p.id && $style.modeTabOn]"
-                  @click="guidePreset = p.id"
-                >
-                  {{ p.label }}
-                </button>
-              </div>
+            <div v-if="headerClass" :class="[$style.filters, $style.desktopOnly]">
+              <GuideModePresetTabs :preset-fill="presetFill" />
             </div>
+            <button
+              v-if="headerClass"
+              type="button"
+              :class="[$style.mobileToggle, $style.mobileOnly]"
+              :aria-expanded="mobileNavOpen"
+              aria-controls="mobile-guide-nav"
+              @click="mobileNavOpen = !mobileNavOpen"
+            >
+              {{ mobileNavOpen ? 'Скрыть' : 'Режим' }}
+            </button>
           </ClientOnly>
           <NuxtLink
             v-if="isSuperadmin"
@@ -94,6 +64,18 @@
           <SuperadminAuth compact />
         </div>
       </div>
+
+      <ClientOnly>
+        <div
+          v-if="headerClass && mobileNavOpen"
+          id="mobile-guide-nav"
+          :class="[$style.mobilePanel, $style.mobileOnly]"
+        >
+          <div class="mx-auto w-[min(100%-2rem,1920px)]" :class="$style.mobilePanelInner">
+            <GuideModePresetTabs :preset-fill="presetFill" />
+          </div>
+        </div>
+      </ClientOnly>
     </header>
 
     <main :class="$style.main">
@@ -114,27 +96,30 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-import { ClassIcon } from '@/entities/class'
+import { computed, ref, watch } from 'vue'
+import { ClassIcon, ClassTierStars } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
-  CRYSTAL_PRESETS,
-  useGuidePreset,
-  useGuideSpecMode,
   useHeaderClass,
-  useHeaderToc,
+  useHeaderPresetFill,
   usePendingSummary,
   useSuperadmin,
 } from '@/shared/lib'
 import { UiConfirm } from '@/shared/ui'
+import GuideModePresetTabs from './GuideModePresetTabs.vue'
+import HomeClassFilters from './HomeClassFilters.vue'
 
+const route = useRoute()
 const headerClass = useHeaderClass()
-const headerToc = useHeaderToc()
-const specMode = useGuideSpecMode()
-const guidePreset = useGuidePreset()
-const guidePresets = CRYSTAL_PRESETS
+const presetFill = useHeaderPresetFill()
 const { isSuperadmin, refresh } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
+const mobileNavOpen = ref(false)
+const showHomeFilters = computed(() => route.path === '/')
+
+watch(headerClass, (v) => {
+  if (!v) mobileNavOpen.value = false
+})
 
 onMounted(async () => {
   await refresh()
@@ -175,22 +160,12 @@ watch(isSuperadmin, () => {
   flex: 1;
 }
 
-.toc {
-  display: flex;
+.classBlock {
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: 0.9rem;
-  row-gap: 0.35rem;
-  font-size: 0.9rem;
-}
-
-.toc a {
-  color: var(--color-gold-soft);
-  white-space: nowrap;
-}
-
-.toc a:hover {
-  color: var(--color-gold);
+  gap: 0.45rem 0.65rem;
+  min-width: 0;
 }
 
 .auth {
@@ -212,36 +187,60 @@ watch(isSuperadmin, () => {
   border-right: 1px solid var(--color-border);
 }
 
-/* Segmented control: Пробуждение / Наследие */
-.modeTabs {
-  display: inline-flex;
-  align-items: stretch;
+.mobileToggle {
+  box-sizing: border-box;
   height: 100%;
-  box-sizing: border-box;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, #000 35%, transparent);
-  padding: 2px;
-}
-
-.modeTab {
-  box-sizing: border-box;
-  border: 0;
   background: transparent;
-  color: var(--color-muted);
+  color: var(--color-gold-soft);
   cursor: pointer;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   line-height: 1;
-  padding: 0 0.75rem;
+  padding: 0 0.65rem;
 }
 
-.modeTab:hover {
-  color: var(--color-gold-soft);
-}
-
-.modeTabOn {
-  background: var(--color-gold-dim);
+.mobileToggle:hover {
+  border-color: var(--color-border-strong);
   color: var(--color-gold);
+}
+
+.mobilePanel {
+  border-top: 1px solid var(--color-border);
+  background: rgba(10, 11, 16, 0.96);
+  padding: 0.85rem 0 1rem;
+}
+
+.mobilePanelInner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mobilePanelInner :global([class*='modeFilters']) {
+  height: auto;
+}
+
+.desktopOnly {
+  display: none;
+}
+
+.mobileOnly {
+  display: inline-flex;
+}
+
+@media (min-width: 768px) {
+  .desktopOnly {
+    display: inline-flex;
+  }
+
+  .filters.desktopOnly {
+    display: inline-flex;
+  }
+
+  .mobileOnly {
+    display: none !important;
+  }
 }
 
 .proposals {
