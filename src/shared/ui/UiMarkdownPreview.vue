@@ -1,19 +1,14 @@
 <template>
   <ClientOnly>
-    <Suspense>
-      <AsyncMdPreview
-        :id="id"
-        :model-value="modelValue"
-        theme="dark"
-        language="ru"
-        preview-theme="github"
-        code-theme="github"
-        :class="[$style.preview, attrs.class]"
-      />
-      <template #fallback>
-        <div :class="[$style.fallback, attrs.class]">{{ modelValue }}</div>
-      </template>
-    </Suspense>
+    <AsyncMdPreview
+      :id="id"
+      :model-value="modelValue"
+      theme="dark"
+      language="ru"
+      preview-theme="github"
+      code-theme="github"
+      :class="[$style.preview, attrs.class]"
+    />
     <template #fallback>
       <div :class="[$style.fallback, attrs.class]">{{ modelValue }}</div>
     </template>

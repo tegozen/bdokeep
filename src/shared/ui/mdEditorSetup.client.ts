@@ -83,10 +83,18 @@ export async function ensureMdEditorConfigured() {
   if (configured) return
   configured = true
 
-  const [{ default: katex }, { default: mermaid }, echarts] = await Promise.all([
+  const [
+    { default: katex },
+    { default: mermaid },
+    echarts,
+    prettier,
+    prettierMarkdown,
+  ] = await Promise.all([
     import('katex'),
     import('mermaid'),
     import('echarts'),
+    import('prettier/standalone'),
+    import('prettier/plugins/markdown'),
   ])
   await import('katex/dist/katex.min.css')
 
@@ -101,6 +109,10 @@ export async function ensureMdEditorConfigured() {
       katex: { instance: katex },
       mermaid: { instance: mermaid },
       echarts: { instance: echarts },
+      prettier: {
+        prettierInstance: prettier,
+        parserMarkdownInstance: prettierMarkdown,
+      },
     },
     markdownItPlugins(plugins) {
       return [

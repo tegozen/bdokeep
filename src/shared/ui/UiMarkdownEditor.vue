@@ -1,31 +1,19 @@
 <template>
   <ClientOnly>
-    <Suspense>
-      <AsyncMdEditor
-        :id="id"
-        v-model="text"
-        theme="dark"
-        language="ru"
-        preview-theme="github"
-        code-theme="github"
-        :toolbars="toolbars"
-        :footers="footers"
-        :no-upload-img="true"
-        :placeholder="placeholder"
-        :style="{ height }"
-        :class="$style.editor"
-      />
-      <template #fallback>
-        <textarea
-          v-model="text"
-          :class="$style.fallback"
-          :rows="12"
-          :placeholder="placeholder"
-          required
-          maxlength="8000"
-        />
-      </template>
-    </Suspense>
+    <AsyncMdEditor
+      :id="id"
+      v-model="text"
+      theme="dark"
+      language="ru"
+      preview-theme="github"
+      code-theme="github"
+      :toolbars="toolbars"
+      :footers="footers"
+      :no-upload-img="true"
+      :placeholder="placeholder"
+      :style="{ height }"
+      :class="$style.editor"
+    />
     <template #fallback>
       <textarea
         v-model="text"
