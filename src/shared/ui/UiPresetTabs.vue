@@ -73,8 +73,7 @@ function onSelect(id: T) {
 
 .autoFit {
   display: grid;
-  /* min(100%, …) so tabs can shrink inside a narrow column instead of overflowing */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
   width: 100%;
   min-width: 0;

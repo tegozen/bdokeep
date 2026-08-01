@@ -170,8 +170,8 @@ function syncBoardWidth() {
   requestAnimationFrame(() => {
     const h = rightMainEl.value?.getBoundingClientRect().height ?? 0
     if (h < 120) return
-    // Cap so picked + board + catalog fit inside xl modal without horizontal crush.
-    boardWidth.value = Math.min(360, Math.max(220, Math.round((h - 20) * (6 / 7))))
+    // Stable board size — not driven by catalog filter height swings.
+    boardWidth.value = Math.min(340, Math.max(240, Math.round((h - 20) * (6 / 7))))
   })
 }
 
@@ -398,9 +398,10 @@ async function onSubmit() {
 <style module>
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  /* boardSide sizes to content; catalog takes leftover modal width */
+  grid-template-columns: auto minmax(20rem, 1fr);
   gap: 0.75rem 1rem;
-  align-items: start;
+  align-items: stretch;
   min-width: 0;
   min-height: 0;
   flex: 1;
@@ -409,11 +410,11 @@ async function onSubmit() {
 
 .boardSide {
   display: grid;
-  grid-template-columns: minmax(0, 16rem) minmax(0, auto);
-  gap: 1rem;
+  grid-template-columns: minmax(12rem, 15rem) auto;
+  gap: 0.85rem;
   align-items: stretch;
   min-width: 0;
-  overflow: hidden;
+  max-width: 100%;
 }
 
 .picked {
@@ -479,7 +480,6 @@ async function onSubmit() {
   flex-direction: column;
   gap: 0.65rem;
   width: 100%;
-  max-width: 22rem;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
