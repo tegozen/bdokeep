@@ -501,9 +501,9 @@ async function onSubmit() {
       website: honeypot.value,
     })
     done.value = true
-    doneMessage.value = res.autoApproved ? 'Опубликовано' : 'Заявка отправлена'
+    close()
     if (res.autoApproved) {
-      setTimeout(() => reloadNuxtApp({ force: true }), 600)
+      reloadNuxtApp({ force: true })
     }
   } catch (e: unknown) {
     const msg =

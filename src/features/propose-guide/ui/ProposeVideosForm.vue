@@ -223,14 +223,9 @@ async function onSubmit() {
       website: honeypot.value || undefined,
     })
     done.value = true
-    doneMessage.value = res.autoApproved
-      ? 'Опубликовано.'
-      : 'Отправлено на модерацию.'
+    close()
     if (res.autoApproved) {
-      setTimeout(() => {
-        close()
-        window.location.reload()
-      }, 700)
+      window.location.reload()
     }
   } catch (e: unknown) {
     const msg =

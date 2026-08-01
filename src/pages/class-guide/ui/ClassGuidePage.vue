@@ -40,11 +40,6 @@
               />
             </div>
             <ShowEmptyGuide v-else />
-            <PendingSectionDrafts
-              v-if="isSuperadmin"
-              :proposals="pendingFor('summary')"
-              @changed="onDraftChanged"
-            />
           </GuideSection>
         </div>
 
@@ -68,11 +63,6 @@
               />
             </div>
             <ShowEmptyGuide v-else />
-            <PendingSectionDrafts
-              v-if="isSuperadmin"
-              :proposals="comboPending"
-              @changed="onDraftChanged"
-            />
           </GuideSection>
         </div>
 
@@ -90,13 +80,29 @@
             <div :class="[$style.morphStage, $style.fade]">
               <MorphBoard :filled="morphFilled" />
             </div>
+          </GuideSection>
+        </div>
+
+        <template v-if="isSuperadmin && topDraftsVisible">
+          <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
             <PendingSectionDrafts
-              v-if="isSuperadmin"
+              :proposals="pendingFor('summary')"
+              @changed="onDraftChanged"
+            />
+          </div>
+          <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
+            <PendingSectionDrafts
+              :proposals="comboPending"
+              @changed="onDraftChanged"
+            />
+          </div>
+          <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
+            <PendingSectionDrafts
               :proposals="pendingFor('morphs')"
               @changed="onDraftChanged"
             />
-          </GuideSection>
-        </div>
+          </div>
+        </template>
       </div>
 
       <div :class="$style.gearBlock">
@@ -290,6 +296,13 @@ function sectionCount(section: string) {
   return pendingFor(section).length
 }
 
+const comboPending = computed(() =>
+  classPending.value.filter(
+    (p) => p.section === 'combo_awakening' || p.section === 'combo_succession',
+  ),
+)
+const comboPendingCount = computed(() => comboPending.value.length)
+
 const gearDraftsVisible = computed(
   () =>
     sectionCount('crystals') > 0 ||
@@ -297,12 +310,12 @@ const gearDraftsVisible = computed(
     sectionCount('buffs') > 0,
 )
 
-const comboPending = computed(() =>
-  classPending.value.filter(
-    (p) => p.section === 'combo_awakening' || p.section === 'combo_succession',
-  ),
+const topDraftsVisible = computed(
+  () =>
+    sectionCount('summary') > 0 ||
+    comboPendingCount.value > 0 ||
+    sectionCount('morphs') > 0,
 )
-const comboPendingCount = computed(() => comboPending.value.length)
 
 async function onDraftChanged(action: 'approve' | 'reject') {
   await loadClassPending()
@@ -589,12 +602,18 @@ const morphFilled = computed(() => {
   margin-bottom: 2.5rem;
   background: var(--color-border);
   border: 1px solid var(--color-border);
+  overflow: visible;
 }
 
 .comboMorphCell {
   min-width: 0;
   padding: 0.85rem 1rem;
   background: var(--color-bg);
+  overflow: visible;
+}
+
+.comboMorphDraft {
+  overflow: visible;
 }
 
 .morphStage {

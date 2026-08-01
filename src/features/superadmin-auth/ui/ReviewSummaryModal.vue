@@ -123,6 +123,7 @@ async function onApprove() {
   try {
     await approveProposal(id, { payload: { text: trimmed } })
     emit('approved')
+    emit('close')
   } catch (e: unknown) {
     const msg =
       e && typeof e === 'object' && 'data' in e

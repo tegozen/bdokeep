@@ -3,7 +3,6 @@
     <article v-for="item in proposals" :key="item.id" :class="$style.draft">
       <BorderSparkler />
       <header :class="$style.head">
-        <span :class="$style.tag">На модерации</span>
         <span :class="$style.meta">
           Черновик
           <template v-if="item.author_label"> · {{ item.author_label }}</template>
@@ -566,15 +565,6 @@ watch(
   align-items: center;
   gap: 0.45rem 0.75rem;
   margin-bottom: 0.65rem;
-}
-
-.tag {
-  border: 1px solid color-mix(in srgb, var(--color-gold) 45%, transparent);
-  color: var(--color-gold);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.1rem 0.4rem;
 }
 
 .meta {

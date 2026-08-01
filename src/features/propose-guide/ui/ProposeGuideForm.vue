@@ -564,13 +564,9 @@ async function onSubmit() {
       website: honeypot.value,
     })
     done.value = true
+    close()
     if (res.autoApproved) {
-      doneMessage.value = 'Опубликовано сразу. Обновляю страницу…'
-      setTimeout(() => {
-        reloadNuxtApp()
-      }, 600)
-    } else {
-      doneMessage.value = 'Отправлено на модерацию. Спасибо!'
+      reloadNuxtApp()
     }
   } catch (e: unknown) {
     const msg =
