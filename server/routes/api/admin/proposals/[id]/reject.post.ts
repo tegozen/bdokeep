@@ -26,14 +26,18 @@ export default defineEventHandler(async (event) => {
       : null
 
   await withDbError(async () => {
-    await sql`
+    const updated = await sql`
       update guide_proposals
       set
         status = 'rejected',
         reviewed_at = now(),
         review_note = ${note}
-      where id = ${id}
+      where id = ${id} and status = 'pending'
+      returning id
     `
+    if (!updated.length) {
+      throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
+    }
   })
 
   return { ok: true }

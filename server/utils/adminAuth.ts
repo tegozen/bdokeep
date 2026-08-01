@@ -3,6 +3,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 const COOKIE_NAME = 'bdo_admin'
 const MAX_AGE_SEC = 60 * 60 * 24 * 7 // 7 days
 
+const WEAK_ADMIN_PASSWORDS = new Set(['changeme', 'password', 'admin', '123456'])
+
 function adminSecret(): string {
   const config = useRuntimeConfig()
   // Prefer plain ADMIN_PASSWORD (compose / .env); NUXT_* only if someone set it
@@ -11,6 +13,13 @@ function adminSecret(): string {
   )
   if (!password) {
     throw createError({ statusCode: 500, statusMessage: 'ADMIN_PASSWORD не задан' })
+  }
+  // Fail closed in production: refuse well-known defaults
+  if (process.env.NODE_ENV === 'production' && WEAK_ADMIN_PASSWORDS.has(password.toLowerCase())) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'ADMIN_PASSWORD слишком слабый для production',
+    })
   }
   return password
 }

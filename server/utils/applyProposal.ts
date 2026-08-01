@@ -16,11 +16,25 @@ export async function applyProposal(
   }
 
   const section = proposal.section as (typeof PROPOSAL_SECTIONS)[number]
-  const payload = (proposal.payload || {}) as Record<string, unknown>
+  let payload = (proposal.payload || {}) as Record<string, unknown>
   const sql = useDb()
 
   await withDbError(async () => {
     await sql.begin(async (tx) => {
+      // Claim pending row first so concurrent approves serialize / roll back cleanly
+      const claimed = await tx`
+        update guide_proposals
+        set
+          status = 'approved',
+          reviewed_at = now(),
+          review_note = ${opts?.reviewNote ?? null}
+        where id = ${proposal.id} and status = 'pending'
+        returning id
+      `
+      if (!claimed.length) {
+        throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
+      }
+
       let guideRows = await tx`
         select id from class_guides where class_id = ${proposal.class_id} limit 1
       `
@@ -338,8 +352,9 @@ export async function applyProposal(
           )}
         `
       } else if (section === 'summary') {
-        const text = String(payload.text || '').trim()
+        const text = sanitizeMarkdown(String(payload.text || '').trim())
         if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
+        payload = { ...payload, text }
 
         await tx`
           update class_guides
@@ -352,11 +367,7 @@ export async function applyProposal(
 
       await tx`
         update guide_proposals
-        set
-          status = 'approved',
-          payload = ${sql.json(payload)},
-          reviewed_at = now(),
-          review_note = ${opts?.reviewNote ?? null}
+        set payload = ${sql.json(payload)}
         where id = ${proposal.id}
       `
     })

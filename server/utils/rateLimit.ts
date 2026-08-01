@@ -19,9 +19,34 @@ export function checkRateLimit(key: string, maxHits = MAX_HITS, windowMs = WINDO
   return true
 }
 
-export function clientIp(event: { node: { req: { headers: Record<string, string | string[] | undefined>; socket: { remoteAddress?: string } } } }): string {
-  const xf = event.node.req.headers['x-forwarded-for']
-  if (typeof xf === 'string' && xf.length) return xf.split(',')[0]!.trim()
-  if (Array.isArray(xf) && xf[0]) return xf[0].split(',')[0]!.trim()
-  return event.node.req.socket.remoteAddress || 'unknown'
+type ReqLike = {
+  node: {
+    req: {
+      headers: Record<string, string | string[] | undefined>
+      socket: { remoteAddress?: string }
+    }
+  }
+}
+
+function firstForwardedHop(xf: string | string[] | undefined): string | null {
+  if (typeof xf === 'string' && xf.length) return xf.split(',')[0]!.trim() || null
+  if (Array.isArray(xf) && xf[0]) return xf[0].split(',')[0]!.trim() || null
+  return null
+}
+
+/**
+ * Client IP for rate limiting.
+ * By default uses the TCP peer address only — raw X-Forwarded-For is spoofable.
+ * Set TRUST_PROXY=1 when Nitro sits behind a reverse proxy that strips/forges XFF.
+ */
+export function clientIp(event: ReqLike): string {
+  const socketIp = event.node.req.socket.remoteAddress || 'unknown'
+  const trustProxy =
+    process.env.TRUST_PROXY === '1' ||
+    process.env.TRUST_PROXY === 'true' ||
+    process.env.NUXT_TRUST_PROXY === '1'
+
+  if (!trustProxy) return socketIp
+
+  return firstForwardedHop(event.node.req.headers['x-forwarded-for']) || socketIp
 }

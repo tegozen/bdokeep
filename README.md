@@ -44,6 +44,8 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep`.
 
 Проксируй только сайт (`HOST_PORT`). Postgres наружу не отдавай (в compose он уже только на `127.0.0.1`).
 
+За reverse proxy выставь `TRUST_PROXY=1` в `.env`, иначе rate limit смотрит на TCP peer, а не на `X-Forwarded-For`.
+
 ```nginx
 location / {
   proxy_pass http://127.0.0.1:3000;

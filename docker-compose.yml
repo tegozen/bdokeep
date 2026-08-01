@@ -57,7 +57,10 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       DATABASE_URL: postgres://bdokeep_app:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
+      # Required — no default. Refuse weak values in production (see adminAuth).
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      # Set to 1 only behind a reverse proxy that controls X-Forwarded-For
+      TRUST_PROXY: ${TRUST_PROXY:-0}
     ports:
       - '${HOST_PORT:-3000}:3000'
 
