@@ -20,9 +20,18 @@ npm run docker:up
 npm run dev   # или сразу сайт с compose: http://127.0.0.1:3000
 ```
 
-Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`) и `ADMIN_PASSWORD`.
+Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (отдельно от `POSTGRES_PASSWORD`) и `ADMIN_PASSWORD`.
 
 SQL к БД: `docker compose exec db psql -U postgres -d bdokeep`.
+
+Если БД уже была создана со старым общим паролем, обнови роль и policy вручную:
+
+```bash
+docker compose exec db psql -U postgres -d bdokeep -c "alter role bdokeep_app with password 'YOUR_APP_PASSWORD';"
+docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/023_guide_morphs_rls.sql
+```
+
+Затем выставь тот же пароль в `BDOKEEP_APP_PASSWORD` / `DATABASE_URL` и перезапусти `web`.
 
 ## Модерация предложений
 

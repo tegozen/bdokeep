@@ -9,6 +9,9 @@ type Body = {
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as Body
   const asSuperadmin = isAdminSession(event)
+  if (asSuperadmin) {
+    assertSameOrigin(event)
+  }
 
   if (body.website) {
     return { ok: true }
@@ -413,7 +416,7 @@ export default defineEventHandler(async (event) => {
 
     payload = { morphs }
   } else {
-    const text = String(body.payload?.text ?? '').trim()
+    const text = sanitizeMarkdown(String(body.payload?.text ?? '').trim())
     if (!text) {
       throw createError({ statusCode: 400, statusMessage: 'Текст пустой' })
     }

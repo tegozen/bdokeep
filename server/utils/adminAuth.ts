@@ -68,6 +68,7 @@ export function clearAdminSession(event: Parameters<typeof deleteCookie>[0]) {
 }
 
 export function requireAdmin(event: Parameters<typeof getCookie>[0]) {
+  assertSameOrigin(event)
   const token = getCookie(event, COOKIE_NAME)
   if (!token || !parseToken(token).ok) {
     throw createError({ statusCode: 401, statusMessage: 'Нет доступа' })

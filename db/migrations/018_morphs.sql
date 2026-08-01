@@ -75,7 +75,15 @@ alter table public.guide_morphs enable row level security;
 
 drop policy if exists "Public read guide_morphs" on public.guide_morphs;
 create policy "Public read guide_morphs"
-  on public.guide_morphs for select to anon, authenticated using (true);
+  on public.guide_morphs for select to anon, authenticated
+  using (
+    exists (
+      select 1
+      from public.class_guides g
+      join public.classes c on c.id = g.class_id
+      where g.id = guide_id and c.published = true
+    )
+  );
 
 grant select on public.guide_morphs to anon, authenticated;
 grant all on public.guide_morphs to service_role;

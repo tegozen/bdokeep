@@ -1,14 +1,16 @@
 #!/bin/bash
-# App role for Nitro (no superuser / no bypassrls). Password = POSTGRES_PASSWORD.
+# App role for Nitro (no superuser / no bypassrls). Password = BDOKEEP_APP_PASSWORD (not postgres superuser).
 set -euo pipefail
+
+: "${BDOKEEP_APP_PASSWORD:?BDOKEEP_APP_PASSWORD must be set for bdokeep_app role}"
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
   do \$\$
   begin
     if not exists (select from pg_roles where rolname = 'bdokeep_app') then
-      create role bdokeep_app login password '${POSTGRES_PASSWORD}' nosuperuser nocreatedb nocreaterole;
+      create role bdokeep_app login password '${BDOKEEP_APP_PASSWORD}' nosuperuser nocreatedb nocreaterole;
     else
-      alter role bdokeep_app with login password '${POSTGRES_PASSWORD}' nosuperuser;
+      alter role bdokeep_app with login password '${BDOKEEP_APP_PASSWORD}' nosuperuser;
     end if;
   end
   \$\$;

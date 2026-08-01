@@ -12,6 +12,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
+      # App role password (Nitro). Must differ from superuser in production setups.
+      BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/migrations/000_roles.sh:/docker-entrypoint-initdb.d/00-roles.sh:ro
@@ -36,6 +38,7 @@ services:
       - ./db/migrations/020_morph_grants.sql:/docker-entrypoint-initdb.d/99c-morph-grants.sql:ro
       - ./db/migrations/021_morph_presets_guide.sql:/docker-entrypoint-initdb.d/99d-morph-presets.sql:ro
       - ./db/migrations/022_bdokeep_app.sh:/docker-entrypoint-initdb.d/99e-bdokeep-app.sh:ro
+      - ./db/migrations/023_guide_morphs_rls.sql:/docker-entrypoint-initdb.d/99f-guide-morphs-rls.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s
@@ -56,7 +59,7 @@ services:
     environment:
       HOST: 0.0.0.0
       PORT: 3000
-      DATABASE_URL: postgres://bdokeep_app:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
+      DATABASE_URL: postgres://bdokeep_app:${BDOKEEP_APP_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
       # Required — no default. Refuse weak values in production (see adminAuth).
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       # Set to 1 only behind a reverse proxy that controls X-Forwarded-For
