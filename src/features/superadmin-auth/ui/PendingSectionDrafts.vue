@@ -198,7 +198,6 @@ async function onReject(id: string) {
 .draft {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--color-gold) 35%, var(--color-border));
-  border-radius: 0.45rem;
   background: color-mix(in srgb, var(--color-gold) 6%, var(--color-bg-elevated));
   padding: 0.75rem 0.85rem 0.85rem;
   overflow: hidden;

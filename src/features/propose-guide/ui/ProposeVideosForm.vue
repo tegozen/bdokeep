@@ -133,10 +133,11 @@ async function onSubmit() {
         slotErrors[i] = 'Некорректная ссылка'
         return null
       }
+      const order = videos.length
       videos.push({
-        title: `Видео ${i + 1}`,
+        title: `Видео ${order + 1}`,
         youtube_url: safe,
-        sort_order: i,
+        sort_order: order,
       })
     }
     if (!videos.length) {

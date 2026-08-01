@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="BDO Keep">
+  <rect width="32" height="32" rx="6" fill="#07080c"/>
+  <circle cx="16" cy="16" r="13.15" fill="none" stroke="#d4af62" stroke-width="1.35"/>
+  <!-- keep -->
+  <path
+    fill="#d4af62"
+    d="
+      M11.1 8.55h2.05V6.35h1.55v2.2h2.6V6.35h1.55v2.2H20.9v4.55h-9.8zm
+      -1 4.55h11.8v5.2H10.1zm
+      -1.15 5.2h14.1V26.7H8.95z
+    "
+  />
+  <!-- openings -->
+  <path
+    fill="#07080c"
+    d="
+      M15.2 9.45h1.6v2.1a.8.8 0 0 1-1.6 0zm
+      0 5.05h1.6v2.2a.8.8 0 0 1-1.6 0zM
+      14.25 22.1h3.5v4.05a1.75 1.75 0 0 1-3.5 0z
+    "
+  />
+</svg>

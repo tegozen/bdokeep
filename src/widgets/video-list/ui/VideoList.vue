@@ -6,9 +6,13 @@
         <UiEmptyState title="Данных пока нет" description="Видео для этого класса ещё не добавлены." />
       </div>
       <ul v-else :class="[$style.list]">
-        <li v-for="video in preview" :key="video.id" :class="$style.item">
+        <li v-for="(video, idx) in preview" :key="video.id" :class="$style.item">
           <div :class="$style.ph" />
-          <span :class="$style.linkPh">{{ video.title || 'YouTube' }}</span>
+          <span :class="$style.linkPh">{{
+            !video.title?.trim() || /^Видео\s+\d+$/i.test(video.title.trim())
+              ? `Видео ${idx + 1}`
+              : video.title
+          }}</span>
         </li>
       </ul>
     </template>

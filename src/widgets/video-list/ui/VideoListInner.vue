@@ -3,11 +3,11 @@
     <UiEmptyState title="Данных пока нет" description="Видео для этого класса ещё не добавлены." />
   </div>
   <ul v-else :class="[$style.list, $style.fade]">
-    <li v-for="video in display" :key="video.id" :class="$style.item">
+    <li v-for="(video, idx) in display" :key="video.id" :class="$style.item">
       <YoutubeEmbed
         v-if="safeUrl(video.youtube_url)"
         :url="safeUrl(video.youtube_url)!"
-        :title="video.title || 'YouTube'"
+        :title="labelFor(video, idx)"
         external
       />
       <p v-else :class="$style.bad">Некорректная ссылка</p>
@@ -18,7 +18,7 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        {{ video.title || 'YouTube' }}
+        {{ labelFor(video, idx) }}
       </a>
     </li>
   </ul>
@@ -40,6 +40,13 @@ const display = computed(() =>
 
 function safeUrl(url: string) {
   return sanitizeYoutubeUrl(url)
+}
+
+/** Default "Видео N" titles follow display order (empty form slots are compacted). */
+function labelFor(video: ClassVideo, idx: number) {
+  const t = video.title?.trim()
+  if (!t || /^Видео\s+\d+$/i.test(t)) return `Видео ${idx + 1}`
+  return t
 }
 </script>
 

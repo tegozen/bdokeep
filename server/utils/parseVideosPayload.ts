@@ -26,10 +26,7 @@ export async function parseVideosPayload(raw: unknown): Promise<ParsedGuideVideo
     const urlRaw = String(entry?.youtube_url || '').trim()
     const safe = sanitizeYoutubeUrl(urlRaw)
     const id = youtubeVideoId(urlRaw)
-    const slotNo =
-      typeof entry.sort_order === 'number' && Number.isFinite(entry.sort_order)
-        ? Math.trunc(entry.sort_order) + 1
-        : i + 1
+    const slotNo = i + 1
     if (!safe || !id) {
       throw createError({
         statusCode: 400,
@@ -43,10 +40,15 @@ export async function parseVideosPayload(raw: unknown): Promise<ParsedGuideVideo
       })
     }
     const titleRaw = String(entry?.title || '').trim()
+    const defaultTitle = `Видео ${slotNo}`
+    const title =
+      !titleRaw || /^Видео\s+\d+$/i.test(titleRaw)
+        ? defaultTitle
+        : titleRaw.slice(0, 120)
     videos.push({
-      title: titleRaw.slice(0, 120) || `Видео ${slotNo}`,
+      title,
       youtube_url: safe,
-      sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      sort_order: i,
     })
   }
 
