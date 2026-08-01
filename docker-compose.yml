@@ -14,28 +14,28 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./supabase/migrations/000_roles.sh:/docker-entrypoint-initdb.d/00-roles.sh:ro
-      - ./supabase/migrations/001_init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
-      - ./supabase/migrations/002_seed_skills.sql:/docker-entrypoint-initdb.d/20-skills.sql:ro
-      - ./supabase/migrations/004_combo_steps.sql:/docker-entrypoint-initdb.d/40-combo-steps.sql:ro
-      - ./supabase/migrations/005_proposals.sql:/docker-entrypoint-initdb.d/50-proposals.sql:ro
-      - ./supabase/migrations/006_drop_pvp_role.sql:/docker-entrypoint-initdb.d/60-drop-pvp-role.sql:ro
-      - ./supabase/migrations/007_buffs_proposals.sql:/docker-entrypoint-initdb.d/70-buffs-proposals.sql:ro
-      - ./supabase/migrations/008_seed_buffs.sql:/docker-entrypoint-initdb.d/80-seed-buffs.sql:ro
-      - ./supabase/migrations/009_drop_guide_skills.sql:/docker-entrypoint-initdb.d/90-drop-guide-skills.sql:ro
-      - ./supabase/migrations/010_seed_crystals.sql:/docker-entrypoint-initdb.d/91-seed-crystals.sql:ro
-      - ./supabase/migrations/011_crystals_proposals.sql:/docker-entrypoint-initdb.d/92-crystals-proposals.sql:ro
-      - ./supabase/migrations/012_crystal_presets.sql:/docker-entrypoint-initdb.d/93-crystal-presets.sql:ro
-      - ./supabase/migrations/013_crystal_preset_sub.sql:/docker-entrypoint-initdb.d/94-crystal-preset-sub.sql:ro
-      - ./supabase/migrations/014_relic_presets.sql:/docker-entrypoint-initdb.d/95-relic-presets.sql:ro
-      - ./supabase/migrations/015_seed_relics_lightstones.sql:/docker-entrypoint-initdb.d/96-seed-relics.sql:ro
-      - ./supabase/migrations/016_buff_presets.sql:/docker-entrypoint-initdb.d/97-buff-presets.sql:ro
-      - ./supabase/migrations/017_videos_proposals.sql:/docker-entrypoint-initdb.d/98-videos.sql:ro
-      - ./supabase/migrations/018_morphs.sql:/docker-entrypoint-initdb.d/99-morphs.sql:ro
-      - ./supabase/migrations/019_seed_skill_addon_effects.sql:/docker-entrypoint-initdb.d/99b-seed-addon-effects.sql:ro
-      - ./supabase/migrations/020_morph_grants.sql:/docker-entrypoint-initdb.d/99c-morph-grants.sql:ro
-      - ./supabase/migrations/021_morph_presets_guide.sql:/docker-entrypoint-initdb.d/99d-morph-presets.sql:ro
-      - ./supabase/migrations/022_bdokeep_app.sh:/docker-entrypoint-initdb.d/99e-bdokeep-app.sh:ro
+      - ./db/migrations/000_roles.sh:/docker-entrypoint-initdb.d/00-roles.sh:ro
+      - ./db/migrations/001_init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - ./db/migrations/002_seed_skills.sql:/docker-entrypoint-initdb.d/20-skills.sql:ro
+      - ./db/migrations/004_combo_steps.sql:/docker-entrypoint-initdb.d/40-combo-steps.sql:ro
+      - ./db/migrations/005_proposals.sql:/docker-entrypoint-initdb.d/50-proposals.sql:ro
+      - ./db/migrations/006_drop_pvp_role.sql:/docker-entrypoint-initdb.d/60-drop-pvp-role.sql:ro
+      - ./db/migrations/007_buffs_proposals.sql:/docker-entrypoint-initdb.d/70-buffs-proposals.sql:ro
+      - ./db/migrations/008_seed_buffs.sql:/docker-entrypoint-initdb.d/80-seed-buffs.sql:ro
+      - ./db/migrations/009_drop_guide_skills.sql:/docker-entrypoint-initdb.d/90-drop-guide-skills.sql:ro
+      - ./db/migrations/010_seed_crystals.sql:/docker-entrypoint-initdb.d/91-seed-crystals.sql:ro
+      - ./db/migrations/011_crystals_proposals.sql:/docker-entrypoint-initdb.d/92-crystals-proposals.sql:ro
+      - ./db/migrations/012_crystal_presets.sql:/docker-entrypoint-initdb.d/93-crystal-presets.sql:ro
+      - ./db/migrations/013_crystal_preset_sub.sql:/docker-entrypoint-initdb.d/94-crystal-preset-sub.sql:ro
+      - ./db/migrations/014_relic_presets.sql:/docker-entrypoint-initdb.d/95-relic-presets.sql:ro
+      - ./db/migrations/015_seed_relics_lightstones.sql:/docker-entrypoint-initdb.d/96-seed-relics.sql:ro
+      - ./db/migrations/016_buff_presets.sql:/docker-entrypoint-initdb.d/97-buff-presets.sql:ro
+      - ./db/migrations/017_videos_proposals.sql:/docker-entrypoint-initdb.d/98-videos.sql:ro
+      - ./db/migrations/018_morphs.sql:/docker-entrypoint-initdb.d/99-morphs.sql:ro
+      - ./db/migrations/019_seed_skill_addon_effects.sql:/docker-entrypoint-initdb.d/99b-seed-addon-effects.sql:ro
+      - ./db/migrations/020_morph_grants.sql:/docker-entrypoint-initdb.d/99c-morph-grants.sql:ro
+      - ./db/migrations/021_morph_presets_guide.sql:/docker-entrypoint-initdb.d/99d-morph-presets.sql:ro
+      - ./db/migrations/022_bdokeep_app.sh:/docker-entrypoint-initdb.d/99e-bdokeep-app.sh:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s

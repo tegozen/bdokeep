@@ -11,8 +11,6 @@
 | `web` | сайт Nuxt + Nitro API | `HOST_PORT` (3000) |
 | `db` | Postgres | `127.0.0.1:POSTGRES_PORT` (5432) |
 
-Полный self-hosted Supabase (Kong, Auth, Realtime, Storage, Studio, PostgREST…) **не используем**.
-
 ## Быстрый старт
 
 ```bash
@@ -37,8 +35,8 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep`.
 ## Данные при старте БД
 
 - классы + пустые гайды
-- скиллы из `supabase/migrations/002_seed_skills.sql` (в git)
-- бафы из `supabase/migrations/008_seed_buffs.sql` (в git)
+- скиллы из `db/migrations/002_seed_skills.sql` (в git)
+- бафы из `db/migrations/008_seed_buffs.sql` (в git)
 
 Картинки: `public/classes/<slug>/{portrait.png,icon.svg}`.
 
