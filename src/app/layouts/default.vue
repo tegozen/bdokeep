@@ -28,8 +28,8 @@
                 <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
               </a>
               <ClassTierStars
-                v-if="headerClass.tier"
-                :tier="headerClass.tier"
+                v-if="headerActiveTier"
+                :tier="headerActiveTier"
                 size="sm"
               />
             </div>
@@ -100,6 +100,7 @@ import { computed, ref, watch } from 'vue'
 import { ClassIcon, ClassTierStars } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
 import {
+  useGuideSpecMode,
   useHeaderClass,
   useHeaderPresetFill,
   usePendingSummary,
@@ -111,11 +112,20 @@ import HomeClassFilters from './HomeClassFilters.vue'
 
 const route = useRoute()
 const headerClass = useHeaderClass()
+const specMode = useGuideSpecMode()
 const presetFill = useHeaderPresetFill()
 const { isSuperadmin, refresh } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
 const mobileNavOpen = ref(false)
 const showHomeFilters = computed(() => route.path === '/')
+
+const headerActiveTier = computed(() => {
+  const hc = headerClass.value
+  if (!hc) return null
+  return specMode.value === 'succession'
+    ? (hc.tier_succession ?? null)
+    : (hc.tier_awakening ?? null)
+})
 
 watch(headerClass, (v) => {
   if (!v) mobileNavOpen.value = false

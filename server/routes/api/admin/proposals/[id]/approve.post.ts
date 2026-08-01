@@ -19,7 +19,10 @@ export default defineEventHandler(async (event) => {
   let payload = (proposal.payload || {}) as Record<string, unknown>
   let reviewNote: string | null = null
 
-  if (section === 'summary' && body?.payload && 'text' in body.payload) {
+  const isSummary =
+    section === 'summary_awakening' || section === 'summary_succession'
+
+  if (isSummary && body?.payload && 'text' in body.payload) {
     const raw = String(body.payload.text ?? '').trim()
     const text = sanitizeMarkdown(raw)
     if (!text) {
@@ -36,7 +39,7 @@ export default defineEventHandler(async (event) => {
     if (raw !== original) {
       reviewNote = 'отредактировано перед одобрением'
     }
-  } else if (section === 'summary') {
+  } else if (isSummary) {
     const text = sanitizeMarkdown(String(payload.text || '').trim())
     if (!text) {
       throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })

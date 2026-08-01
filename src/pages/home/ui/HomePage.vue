@@ -29,13 +29,18 @@ const pendingByClass = computed(() =>
   isSuperadmin.value ? summary.value.byClass : {},
 )
 
+function classTierMax(klass: BdoClass) {
+  const a = klass.tier_awakening == null ? 0 : Number(klass.tier_awakening)
+  const s = klass.tier_succession == null ? 0 : Number(klass.tier_succession)
+  return Math.max(a, s)
+}
+
 const filteredClasses = computed(() => {
   const list = classes.value ?? []
   return list.filter((klass) => {
     if (hideEmpty.value && !klass.has_content) return false
     if (tierMin.value === 0) return true
-    const t = klass.tier == null ? 0 : Number(klass.tier)
-    return t >= tierMin.value
+    return classTierMax(klass) >= tierMin.value
   })
 })
 

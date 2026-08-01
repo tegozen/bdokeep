@@ -162,7 +162,7 @@
             <li v-if="!(item.payload?.videos ?? []).length" :class="$style.muted">Нет видео</li>
           </ul>
           <UiMarkdownPreview
-            v-else-if="item.section === 'summary'"
+            v-else-if="isSummary(item.section)"
             :id="`admin-summary-${item.id}`"
             :model-value="textOf(item)"
             :class="$style.text"
@@ -171,7 +171,7 @@
 
           <div v-if="item.status === 'pending'" :class="$style.actions">
             <UiButton
-              v-if="item.section === 'summary'"
+              v-if="isSummary(item.section)"
               variant="ghost"
               type="button"
               :disabled="acting === item.id"
@@ -321,16 +321,20 @@ function clearClassFilter() {
 
 function sectionLabel(section: string) {
   switch (section) {
-    case 'summary':
-      return 'Суть'
+    case 'summary_awakening':
+      return 'Суть · пробуждение'
+    case 'summary_succession':
+      return 'Суть · наследие'
     case 'buffs':
       return 'Забаф'
     case 'crystals':
       return 'Инкрустация'
     case 'relics':
       return 'Реликвии'
-    case 'videos':
-      return 'Видео'
+    case 'videos_awakening':
+      return 'Видео · пробуждение'
+    case 'videos_succession':
+      return 'Видео · наследие'
     case 'morphs':
       return 'Морфы'
     case 'combo_awakening':
@@ -359,7 +363,11 @@ function isRelics(section: string) {
 }
 
 function isVideos(section: string) {
-  return section === 'videos'
+  return section === 'videos_awakening' || section === 'videos_succession'
+}
+
+function isSummary(section: string) {
+  return section === 'summary_awakening' || section === 'summary_succession'
 }
 
 function textOf(item: Proposal) {

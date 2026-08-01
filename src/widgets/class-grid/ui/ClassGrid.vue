@@ -40,8 +40,18 @@
           >
             {{ pendingByClass[klass.slug] }}
           </span>
-          <div v-if="klass.tier" :class="$style.tier">
-            <ClassTierStars :tier="klass.tier" size="sm" />
+          <div
+            v-if="klass.tier_awakening || klass.tier_succession"
+            :class="$style.tiers"
+          >
+            <div v-if="klass.tier_awakening" :class="$style.tierRow">
+              <span :class="$style.tierLabel">Проб.</span>
+              <ClassTierStars :tier="klass.tier_awakening" size="sm" />
+            </div>
+            <div v-if="klass.tier_succession" :class="$style.tierRow">
+              <span :class="$style.tierLabel">Насл.</span>
+              <ClassTierStars :tier="klass.tier_succession" size="sm" />
+            </div>
           </div>
         </div>
         <div :class="$style.meta">
@@ -165,19 +175,35 @@ withDefaults(
   user-select: none;
 }
 
-.tier {
+.tiers {
   position: absolute;
   top: 0.45rem;
   left: 0.45rem;
   z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+
+.tierRow {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.3rem 0.45rem;
+  gap: 0.3rem;
+  padding: 0.22rem 0.4rem;
   border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
   border-radius: 999px;
   background: rgba(10, 11, 16, 0.82);
   line-height: 0;
+}
+
+.tierLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-gold);
+  line-height: 1;
+  user-select: none;
 }
 
 .meta {

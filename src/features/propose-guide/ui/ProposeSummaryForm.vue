@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { ProposalSection } from '@/entities/class'
 import { UiMarkdownEditor } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
 import { useProposeModal } from '../lib/useProposeModal'
@@ -35,10 +36,12 @@ import ProposeModalShell from './ProposeModalShell.vue'
 const props = withDefaults(
   defineProps<{
     classSlug: string
+    section?: Extract<ProposalSection, 'summary_awakening' | 'summary_succession'>
     triggerLabel?: string
     initialText?: string | null
   }>(),
   {
+    section: 'summary_awakening',
     triggerLabel: 'Предложить',
     initialText: null,
   },
@@ -75,7 +78,7 @@ async function onSubmit() {
     }
     return submitGuideProposal({
       class_slug: props.classSlug,
-      section: 'summary',
+      section: props.section,
       payload: { text: text.value.trim() },
       author_label: author.value.trim() || undefined,
       website: honeypot.value,

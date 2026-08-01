@@ -16,6 +16,7 @@ export {
   displayAuthorLabel,
   formatSectionUpdated,
   parseSectionUpdates,
+  sectionUpdateKey,
   uiSectionFromProposal,
   type GuideUiSection,
   type SectionUpdateMeta,

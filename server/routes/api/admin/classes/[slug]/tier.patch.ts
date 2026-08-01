@@ -8,7 +8,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Некорректный класс' })
   }
 
-  const body = await readBody<{ tier?: unknown } | null>(event).catch(() => null)
+  const body = await readBody<{ tier?: unknown; mode?: unknown } | null>(event).catch(() => null)
+  const modeRaw = String(body?.mode || '').trim()
+  if (modeRaw !== 'awakening' && modeRaw !== 'succession') {
+    throw createError({ statusCode: 400, statusMessage: 'Укажите mode: awakening или succession' })
+  }
+  const mode = modeRaw as 'awakening' | 'succession'
+
   const raw = body?.tier
 
   let tier: number | null
@@ -24,11 +30,20 @@ export default defineEventHandler(async (event) => {
 
   const sql = useDb()
   const updated = await withDbError(async () => {
+    if (mode === 'succession') {
+      const rows = await sql`
+        update classes
+        set tier_succession = ${tier}
+        where slug = ${slug} and published = true
+        returning id, slug, tier_awakening, tier_succession
+      `
+      return rows[0] ?? null
+    }
     const rows = await sql`
       update classes
-      set tier = ${tier}
+      set tier_awakening = ${tier}
       where slug = ${slug} and published = true
-      returning id, slug, tier
+      returning id, slug, tier_awakening, tier_succession
     `
     return rows[0] ?? null
   })
@@ -37,5 +52,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Класс не найден' })
   }
 
-  return { ok: true, slug: String(updated.slug), tier: updated.tier == null ? null : Number(updated.tier) }
+  return {
+    ok: true,
+    slug: String(updated.slug),
+    mode,
+    tier,
+    tier_awakening: updated.tier_awakening == null ? null : Number(updated.tier_awakening),
+    tier_succession: updated.tier_succession == null ? null : Number(updated.tier_succession),
+  }
 })

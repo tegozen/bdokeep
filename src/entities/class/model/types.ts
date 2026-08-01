@@ -8,8 +8,10 @@ export type BdoClass = {
   succession_name: string | null
   sort_order: number
   published: boolean
-  /** PvP tier 1–5 (admin-set). Null = not rated. */
-  tier?: number | null
+  /** PvP tier 1–5 for awakening (admin-set). Null = not rated. */
+  tier_awakening?: number | null
+  /** PvP tier 1–5 for succession (admin-set). Null = not rated. */
+  tier_succession?: number | null
   /** Guide has any filled content (summary / sections / videos) */
   has_content?: boolean
 }
@@ -22,9 +24,10 @@ export type SectionUpdateMeta = {
 export type ClassGuide = {
   id: string
   class_id: string
-  summary: string | null
+  summary_awakening: string | null
+  summary_succession: string | null
   updated_at: string
-  /** Per UI-section last update: summary/combo/morphs/crystals/relics/buffs/videos */
+  /** Per UI-section last update keys (summary_awakening, combo, videos_succession, …) */
   section_updates?: Record<string, SectionUpdateMeta> | null
 }
 
@@ -34,6 +37,7 @@ export type ClassVideo = {
   title: string
   youtube_url: string
   sort_order: number
+  mode: 'awakening' | 'succession' | string
 }
 
 export type Skill = {
@@ -122,11 +126,13 @@ export type ClassGuideBundle = {
 }
 
 export type ProposalSection =
-  | 'summary'
+  | 'summary_awakening'
+  | 'summary_succession'
   | 'buffs'
   | 'combo_awakening'
   | 'combo_succession'
   | 'crystals'
   | 'relics'
-  | 'videos'
+  | 'videos_awakening'
+  | 'videos_succession'
   | 'morphs'

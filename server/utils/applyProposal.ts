@@ -269,16 +269,21 @@ export async function applyProposal(
           throw createError({ statusCode: 400, statusMessage: 'Некорректные данные видео' })
         }
 
+        const mode = videoModeFromSection(section)
         const rows = verifiedVideos.map((v) => ({
           class_id: proposal.class_id,
           title: v.title,
           youtube_url: v.youtube_url,
           sort_order: v.sort_order,
+          mode,
         }))
 
-        await tx`delete from class_videos where class_id = ${proposal.class_id}`
         await tx`
-          insert into class_videos ${tx(rows, 'class_id', 'title', 'youtube_url', 'sort_order')}
+          delete from class_videos
+          where class_id = ${proposal.class_id} and mode = ${mode}
+        `
+        await tx`
+          insert into class_videos ${tx(rows, 'class_id', 'title', 'youtube_url', 'sort_order', 'mode')}
         `
       } else if (isMorphsSection(section)) {
         const raw = Array.isArray(payload.morphs) ? payload.morphs : []
@@ -344,16 +349,24 @@ export async function applyProposal(
             'sort_order',
           )}
         `
-      } else if (section === 'summary') {
+      } else if (isSummarySection(section)) {
         const text = sanitizeMarkdown(String(payload.text || '').trim())
         if (!text) throw createError({ statusCode: 400, statusMessage: 'Пустой текст' })
         payload = { ...payload, text }
 
-        await tx`
-          update class_guides
-          set summary = ${text}
-          where id = ${guide.id}
-        `
+        if (summaryModeFromSection(section) === 'succession') {
+          await tx`
+            update class_guides
+            set summary_succession = ${text}
+            where id = ${guide.id}
+          `
+        } else {
+          await tx`
+            update class_guides
+            set summary_awakening = ${text}
+            where id = ${guide.id}
+          `
+        }
       } else {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
       }

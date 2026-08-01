@@ -11,7 +11,7 @@
         </span>
         <div :class="$style.actions">
           <UiButton
-            v-if="item.section === 'summary'"
+            v-if="isSummary(item.section)"
             variant="ghost"
             size="sm"
             type="button"
@@ -43,7 +43,7 @@
       <div :class="$style.scrollCard">
         <!-- summary -->
         <UiMarkdownPreview
-          v-if="item.section === 'summary'"
+          v-if="isSummary(item.section)"
           :id="`pending-summary-${item.id}`"
           :model-value="String(payload(item).text || '')"
           :class="$style.text"
@@ -136,7 +136,7 @@
 
         <!-- videos -->
         <VideoList
-          v-else-if="item.section === 'videos'"
+          v-else-if="isVideos(item.section)"
           :videos="videosFor(item)"
         />
 
@@ -262,9 +262,21 @@ function isCombo(section: string) {
   return section === 'combo_awakening' || section === 'combo_succession'
 }
 
+function isSummary(section: string) {
+  return section === 'summary_awakening' || section === 'summary_succession'
+}
+
+function isVideos(section: string) {
+  return section === 'videos_awakening' || section === 'videos_succession'
+}
+
 function comboLabel(section: string) {
-  if (section === 'combo_awakening') return 'Пробуждение'
-  if (section === 'combo_succession') return 'Наследие'
+  if (section === 'combo_awakening' || section === 'summary_awakening' || section === 'videos_awakening') {
+    return 'Пробуждение'
+  }
+  if (section === 'combo_succession' || section === 'summary_succession' || section === 'videos_succession') {
+    return 'Наследие'
+  }
   return ''
 }
 
@@ -297,12 +309,15 @@ function morphFilled(id: string): Partial<Record<MorphSlotLevel, MorphSlotFill>>
 }
 
 function videosFor(item: PendingProposal): ClassVideo[] {
+  const mode =
+    item.section === 'videos_succession' ? 'succession' : 'awakening'
   return (payload(item).videos ?? []).map((v, i) => ({
     id: `${item.id}-${i}`,
     class_id: item.class_id,
     title: v.title || `Видео ${i + 1}`,
     youtube_url: v.youtube_url,
     sort_order: i,
+    mode,
   }))
 }
 

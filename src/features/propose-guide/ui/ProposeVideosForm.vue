@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-import type { ClassVideo } from '@/entities/class'
+import type { ClassVideo, ProposalSection } from '@/entities/class'
 import { sanitizeYoutubeUrl, youtubeVideoId } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
 import { parseSubmitError } from '../lib/parseSubmitError'
@@ -59,10 +59,12 @@ type Slot = { url: string }
 const props = withDefaults(
   defineProps<{
     classSlug: string
+    section?: Extract<ProposalSection, 'videos_awakening' | 'videos_succession'>
     triggerLabel?: string
     initialVideos?: ClassVideo[]
   }>(),
   {
+    section: 'videos_awakening',
     triggerLabel: 'Предложить',
     initialVideos: () => [],
   },
@@ -144,7 +146,7 @@ async function onSubmit() {
     try {
       return await submitGuideProposal({
         class_slug: props.classSlug,
-        section: 'videos',
+        section: props.section,
         payload: { videos },
         author_label: author.value || undefined,
         website: honeypot.value || undefined,

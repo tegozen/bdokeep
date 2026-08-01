@@ -36,7 +36,8 @@ watch(
         slug: b.class.slug,
         name_ru: b.class.name_ru,
         icon_url: b.class.icon_url,
-        tier: b.class.tier ?? null,
+        tier_awakening: b.class.tier_awakening ?? null,
+        tier_succession: b.class.tier_succession ?? null,
       }
     } else {
       headerClass.value = null
@@ -45,11 +46,14 @@ watch(
   { immediate: true },
 )
 
-function onTierChange(tier: number | null) {
+function onTierChange(mode: 'awakening' | 'succession', tier: number | null) {
   if (!bundle.value?.class) return
   bundle.value = {
     ...bundle.value,
-    class: { ...bundle.value.class, tier },
+    class: {
+      ...bundle.value.class,
+      ...(mode === 'succession' ? { tier_succession: tier } : { tier_awakening: tier }),
+    },
   }
 }
 

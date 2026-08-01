@@ -1,11 +1,13 @@
 export const PROPOSAL_SECTIONS = [
-  'summary',
+  'summary_awakening',
+  'summary_succession',
   'buffs',
   'combo_awakening',
   'combo_succession',
   'crystals',
   'relics',
-  'videos',
+  'videos_awakening',
+  'videos_succession',
   'morphs',
 ] as const
 
@@ -88,8 +90,12 @@ export function isRelicsSection(section: ProposalSection): boolean {
   return section === 'relics'
 }
 
+export function isSummarySection(section: ProposalSection): boolean {
+  return section === 'summary_awakening' || section === 'summary_succession'
+}
+
 export function isVideosSection(section: ProposalSection): boolean {
-  return section === 'videos'
+  return section === 'videos_awakening' || section === 'videos_succession'
 }
 
 export function isMorphsSection(section: ProposalSection): boolean {
@@ -98,6 +104,14 @@ export function isMorphsSection(section: ProposalSection): boolean {
 
 export function comboModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
   return section === 'combo_succession' ? 'succession' : 'awakening'
+}
+
+export function summaryModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
+  return section === 'summary_succession' ? 'succession' : 'awakening'
+}
+
+export function videoModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
+  return section === 'videos_succession' ? 'succession' : 'awakening'
 }
 
 export function isCrystalSlotId(id: string): boolean {

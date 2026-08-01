@@ -2,6 +2,12 @@ import type postgres from 'postgres'
 
 type Sql = ReturnType<typeof postgres>
 
+function tierMax(aw: number | null | undefined, succ: number | null | undefined) {
+  const a = aw == null ? -1 : Number(aw)
+  const s = succ == null ? -1 : Number(succ)
+  return Math.max(a, s)
+}
+
 export async function listPublishedClasses(sql: Sql) {
   const rows = await sql`
     select
@@ -14,9 +20,13 @@ export async function listPublishedClasses(sql: Sql) {
       c.succession_name,
       c.sort_order,
       c.published,
-      c.tier,
+      c.tier_awakening,
+      c.tier_succession,
       (
-        (g.id is not null and coalesce(trim(g.summary), '') <> '')
+        (g.id is not null and (
+          coalesce(trim(g.summary_awakening), '') <> ''
+          or coalesce(trim(g.summary_succession), '') <> ''
+        ))
         or exists (select 1 from guide_buffs x where x.guide_id = g.id)
         or exists (select 1 from guide_relics x where x.guide_id = g.id)
         or exists (select 1 from guide_lightstones x where x.guide_id = g.id)
@@ -34,15 +44,16 @@ export async function listPublishedClasses(sql: Sql) {
 
   const mapped = rows.map((row) => ({
     ...row,
-    tier: row.tier == null ? null : Number(row.tier),
+    tier_awakening: row.tier_awakening == null ? null : Number(row.tier_awakening),
+    tier_succession: row.tier_succession == null ? null : Number(row.tier_succession),
     has_content: Boolean(row.has_content),
   }))
 
   mapped.sort((a, b) => {
     const byContent = Number(Boolean(b.has_content)) - Number(Boolean(a.has_content))
     if (byContent !== 0) return byContent
-    const tierA = a.tier == null ? -1 : Number(a.tier)
-    const tierB = b.tier == null ? -1 : Number(b.tier)
+    const tierA = tierMax(a.tier_awakening, a.tier_succession)
+    const tierB = tierMax(b.tier_awakening, b.tier_succession)
     if (tierA !== tierB) return tierB - tierA
     return Number(a.sort_order) - Number(b.sort_order)
   })
@@ -71,7 +82,8 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
   if (!klassRow) return null
   const klass = {
     ...klassRow,
-    tier: klassRow.tier == null ? null : Number(klassRow.tier),
+    tier_awakening: klassRow.tier_awakening == null ? null : Number(klassRow.tier_awakening),
+    tier_succession: klassRow.tier_succession == null ? null : Number(klassRow.tier_succession),
   }
 
   const [guideRows, videoRows] = await Promise.all([

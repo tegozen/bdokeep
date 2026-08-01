@@ -7,10 +7,18 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
 export async function updateClassTier(
   slug: string,
   tier: number | null,
-): Promise<{ ok: boolean; slug: string; tier: number | null }> {
+  mode: 'awakening' | 'succession',
+): Promise<{
+  ok: boolean
+  slug: string
+  mode: 'awakening' | 'succession'
+  tier: number | null
+  tier_awakening: number | null
+  tier_succession: number | null
+}> {
   return $fetch(`/api/admin/classes/${encodeURIComponent(slug)}/tier`, {
     method: 'PATCH',
-    body: { tier },
+    body: { tier, mode },
   })
 }
 

@@ -15,11 +15,14 @@ export type GuideUiSection =
   | 'buffs'
   | 'videos'
 
-/** Map proposal section → UI section meta key. */
-export function uiSectionFromProposal(section: string): GuideUiSection | null {
+/** Map proposal section → UI section meta key (for shared sections). */
+export function uiSectionFromProposal(section: string): string | null {
   switch (section) {
-    case 'summary':
-      return 'summary'
+    case 'summary_awakening':
+    case 'summary_succession':
+    case 'videos_awakening':
+    case 'videos_succession':
+      return section
     case 'combo_awakening':
     case 'combo_succession':
       return 'combo'
@@ -31,11 +34,18 @@ export function uiSectionFromProposal(section: string): GuideUiSection | null {
       return 'relics'
     case 'buffs':
       return 'buffs'
-    case 'videos':
-      return 'videos'
     default:
       return null
   }
+}
+
+/** Resolve section_updates key for a guide UI block given active spec mode. */
+export function sectionUpdateKey(
+  base: GuideUiSection,
+  mode: 'awakening' | 'succession' = 'awakening',
+): string {
+  if (base === 'summary' || base === 'videos') return `${base}_${mode}`
+  return base
 }
 
 export function displayAuthorLabel(raw: string | null | undefined): string | null {

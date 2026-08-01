@@ -28,29 +28,29 @@
             anchor="summary"
             :subtitle="sectionSubtitle('summary')"
           >
-            <template v-if="sectionCount('summary')" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
+            <template v-if="summaryPendingCount" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ summaryPendingCount }}</span>
             </template>
-            <template v-if="isSuperadmin || bundle.class.tier" #beside>
+            <template v-if="isSuperadmin || activeTier" #beside>
               <ClassTierStars
-                :tier="bundle.class.tier"
+                :tier="activeTier"
                 :editable="isSuperadmin"
                 :saving="tierSaving"
                 @change="onTierChange"
               />
             </template>
             <template #actions>
-              
-                <ProposeSummaryForm
-                  :class-slug="bundle.class.slug"
-                  :initial-text="bundle.guide?.summary"
-                />
-
+              <ProposeSummaryForm
+                :key="summarySection"
+                :class-slug="bundle.class.slug"
+                :section="summarySection"
+                :initial-text="activeSummary"
+              />
             </template>
-            <div v-if="bundle.guide?.summary" :class="[$style.summary, $style.fade]">
+            <div v-if="activeSummary" :class="[$style.summary, $style.fade]">
               <UiMarkdownPreview
                 id="class-summary-preview"
-                :model-value="bundle.guide.summary"
+                :model-value="activeSummary"
               />
             </div>
             <ShowEmptyGuide v-else />
@@ -113,14 +113,12 @@
 
         <template v-if="isSuperadmin && topDraftsVisible">
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-            
-              <PendingSectionDrafts
-                :proposals="pendingFor('summary')"
-                @changed="onDraftChanged"
-                @optimistic-remove="onOptimisticRemove"
-                @optimistic-restore="onOptimisticRestore"
-              />
-
+            <PendingSectionDrafts
+              :proposals="summaryPending"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
           </div>
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
             
@@ -299,23 +297,25 @@
             anchor="videos"
             :subtitle="sectionSubtitle('videos')"
           >
-            <template v-if="sectionCount('videos')" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('videos') }}</span>
+            <template v-if="videosPendingCount" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ videosPendingCount }}</span>
             </template>
             <template #actions>
               <ProposeVideosForm
+                :key="videosSection"
                 :class-slug="bundle.class.slug"
-                :initial-videos="bundle.videos"
+                :section="videosSection"
+                :initial-videos="activeVideos"
               />
             </template>
-            <VideoList :videos="bundle.videos" />
+            <VideoList :videos="activeVideos" />
           </GuideSection>
         </div>
 
         <template v-if="isSuperadmin && videoDraftsVisible">
           <div :class="[$style.videoCell, $style.videoDraft]">
             <PendingSectionDrafts
-              :proposals="pendingFor('videos')"
+              :proposals="videosPending"
               @changed="onDraftChanged"
               @optimistic-remove="onOptimisticRemove"
               @optimistic-restore="onOptimisticRestore"
@@ -354,6 +354,7 @@ import {
   morphPresetFrom,
   parseSectionUpdates,
   resolveAddonLabel,
+  sectionUpdateKey,
   useGuidePreset,
   useGuideSpecMode,
   useHeaderClass,
@@ -378,7 +379,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'tier-change': [tier: number | null]
+  'tier-change': [mode: 'awakening' | 'succession', tier: number | null]
 }>()
 
 const { isSuperadmin } = useSuperadmin()
@@ -388,13 +389,16 @@ const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePend
 const classPending = ref<PendingProposal[]>([])
 const pendingRestoreAt = new Map<string, number>()
 const tierSaving = ref(false)
+const specMode = useGuideSpecMode()
+const guidePreset = useGuidePreset()
 
 const sectionUpdates = computed(() =>
   parseSectionUpdates(props.bundle?.guide?.section_updates),
 )
 
 function sectionSubtitle(key: GuideUiSection) {
-  return formatSectionUpdated(sectionUpdates.value[key])
+  const metaKey = sectionUpdateKey(key, specMode.value)
+  return formatSectionUpdated(sectionUpdates.value[metaKey])
 }
 
 watch(
@@ -405,24 +409,40 @@ watch(
   { immediate: true, deep: true },
 )
 
+const activeTier = computed(() => {
+  const klass = props.bundle?.class
+  if (!klass) return null
+  return specMode.value === 'succession'
+    ? (klass.tier_succession ?? null)
+    : (klass.tier_awakening ?? null)
+})
+
 async function onTierChange(tier: number | null) {
   const klass = props.bundle?.class
   if (!klass || !isSuperadmin.value || tierSaving.value) return
 
-  const prev = klass.tier ?? null
-  emit('tier-change', tier)
+  const mode = specMode.value
+  const prev =
+    mode === 'succession' ? (klass.tier_succession ?? null) : (klass.tier_awakening ?? null)
+  emit('tier-change', mode, tier)
   if (headerClass.value?.slug === klass.slug) {
-    headerClass.value = { ...headerClass.value, tier }
+    headerClass.value = {
+      ...headerClass.value,
+      ...(mode === 'succession' ? { tier_succession: tier } : { tier_awakening: tier }),
+    }
   }
 
   tierSaving.value = true
   try {
-    await updateClassTier(klass.slug, tier)
+    await updateClassTier(klass.slug, tier, mode)
     clearNuxtData('classes')
   } catch {
-    emit('tier-change', prev)
+    emit('tier-change', mode, prev)
     if (headerClass.value?.slug === klass.slug) {
-      headerClass.value = { ...headerClass.value, tier: prev }
+      headerClass.value = {
+        ...headerClass.value,
+        ...(mode === 'succession' ? { tier_succession: prev } : { tier_awakening: prev }),
+      }
     }
   } finally {
     tierSaving.value = false
@@ -473,6 +493,22 @@ const comboPending = computed(() =>
 )
 const comboPendingCount = computed(() => comboPending.value.length)
 
+const summarySection = computed(() =>
+  specMode.value === 'succession'
+    ? ('summary_succession' as const)
+    : ('summary_awakening' as const),
+)
+const videosSection = computed(() =>
+  specMode.value === 'succession'
+    ? ('videos_succession' as const)
+    : ('videos_awakening' as const),
+)
+
+const summaryPending = computed(() => pendingFor(summarySection.value))
+const summaryPendingCount = computed(() => summaryPending.value.length)
+const videosPending = computed(() => pendingFor(videosSection.value))
+const videosPendingCount = computed(() => videosPending.value.length)
+
 const gearDraftsVisible = computed(
   () =>
     sectionCount('crystals') > 0 ||
@@ -482,12 +518,12 @@ const gearDraftsVisible = computed(
 
 const topDraftsVisible = computed(
   () =>
-    sectionCount('summary') > 0 ||
+    summaryPendingCount.value > 0 ||
     comboPendingCount.value > 0 ||
     sectionCount('morphs') > 0,
 )
 
-const videoDraftsVisible = computed(() => sectionCount('videos') > 0)
+const videoDraftsVisible = computed(() => videosPendingCount.value > 0)
 
 async function onDraftChanged(action: 'approve' | 'reject') {
   if (action === 'approve' && props.bundle?.class.slug) {
@@ -505,8 +541,6 @@ watch(
   { immediate: true },
 )
 
-const specMode = useGuideSpecMode()
-const guidePreset = useGuidePreset()
 const activeMorphPreset = computed(() => morphPresetFrom(specMode.value, guidePreset.value))
 const crystalColRef = ref<HTMLElement | null>(null)
 const buffMaxHeight = ref<number | null>(null)
@@ -576,6 +610,19 @@ const activeComboSteps = computed(() =>
 )
 const comboSection = computed(() =>
   specMode.value === 'succession' ? ('combo_succession' as const) : ('combo_awakening' as const),
+)
+
+const activeSummary = computed(() => {
+  const guide = props.bundle?.guide
+  if (!guide) return null
+  const text =
+    specMode.value === 'succession' ? guide.summary_succession : guide.summary_awakening
+  return text?.trim() ? text : null
+})
+
+const activeVideos = computed(
+  () =>
+    props.bundle?.videos.filter((v) => (v.mode || 'awakening') === specMode.value) ?? [],
 )
 
 const activeBuffs = computed(() =>
