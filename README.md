@@ -111,11 +111,17 @@ docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/026_backfi
 - сиды скиллов, бафов, кристаллов, реликвий/лайтстоунов, эффектов аддонов
 - схема proposals, пресеты, морфы, RLS
 
-Картинки: `public/classes/<slug>/{portrait.png,icon.svg}`.
+Картинки классов: `public/classes/<slug>/{portrait.png,icon.svg}`.
+Иконки каталога (скиллы/бафы/предметы): `public/codex/…` (зеркало bdocodex). После обновления сидов:
+
+```bash
+npm run images:codex   # Playwright → public/codex + rewrite DB/SQL
+docker compose up -d --build web
+```
 
 ## Nginx (внешний)
 
-Проксируй только сайт (`HOST_PORT`). Postgres наружу не отдавай (в compose он уже только на `127.0.0.1`).
+Проксируй только сайт (`HOST_PORT`). Postgres наружу не публикуй.
 
 За reverse proxy выставь `TRUST_PROXY=1` в `.env`, иначе rate limit смотрит на TCP peer, а не на `X-Forwarded-For`.
 

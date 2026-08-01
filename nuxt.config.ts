@@ -111,7 +111,7 @@ export default defineNuxtConfig({
       navigateFallback: null,
       // Shell only — skip large class portraits under public/classes/
       globPatterns: ['**/*.{js,css,ico,woff,woff2}', 'android-chrome-*.png', 'favicon*.png', 'apple-touch-icon.png', 'favicon.svg'],
-      globIgnores: ['**/classes/**'],
+      globIgnores: ['**/classes/**', '**/codex/**'],
     },
     client: {
       registerPlugin: true,
@@ -128,6 +128,11 @@ export default defineNuxtConfig({
       },
     },
     '/classes/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+      },
+    },
+    '/codex/**': {
       headers: {
         'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
       },
