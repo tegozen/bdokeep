@@ -30,6 +30,31 @@
           </nav>
         </div>
         <div :class="$style.auth">
+          <div
+            v-if="headerClass"
+            :class="$style.specTabs"
+            role="tablist"
+            aria-label="Пробуждение или наследие"
+          >
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="specMode === 'awakening'"
+              :class="[$style.specTab, specMode === 'awakening' && $style.specTabOn]"
+              @click="specMode = 'awakening'"
+            >
+              Пробуждение
+            </button>
+            <button
+              type="button"
+              role="tab"
+              :aria-selected="specMode === 'succession'"
+              :class="[$style.specTab, specMode === 'succession' && $style.specTabOn]"
+              @click="specMode = 'succession'"
+            >
+              Наследие
+            </button>
+          </div>
           <NuxtLink
             v-if="isSuperadmin"
             to="/admin/proposals?status=pending"
@@ -66,11 +91,12 @@
 import { watch } from 'vue'
 import { ClassIcon } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
-import { useHeaderClass, useHeaderToc, usePendingSummary, useSuperadmin } from '@/shared/lib'
+import { useGuideSpecMode, useHeaderClass, useHeaderToc, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { UiConfirm } from '@/shared/ui'
 
 const headerClass = useHeaderClass()
 const headerToc = useHeaderToc()
+const specMode = useGuideSpecMode()
 const { isSuperadmin, refresh } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
 
@@ -138,6 +164,32 @@ watch(isSuperadmin, () => {
   gap: 0.65rem;
   flex-shrink: 0;
   height: 2rem;
+}
+
+.specTabs {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.3rem;
+  height: 100%;
+}
+
+.specTab {
+  box-sizing: border-box;
+  height: 100%;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 0 0.7rem;
+}
+
+.specTabOn {
+  border-color: var(--color-border-strong);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
 }
 
 .proposals {
