@@ -6,6 +6,9 @@
     <header :class="$style.head">
       <div :class="$style.titleRow">
         <h2 :class="$style.title">{{ title }}</h2>
+        <div v-if="$slots.badge" :class="$style.badge">
+          <slot name="badge" />
+        </div>
         <div v-if="$slots.beside" :class="$style.beside">
           <slot name="beside" />
         </div>
@@ -49,7 +52,7 @@ withDefaults(
 .fill {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   min-height: 0;
   overflow: hidden;
 }
@@ -59,9 +62,11 @@ withDefaults(
 }
 
 .fill .body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .head {
@@ -80,6 +85,12 @@ withDefaults(
 .title {
   margin: 0;
   font-size: 1.35rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .beside {

@@ -2,6 +2,7 @@ export { sanitizeYoutubeUrl, youtubeEmbedUrl } from './youtube'
 export { useHeaderClass, type HeaderClassInfo } from './useHeaderClass'
 export { useHeaderToc, CLASS_GUIDE_TOC, type HeaderTocItem } from './useHeaderToc'
 export { useSuperadmin } from './useSuperadmin'
+export { usePendingSummary } from './usePendingSummary'
 export { useConfirm, type ConfirmOptions } from './useConfirm'
 export { useModalEscape } from './useModalEscape'
 export {

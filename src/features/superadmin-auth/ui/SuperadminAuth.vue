@@ -101,8 +101,17 @@ async function onLogout() {
 }
 
 .compact.banner {
+  box-sizing: border-box;
+  height: 2rem;
   font-size: 0.82rem;
   gap: 0.75rem;
+  padding: 0 0.65rem;
+  line-height: 1;
+}
+
+.compact .linkish {
+  font-size: inherit;
+  line-height: 1;
 }
 
 .trigger {

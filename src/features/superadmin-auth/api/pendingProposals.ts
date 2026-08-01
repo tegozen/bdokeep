@@ -1,0 +1,38 @@
+export type PendingProposal = {
+  id: string
+  class_id: string
+  class_slug: string
+  section: string
+  payload: Record<string, unknown> | null
+  author_label: string | null
+  status: string
+  created_at: string
+  reviewed_at: string | null
+  review_note: string | null
+}
+
+export type PendingSummary = {
+  total: number
+  byClass: Record<string, number>
+}
+
+export async function fetchPendingSummary(): Promise<PendingSummary> {
+  return $fetch<PendingSummary>('/api/admin/proposals', {
+    query: { summary: '1' },
+  })
+}
+
+export async function fetchPendingForClass(classSlug: string): Promise<PendingProposal[]> {
+  const res = await $fetch<{ items: PendingProposal[] }>('/api/admin/proposals', {
+    query: { status: 'pending', class_slug: classSlug },
+  })
+  return res.items ?? []
+}
+
+export async function approveProposal(id: string): Promise<void> {
+  await $fetch(`/api/admin/proposals/${id}/approve`, { method: 'POST' })
+}
+
+export async function rejectProposal(id: string): Promise<void> {
+  await $fetch(`/api/admin/proposals/${id}/reject`, { method: 'POST', body: {} })
+}

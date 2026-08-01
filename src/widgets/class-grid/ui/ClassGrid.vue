@@ -29,6 +29,13 @@
             :class="$style.img"
           >
           <div :class="$style.veil" />
+          <span
+            v-if="pendingByClass[klass.slug]"
+            :class="$style.pendingBadge"
+            :aria-label="`${pendingByClass[klass.slug]} заявок`"
+          >
+            {{ pendingByClass[klass.slug] }}
+          </span>
         </div>
         <div :class="$style.meta">
           <ClassIcon
@@ -48,11 +55,15 @@
 import { ClassIcon, type BdoClass } from '@/entities/class'
 import { UiSkeleton } from '@/shared/ui'
 
-defineProps<{
-  classes: BdoClass[]
-  pending: boolean
-  error: boolean
-}>()
+withDefaults(
+  defineProps<{
+    classes: BdoClass[]
+    pending: boolean
+    error: boolean
+    pendingByClass?: Record<string, number>
+  }>(),
+  { pendingByClass: () => ({}) },
+)
 </script>
 
 <style module>
@@ -119,6 +130,28 @@ defineProps<{
   bottom: 0;
   height: 45%;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+}
+
+.pendingBadge {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 55%, transparent);
+  border-radius: 999px;
+  background: rgba(10, 11, 16, 0.85);
+  color: var(--color-gold);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
 }
 
 .meta {

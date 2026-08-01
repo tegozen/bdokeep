@@ -30,6 +30,16 @@
           </nav>
         </div>
         <div :class="$style.auth">
+          <NuxtLink
+            v-if="isSuperadmin"
+            to="/admin/proposals?status=pending"
+            :class="$style.proposals"
+          >
+            Заявки
+            <span v-if="pendingSummary.total > 0" :class="$style.proposalsBadge">
+              {{ pendingSummary.total }}
+            </span>
+          </NuxtLink>
           <SuperadminAuth compact />
         </div>
       </div>
@@ -53,13 +63,25 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue'
 import { ClassIcon } from '@/entities/class'
 import { SuperadminAuth } from '@/features/superadmin-auth'
-import { useHeaderClass, useHeaderToc } from '@/shared/lib'
+import { useHeaderClass, useHeaderToc, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { UiConfirm } from '@/shared/ui'
 
 const headerClass = useHeaderClass()
 const headerToc = useHeaderToc()
+const { isSuperadmin, refresh } = useSuperadmin()
+const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
+
+onMounted(async () => {
+  await refresh()
+  await refreshPending()
+})
+
+watch(isSuperadmin, () => {
+  void refreshPending()
+})
 </script>
 
 <style module>
@@ -111,7 +133,47 @@ const headerToc = useHeaderToc()
 
 .auth {
   margin-left: auto;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.65rem;
   flex-shrink: 0;
+  height: 2rem;
+}
+
+.proposals {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-sizing: border-box;
+  height: 100%;
+  border: 1px solid var(--color-border);
+  color: var(--color-gold-soft);
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 0 0.65rem;
+  text-decoration: none;
+}
+
+.proposals:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-gold);
+}
+
+.proposalsBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 50%, transparent);
+  border-radius: 999px;
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  text-align: center;
+  pointer-events: none;
 }
 
 .brand {

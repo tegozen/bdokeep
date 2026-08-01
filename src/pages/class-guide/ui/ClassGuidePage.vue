@@ -21,6 +21,9 @@
 
     <template v-else>
       <GuideSection title="Суть" anchor="summary">
+        <template v-if="sectionCount('summary')" #badge>
+          <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('summary') }}</span>
+        </template>
         <template #actions>
           <ProposeGuideForm :class-slug="bundle.class.slug" section="summary" />
         </template>
@@ -28,9 +31,17 @@
           {{ bundle.guide.summary }}
         </p>
         <ShowEmptyGuide v-else />
+        <PendingSectionDrafts
+          v-if="isSuperadmin"
+          :proposals="pendingFor('summary')"
+          @changed="onDraftChanged"
+        />
       </GuideSection>
 
       <GuideSection title="Комба" anchor="combo">
+        <template v-if="comboPendingCount" #badge>
+          <span :class="$style.pendingBadge" title="На модерации">{{ comboPendingCount }}</span>
+        </template>
         <template #beside>
           <div :class="$style.comboTabs" role="tablist" aria-label="Тип комбы">
             <button
@@ -69,11 +80,19 @@
           />
         </div>
         <ShowEmptyGuide v-else />
+        <PendingSectionDrafts
+          v-if="isSuperadmin"
+          :proposals="comboPending"
+          @changed="onDraftChanged"
+        />
       </GuideSection>
 
-      <div :class="$style.gearRow">
-        <div ref="crystalColRef" :class="$style.gearCol">
+      <div :class="$style.gearBlock">
+        <div ref="crystalColRef" :class="[$style.gearCell, $style.gearLive]">
           <GuideSection flush title="Инкрустация" anchor="crystals">
+            <template v-if="sectionCount('crystals')" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('crystals') }}</span>
+            </template>
             <template #beside>
               <div :class="$style.presetTabs" role="tablist" aria-label="Пресет инкрустации">
                 <button
@@ -119,39 +138,47 @@
           </GuideSection>
         </div>
 
-        <GuideSection flush :class="$style.gearCol" title="Реликвии" anchor="relics">
-          <template #beside>
-            <div :class="$style.presetTabs" role="tablist" aria-label="Пресет реликвий">
-              <button
-                v-for="p in crystalPresets"
-                :key="p.id"
-                type="button"
-                role="tab"
-                :aria-selected="activeRelicPreset === p.id"
-                :class="[$style.presetTab, activeRelicPreset === p.id && $style.presetTabOn]"
-                @click="activeRelicPreset = p.id"
-              >
-                {{ p.label }}
-              </button>
+        <div :class="[$style.gearCell, $style.gearLive]">
+          <GuideSection flush title="Реликвии" anchor="relics">
+            <template v-if="sectionCount('relics')" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('relics') }}</span>
+            </template>
+            <template #beside>
+              <div :class="$style.presetTabs" role="tablist" aria-label="Пресет реликвий">
+                <button
+                  v-for="p in crystalPresets"
+                  :key="p.id"
+                  type="button"
+                  role="tab"
+                  :aria-selected="activeRelicPreset === p.id"
+                  :class="[$style.presetTab, activeRelicPreset === p.id && $style.presetTabOn]"
+                  @click="activeRelicPreset = p.id"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
+            </template>
+            <template #actions>
+              <ProposeRelicForm
+                :class-slug="bundle.class.slug"
+                :initial-relics="bundle.relics"
+                :initial-lightstones="bundle.lightstones"
+              />
+            </template>
+            <div :class="[$style.relicStage, $style.fade]">
+              <RelicBoard :filled="relicFilled" />
             </div>
-          </template>
-          <template #actions>
-            <ProposeRelicForm
-              :class-slug="bundle.class.slug"
-              :initial-relics="bundle.relics"
-              :initial-lightstones="bundle.lightstones"
-            />
-          </template>
-          <div :class="[$style.relicStage, $style.fade]">
-            <RelicBoard :filled="relicFilled" />
-          </div>
-        </GuideSection>
+          </GuideSection>
+        </div>
 
         <div
-          :class="[$style.gearCol, $style.buffCol]"
+          :class="[$style.gearCell, $style.gearLive, $style.buffCol]"
           :style="buffColStyle"
         >
           <GuideSection fill flush title="Забаф" anchor="buffs">
+            <template v-if="sectionCount('buffs')" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('buffs') }}</span>
+            </template>
             <template #beside>
               <div :class="$style.presetTabs" role="tablist" aria-label="Пресет забафа">
                 <button
@@ -175,28 +202,54 @@
                 :initial-buffs="bundle.buffs"
               />
             </template>
-            <ul v-if="activeBuffs.length" :class="[$style.buffList, $style.fade]">
-              <li v-for="row in activeBuffs" :key="row.id" :class="$style.buffItem">
-                <img
-                  v-if="row.buffs?.icon_url"
-                  :src="row.buffs.icon_url"
-                  alt=""
-                  :class="$style.buffIcon"
-                  loading="lazy"
-                >
-                <div :class="$style.buffBody">
-                  <strong>{{ row.buffs?.name_ru || row.slot || 'Слот' }}</strong>
-                  <span v-if="row.group_name" :class="$style.muted"> · {{ row.group_name }}</span>
-                  <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
-                </div>
-              </li>
-            </ul>
-            <p v-else :class="[$style.buffEmpty, $style.fade]">Пока пусто</p>
+            <div :class="$style.scrollCard">
+              <ul v-if="activeBuffs.length" :class="[$style.buffList, $style.fade]">
+                <li v-for="row in activeBuffs" :key="row.id" :class="$style.buffItem">
+                  <img
+                    v-if="row.buffs?.icon_url"
+                    :src="row.buffs.icon_url"
+                    alt=""
+                    :class="$style.buffIcon"
+                    loading="lazy"
+                  >
+                  <div :class="$style.buffBody">
+                    <strong>{{ row.buffs?.name_ru || row.slot || 'Слот' }}</strong>
+                    <span v-if="row.group_name" :class="$style.muted"> · {{ row.group_name }}</span>
+                    <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
+                  </div>
+                </li>
+              </ul>
+              <p v-else :class="[$style.buffEmpty, $style.fade]">Пока пусто</p>
+            </div>
           </GuideSection>
         </div>
+
+        <template v-if="isSuperadmin && gearDraftsVisible">
+          <div :class="[$style.gearCell, $style.gearDraft]">
+            <PendingSectionDrafts
+              :proposals="pendingFor('crystals')"
+              @changed="onDraftChanged"
+            />
+          </div>
+          <div :class="[$style.gearCell, $style.gearDraft]">
+            <PendingSectionDrafts
+              :proposals="pendingFor('relics')"
+              @changed="onDraftChanged"
+            />
+          </div>
+          <div :class="[$style.gearCell, $style.gearDraft]">
+            <PendingSectionDrafts
+              :proposals="pendingFor('buffs')"
+              @changed="onDraftChanged"
+            />
+          </div>
+        </template>
       </div>
 
       <GuideSection title="Видео" anchor="videos">
+        <template v-if="sectionCount('videos')" #badge>
+          <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('videos') }}</span>
+        </template>
         <template #actions>
           <ProposeVideosForm
             :class-slug="bundle.class.slug"
@@ -204,6 +257,11 @@
           />
         </template>
         <VideoList :videos="bundle.videos" />
+        <PendingSectionDrafts
+          v-if="isSuperadmin"
+          :proposals="pendingFor('videos')"
+          @changed="onDraftChanged"
+        />
       </GuideSection>
     </template>
   </div>
@@ -212,9 +270,14 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { ClassGuideBundle, ProposalSection } from '@/entities/class'
+import {
+  fetchPendingForClass,
+  PendingSectionDrafts,
+  type PendingProposal,
+} from '@/features/superadmin-auth'
 import { ProposeCrystalForm, ProposeGuideForm, ProposeRelicForm, ProposeVideosForm } from '@/features/propose-guide'
 import { ShowEmptyGuide } from '@/features/show-empty-guide'
-import { CRYSTAL_ALL_SLOTS, CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
+import { CRYSTAL_ALL_SLOTS, CRYSTAL_PRESETS, type CrystalPresetId, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { UiSkeleton } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
@@ -227,6 +290,60 @@ const props = defineProps<{
   pending: boolean
   error?: boolean
 }>()
+
+const { isSuperadmin } = useSuperadmin()
+const { refresh: refreshPendingSummary } = usePendingSummary()
+const classPending = ref<PendingProposal[]>([])
+
+async function loadClassPending() {
+  if (!isSuperadmin.value || !props.bundle?.class.slug) {
+    classPending.value = []
+    return
+  }
+  try {
+    classPending.value = await fetchPendingForClass(props.bundle.class.slug)
+  } catch {
+    classPending.value = []
+  }
+}
+
+function pendingFor(section: string) {
+  return classPending.value.filter((p) => p.section === section)
+}
+
+function sectionCount(section: string) {
+  return pendingFor(section).length
+}
+
+const gearDraftsVisible = computed(
+  () =>
+    sectionCount('crystals') > 0 ||
+    sectionCount('relics') > 0 ||
+    sectionCount('buffs') > 0,
+)
+
+const comboPending = computed(() =>
+  classPending.value.filter(
+    (p) => p.section === 'combo_awakening' || p.section === 'combo_succession',
+  ),
+)
+const comboPendingCount = computed(() => comboPending.value.length)
+
+async function onDraftChanged(action: 'approve' | 'reject') {
+  await loadClassPending()
+  await refreshPendingSummary()
+  if (action === 'approve') {
+    await reloadNuxtApp({ force: true })
+  }
+}
+
+watch(
+  [isSuperadmin, () => props.bundle?.class.slug],
+  () => {
+    void loadClassPending()
+  },
+  { immediate: true },
+)
 
 const comboTab = ref<'awakening' | 'succession'>('awakening')
 const crystalPresets = CRYSTAL_PRESETS
@@ -369,6 +486,24 @@ const relicFilled = computed(() => {
   animation: fade-in 320ms ease both;
 }
 
+.pendingBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 50%, transparent);
+  border-radius: 999px;
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
 .list {
   margin: 0;
   display: grid;
@@ -491,17 +626,25 @@ const relicFilled = computed(() => {
   color: var(--color-gold);
 }
 
-.gearRow {
+.gearBlock {
   display: grid;
   grid-template-columns: auto auto minmax(14rem, 1fr);
-  gap: 1.5rem 1.75rem;
-  align-items: start;
+  gap: 1px;
   margin-bottom: 2.5rem;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  overflow: visible;
 }
 
-.gearCol {
-  margin-bottom: 0;
+.gearCell {
   min-width: 0;
+  padding: 0.85rem 1rem;
+  background: var(--color-bg);
+  overflow: visible;
+}
+
+.gearDraft {
+  overflow: visible;
 }
 
 .buffCol {
@@ -509,6 +652,15 @@ const relicFilled = computed(() => {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+}
+
+.scrollCard {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+  padding: 0.55rem;
 }
 
 .crystalLayout {
@@ -584,25 +736,13 @@ const relicFilled = computed(() => {
   width: min(100%, 28rem);
 }
 
-@media (max-width: 1280px) {
-  .gearRow {
-    grid-template-columns: auto auto;
-  }
-
-  .gearRow > :last-child {
-    grid-column: 1 / -1;
-    max-width: 36rem;
-  }
-}
-
 @media (max-width: 1100px) {
-  .gearRow {
+  .gearBlock {
     grid-template-columns: 1fr;
   }
 
-  .gearRow > :last-child {
-    grid-column: auto;
-    max-width: none;
+  .buffCol {
+    max-height: none !important;
   }
 }
 

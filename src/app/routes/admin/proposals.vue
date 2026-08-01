@@ -24,6 +24,14 @@
         >
           {{ opt.label }}
         </button>
+        <button
+          v-if="classFilter"
+          type="button"
+          :class="[$style.chip, $style.chipOn]"
+          @click="clearClassFilter"
+        >
+          Класс: {{ classFilter }} ×
+        </button>
         <button type="button" :class="$style.ghost" :disabled="loading" @click="load">
           Обновить
         </button>
@@ -182,12 +190,12 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
+import type { Buff, Skill } from '@/entities/class'
 import { getSupabase } from '@/shared/api'
-import { CRYSTAL_PRESETS, type CrystalPresetId } from '@/shared/lib'
+import { CRYSTAL_PRESETS, type CrystalPresetId, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
-import type { Buff, Skill } from '@/entities/class'
 
 useHead({ title: 'Админ — предложения | BDO Keep' })
 
@@ -214,6 +222,11 @@ type Proposal = {
   review_note: string | null
 }
 
+const route = useRoute()
+const router = useRouter()
+const { isSuperadmin } = useSuperadmin()
+const { refresh: refreshPendingSummary } = usePendingSummary()
+
 const crystalPresetTabs = CRYSTAL_PRESETS
 const authed = ref(false)
 const password = ref('')
@@ -221,7 +234,14 @@ const loginError = ref('')
 const busy = ref(false)
 const loading = ref(false)
 const items = ref<Proposal[]>([])
-const status = ref('pending')
+const status = ref(
+  typeof route.query.status === 'string' && route.query.status
+    ? route.query.status
+    : 'pending',
+)
+const classFilter = ref(
+  typeof route.query.class === 'string' ? route.query.class.trim().toLowerCase() : '',
+)
 const acting = ref<string | null>(null)
 const comboPreview = reactive<Record<string, Array<{ id: string; skills: Skill | null }> | null>>(
   {},
@@ -245,6 +265,20 @@ const statusOpts = [
   { value: 'rejected', label: 'Rejected' },
   { value: 'all', label: 'Все' },
 ]
+
+function syncQuery() {
+  const query: Record<string, string> = {}
+  if (status.value && status.value !== 'pending') query.status = status.value
+  else if (status.value === 'pending') query.status = 'pending'
+  if (classFilter.value) query.class = classFilter.value
+  void router.replace({ query })
+}
+
+function clearClassFilter() {
+  classFilter.value = ''
+  syncQuery()
+  if (authed.value) void load()
+}
 
 function sectionLabel(section: string) {
   switch (section) {
@@ -318,6 +352,7 @@ async function checkMe() {
   try {
     const res = await $fetch<{ ok: boolean }>('/api/admin/me')
     authed.value = Boolean(res.ok)
+    isSuperadmin.value = authed.value
   } catch {
     authed.value = false
   }
@@ -330,6 +365,8 @@ async function login() {
     await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
     password.value = ''
     authed.value = true
+    isSuperadmin.value = true
+    await refreshPendingSummary()
     await load()
   } catch {
     loginError.value = 'Неверный пароль'
@@ -341,9 +378,11 @@ async function login() {
 async function load() {
   loading.value = true
   try {
-    const res = await $fetch<{ items: Proposal[] }>('/api/admin/proposals', {
-      query: { status: status.value },
-    })
+    const query: Record<string, string> = { status: status.value }
+    if (classFilter.value && /^[a-z0-9-]+$/.test(classFilter.value)) {
+      query.class_slug = classFilter.value
+    }
+    const res = await $fetch<{ items: Proposal[] }>('/api/admin/proposals', { query })
     items.value = res.items ?? []
     await Promise.all([
       hydrateComboPreviews(),
@@ -356,7 +395,10 @@ async function load() {
       e && typeof e === 'object' && 'statusCode' in e
         ? Number((e as { statusCode?: number }).statusCode)
         : 0
-    if (code === 401) authed.value = false
+    if (code === 401) {
+      authed.value = false
+      isSuperadmin.value = false
+    }
     items.value = []
   } finally {
     loading.value = false
@@ -365,6 +407,7 @@ async function load() {
 
 function setStatus(value: string) {
   status.value = value
+  syncQuery()
 }
 
 async function hydrateComboPreviews() {
@@ -535,6 +578,7 @@ async function approve(id: string) {
   try {
     await $fetch(`/api/admin/proposals/${id}/approve`, { method: 'POST' })
     await load()
+    await refreshPendingSummary()
   } catch (e: unknown) {
     const msg =
       e && typeof e === 'object' && 'data' in e
@@ -551,6 +595,7 @@ async function reject(id: string) {
   try {
     await $fetch(`/api/admin/proposals/${id}/reject`, { method: 'POST', body: {} })
     await load()
+    await refreshPendingSummary()
   } catch (e: unknown) {
     const msg =
       e && typeof e === 'object' && 'data' in e
@@ -568,7 +613,10 @@ watch(status, () => {
 
 onMounted(async () => {
   await checkMe()
-  if (authed.value) await load()
+  if (authed.value) {
+    await refreshPendingSummary()
+    await load()
+  }
 })
 </script>
 
