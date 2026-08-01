@@ -10,7 +10,7 @@ export function useDb(): Sql {
 
   const config = useRuntimeConfig()
   const url = String(
-    config.databaseUrl || process.env.NUXT_DATABASE_URL || process.env.DATABASE_URL || '',
+    config.databaseUrl || process.env.DATABASE_URL || process.env.NUXT_DATABASE_URL || '',
   ).trim()
   if (!url) {
     throw createError({ statusCode: 500, statusMessage: 'DATABASE_URL is not configured' })

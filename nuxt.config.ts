@@ -28,9 +28,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Override at runtime: NUXT_DATABASE_URL (do not bake host .env at build time)
+    // Filled at runtime from DATABASE_URL / ADMIN_PASSWORD (see server/utils)
     databaseUrl: '',
-    // Override at runtime: NUXT_ADMIN_PASSWORD
     adminPassword: '',
     public: {
       siteName: 'BDO Keep',

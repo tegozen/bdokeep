@@ -57,9 +57,7 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       DATABASE_URL: postgres://bdokeep_app:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
-      NUXT_DATABASE_URL: postgres://bdokeep_app:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
-      NUXT_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
     ports:
       - '${HOST_PORT:-3000}:3000'
 

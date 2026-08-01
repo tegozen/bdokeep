@@ -5,7 +5,10 @@ const MAX_AGE_SEC = 60 * 60 * 24 * 7 // 7 days
 
 function adminSecret(): string {
   const config = useRuntimeConfig()
-  const password = String(config.adminPassword || '')
+  // Prefer plain ADMIN_PASSWORD (compose / .env); NUXT_* only if someone set it
+  const password = String(
+    config.adminPassword || process.env.ADMIN_PASSWORD || process.env.NUXT_ADMIN_PASSWORD || '',
+  )
   if (!password) {
     throw createError({ statusCode: 500, statusMessage: 'ADMIN_PASSWORD is not configured' })
   }
