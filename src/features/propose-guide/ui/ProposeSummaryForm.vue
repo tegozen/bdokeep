@@ -3,7 +3,7 @@
     v-model:open="open"
     v-model:honeypot="honeypot"
     v-model:author="author"
-    title="Предложить суть"
+    title="Предложить роль на осаде"
     :trigger-label="triggerLabel"
     :submitting="submitting"
     :form-error="formError"
@@ -18,7 +18,7 @@
       <UiMarkdownEditor
         id="propose-summary-editor"
         v-model="text"
-        placeholder="Опишите суть класса в Markdown…"
+        placeholder="Опишите роль класса на осаде в Markdown…"
         height="100%"
       />
     </div>

@@ -164,9 +164,9 @@ export function uiSectionFromProposal(section: string): string | null {
 export function sectionLabel(section: string): string {
   switch (section) {
     case 'summary_awakening':
-      return 'Суть (пробуждение)'
+      return 'Роль на осаде (пробуждение)'
     case 'summary_succession':
-      return 'Суть (наследие)'
+      return 'Роль на осаде (наследие)'
     case 'buffs':
       return 'Забаф'
     case 'combo_awakening':

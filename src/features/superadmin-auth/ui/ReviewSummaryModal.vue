@@ -1,8 +1,8 @@
 <template>
   <UiModal
     :open="open"
-    title="Редактировать суть"
-    aria-label="Редактировать суть перед одобрением"
+    title="Редактировать роль на осаде"
+    aria-label="Редактировать роль на осаде перед одобрением"
     full
     :z-index="90"
     :obscured="obscured"
@@ -15,7 +15,7 @@
           id="review-summary-editor"
           v-model="text"
           height="100%"
-          placeholder="Отредактируйте суть…"
+          placeholder="Отредактируйте роль на осаде…"
         />
       </div>
 

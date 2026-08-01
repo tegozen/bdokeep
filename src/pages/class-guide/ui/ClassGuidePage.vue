@@ -24,7 +24,7 @@
         <div :class="$style.comboMorphCell">
           <GuideSection
             flush
-            title="Суть"
+            title="Роль на осаде"
             anchor="summary"
             :subtitle="sectionSubtitle('summary')"
           >

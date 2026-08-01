@@ -17,7 +17,7 @@
               <a
                 href="#summary"
                 :class="$style.classMeta"
-                :aria-label="`${headerClass.name_ru} — суть`"
+                :aria-label="`${headerClass.name_ru} — роль на осаде`"
               >
                 <ClassIcon
                   :slug="headerClass.slug"
