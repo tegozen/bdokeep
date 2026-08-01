@@ -1,7 +1,7 @@
 <template>
   <div :class="['mx-auto w-[min(100%-2rem,1920px)]', $style.page]">
     <div v-if="error && !pending" :class="$style.error">
-      Не удалось загрузить гайд. Проверьте API (PostgREST) и обновите страницу.
+      Не удалось загрузить гайд. Проверьте API и обновите страницу.
     </div>
 
     <template v-if="pending">

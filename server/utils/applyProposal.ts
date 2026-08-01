@@ -36,7 +36,7 @@ export async function applyProposal(
       }
 
       if (!guide) {
-        throw createError({ statusCode: 502, statusMessage: 'Database error' })
+        throw createError({ statusCode: 502, statusMessage: 'Ошибка базы данных' })
       }
 
       if (isComboSection(section)) {
@@ -46,7 +46,7 @@ export async function applyProposal(
           : []
 
         if (!skillIds.length || skillIds.some((sid) => !UUID_RE.test(sid))) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный payload комбы' })
+          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные комбы' })
         }
 
         await tx`
@@ -86,7 +86,7 @@ export async function applyProposal(
             const preset = String(entry?.preset || 't1')
             const buffId = String(entry?.buff_id || '')
             if (!isCrystalPresetId(preset) || !UUID_RE.test(buffId)) {
-              throw createError({ statusCode: 400, statusMessage: 'Некорректный payload забафа' })
+              throw createError({ statusCode: 400, statusMessage: 'Некорректные данные забафа' })
             }
             rows.push({
               guide_id: guide.id,
@@ -107,7 +107,7 @@ export async function applyProposal(
         }
 
         if (!rows.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный payload забафа' })
+          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные забафа' })
         }
 
         await tx`delete from guide_buffs where guide_id = ${guide.id}`
@@ -117,7 +117,7 @@ export async function applyProposal(
       } else if (isCrystalsSection(section)) {
         const raw = Array.isArray(payload.crystals) ? payload.crystals : []
         if (!raw.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный payload инкрустации' })
+          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные инкрустации' })
         }
 
         const rows: Array<{
@@ -160,7 +160,7 @@ export async function applyProposal(
         const rawRelics = Array.isArray(payload.relics) ? payload.relics : []
         const rawLights = Array.isArray(payload.lightstones) ? payload.lightstones : []
         if (!rawRelics.length && !rawLights.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный payload реликвий' })
+          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные реликвий' })
         }
 
         const relicRows: Array<{
@@ -240,7 +240,7 @@ export async function applyProposal(
       } else if (isVideosSection(section)) {
         const raw = Array.isArray(payload.videos) ? payload.videos : []
         if (!raw.length || raw.length > MAX_VIDEOS) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный payload видео' })
+          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные видео' })
         }
 
         const rows: Array<{
@@ -276,7 +276,7 @@ export async function applyProposal(
       } else if (isMorphsSection(section)) {
         const raw = Array.isArray(payload.morphs) ? payload.morphs : []
         if (!raw.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный payload морфов' })
+          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные морфов' })
         }
 
         const rows: Array<{

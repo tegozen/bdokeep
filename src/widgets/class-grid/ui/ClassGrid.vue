@@ -10,7 +10,7 @@
     </div>
 
     <div v-else-if="error" :class="$style.error">
-      Не удалось загрузить классы. Проверьте API (PostgREST) и env.
+      Не удалось загрузить классы. Проверьте API и настройки окружения.
     </div>
 
     <div v-else :class="[$style.grid, $style.fade]">

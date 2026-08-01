@@ -13,7 +13,7 @@ export function useDb(): Sql {
     config.databaseUrl || process.env.DATABASE_URL || process.env.NUXT_DATABASE_URL || '',
   ).trim()
   if (!url) {
-    throw createError({ statusCode: 500, statusMessage: 'DATABASE_URL is not configured' })
+    throw createError({ statusCode: 500, statusMessage: 'DATABASE_URL не задан' })
   }
 
   sqlSingleton = postgres(url, {
@@ -28,7 +28,7 @@ export function useDb(): Sql {
 export function throwDbError(err: unknown): never {
   const msg = err instanceof Error ? err.message : 'query failed'
   console.error('[db]', msg)
-  throw createError({ statusCode: 502, statusMessage: 'Database error' })
+  throw createError({ statusCode: 502, statusMessage: 'Ошибка базы данных' })
 }
 
 export async function withDbError<T>(fn: () => Promise<T>): Promise<T> {

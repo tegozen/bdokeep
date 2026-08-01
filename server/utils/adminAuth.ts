@@ -10,7 +10,7 @@ function adminSecret(): string {
     config.adminPassword || process.env.ADMIN_PASSWORD || process.env.NUXT_ADMIN_PASSWORD || '',
   )
   if (!password) {
-    throw createError({ statusCode: 500, statusMessage: 'ADMIN_PASSWORD is not configured' })
+    throw createError({ statusCode: 500, statusMessage: 'ADMIN_PASSWORD не задан' })
   }
   return password
 }
@@ -61,7 +61,7 @@ export function clearAdminSession(event: Parameters<typeof deleteCookie>[0]) {
 export function requireAdmin(event: Parameters<typeof getCookie>[0]) {
   const token = getCookie(event, COOKIE_NAME)
   if (!token || !parseToken(token).ok) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    throw createError({ statusCode: 401, statusMessage: 'Нет доступа' })
   }
 }
 

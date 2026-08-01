@@ -17,7 +17,7 @@
             :disabled="acting === item.id"
             @click="onApprove(item.id)"
           >
-            Approve
+            Одобрить
           </button>
           <button
             type="button"
@@ -25,7 +25,7 @@
             :disabled="acting === item.id"
             @click="onReject(item.id)"
           >
-            Reject
+            Отклонить
           </button>
         </div>
       </header>
@@ -462,7 +462,7 @@ async function onApprove(id: string) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка approve')
+    alert(msg || 'Ошибка одобрения')
   } finally {
     acting.value = null
   }
@@ -478,7 +478,7 @@ async function onReject(id: string) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка reject')
+    alert(msg || 'Ошибка отклонения')
   } finally {
     acting.value = null
   }

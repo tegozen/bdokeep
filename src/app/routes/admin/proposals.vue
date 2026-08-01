@@ -47,7 +47,7 @@
             <span :class="$style.badge">{{ sectionLabel(item.section) }}</span>
             <span :class="$style.muted">{{ formatDate(item.created_at) }}</span>
             <span v-if="item.author_label" :class="$style.muted">· {{ item.author_label }}</span>
-            <span :class="$style.status">{{ item.status }}</span>
+            <span :class="$style.status">{{ statusLabel(item.status) }}</span>
           </div>
 
           <div v-if="isCombo(item.section)" :class="$style.preview">
@@ -59,7 +59,7 @@
             <p v-else-if="comboPreview[item.id] === undefined" :class="$style.muted">
               Загрузка скиллов…
             </p>
-            <p v-else :class="$style.muted">Нет скиллов в payload</p>
+            <p v-else :class="$style.muted">Нет скиллов в предложении</p>
           </div>
           <div v-else-if="isBuffs(item.section)" :class="$style.crystalPreview">
             <p v-if="buffPreview[item.id] === undefined" :class="$style.muted">
@@ -170,7 +170,7 @@
               :disabled="acting === item.id"
               @click="approve(item.id)"
             >
-              Approve
+              Одобрить
             </button>
             <button
               type="button"
@@ -178,7 +178,7 @@
               :disabled="acting === item.id"
               @click="reject(item.id)"
             >
-              Reject
+              Отклонить
             </button>
           </div>
           <p v-if="item.review_note" :class="$style.muted">Заметка: {{ item.review_note }}</p>
@@ -260,11 +260,24 @@ const relicPreview = reactive<
 const relicPreviewPreset = reactive<Record<string, CrystalPresetId>>({})
 
 const statusOpts = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'pending', label: 'Ожидает' },
+  { value: 'approved', label: 'Одобрено' },
+  { value: 'rejected', label: 'Отклонено' },
   { value: 'all', label: 'Все' },
 ]
+
+function statusLabel(value: string) {
+  switch (value) {
+    case 'pending':
+      return 'Ожидает'
+    case 'approved':
+      return 'Одобрено'
+    case 'rejected':
+      return 'Отклонено'
+    default:
+      return value
+  }
+}
 
 function syncQuery() {
   const query: Record<string, string> = {}
@@ -568,7 +581,7 @@ async function approve(id: string) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка approve')
+    alert(msg || 'Ошибка одобрения')
   } finally {
     acting.value = null
   }
@@ -585,7 +598,7 @@ async function reject(id: string) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка reject')
+    alert(msg || 'Ошибка отклонения')
   } finally {
     acting.value = null
   }

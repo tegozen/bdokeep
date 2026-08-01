@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
     }
     const skillIds = rawIds.map((id) => String(id))
     if (skillIds.some((id) => !UUID_RE.test(id))) {
-      throw createError({ statusCode: 400, statusMessage: 'Некорректный skill id' })
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный id скилла' })
     }
 
     const allowed = await withDbError(() =>
@@ -106,7 +106,7 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
       }
       if (!UUID_RE.test(buffId)) {
-        throw createError({ statusCode: 400, statusMessage: 'Некорректный buff id' })
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный id бафа' })
       }
       const count = (perPreset.get(preset) || 0) + 1
       if (count > MAX_BUFFS) {
@@ -171,7 +171,7 @@ export default defineEventHandler(async (event) => {
       }
       usedKeys.add(key)
       if (!UUID_RE.test(itemId)) {
-        throw createError({ statusCode: 400, statusMessage: 'Некорректный crystal id' })
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный id кристалла' })
       }
       crystals.push({
         preset,
@@ -376,7 +376,7 @@ export default defineEventHandler(async (event) => {
       }
       used.add(key)
       if (!UUID_RE.test(skillId)) {
-        throw createError({ statusCode: 400, statusMessage: 'Некорректный skill id' })
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный id скилла' })
       }
       if (
         effectIds.length !== 2 ||
