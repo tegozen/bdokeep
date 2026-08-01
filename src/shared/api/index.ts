@@ -1,1 +1,1 @@
-export { getSupabase } from './supabase'
+export { resolveCatalogIds } from './catalogResolve'

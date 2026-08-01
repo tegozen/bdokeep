@@ -191,7 +191,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
 import type { Buff, Skill } from '@/entities/class'
-import { getSupabase } from '@/shared/api'
+import { resolveCatalogIds } from '@/shared/api/catalogResolve'
 import { CRYSTAL_PRESETS, type CrystalPresetId, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
@@ -423,13 +423,8 @@ async function hydrateComboPreviews() {
         return
       }
       try {
-        const supabase = getSupabase()
-        const { data, error } = await supabase
-          .from('skills')
-          .select('id, name_ru, icon_url, class_slug')
-          .in('id', ids)
-        if (error) throw error
-        const byId = new Map((data ?? []).map((s) => [s.id, s as Skill]))
+        const { skills } = await resolveCatalogIds({ skills: ids })
+        const byId = new Map(skills.map((s) => [s.id, s as Skill]))
         comboPreview[item.id] = ids.map((id) => ({
           id,
           skills: byId.get(id) ?? null,
@@ -461,13 +456,8 @@ async function hydrateBuffPreviews() {
       }
       try {
         const ids = entries.map((e) => e.buff_id)
-        const supabase = getSupabase()
-        const { data, error } = await supabase
-          .from('buffs')
-          .select('id, name_ru, icon_url, description')
-          .in('id', ids)
-        if (error) throw error
-        const byId = new Map((data ?? []).map((b) => [b.id, b as Buff]))
+        const { buffs } = await resolveCatalogIds({ buffs: ids })
+        const byId = new Map(buffs.map((b) => [b.id, b as Buff]))
         const byPreset: Partial<
           Record<CrystalPresetId, Array<{ id: string; buffs: Buff | null }>>
         > = {}
@@ -501,18 +491,14 @@ async function hydrateCrystalPreviews() {
       }
       try {
         const ids = entries.map((e) => e.item_id)
-        const supabase = getSupabase()
-        const { data, error } = await supabase
-          .from('items')
-          .select('id, name_ru, icon_url, item_type')
-          .eq('item_type', 'crystal')
-          .in('id', ids)
-        if (error) throw error
+        const { items } = await resolveCatalogIds({ items: ids })
         const byId = new Map(
-          (data ?? []).map((c) => [
-            c.id,
-            { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as CrystalFill,
-          ]),
+          items
+            .filter((c) => c.item_type === 'crystal')
+            .map((c) => [
+              c.id,
+              { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as CrystalFill,
+            ]),
         )
         const byPreset: Partial<Record<CrystalPresetId, Record<string, CrystalFill>>> = {}
         for (const entry of entries) {
@@ -546,18 +532,14 @@ async function hydrateRelicPreviews() {
       }
       try {
         const ids = entries.map((e) => e.item_id)
-        const supabase = getSupabase()
-        const { data, error } = await supabase
-          .from('items')
-          .select('id, name_ru, icon_url, item_type')
-          .in('item_type', ['relic', 'lightstone'])
-          .in('id', ids)
-        if (error) throw error
+        const { items } = await resolveCatalogIds({ items: ids })
         const byId = new Map(
-          (data ?? []).map((c) => [
-            c.id,
-            { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as RelicFill,
-          ]),
+          items
+            .filter((c) => c.item_type === 'relic' || c.item_type === 'lightstone')
+            .map((c) => [
+              c.id,
+              { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as RelicFill,
+            ]),
         )
         const byPreset: Partial<Record<CrystalPresetId, Record<string, RelicFill>>> = {}
         for (const entry of entries) {

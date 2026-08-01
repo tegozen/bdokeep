@@ -164,7 +164,7 @@ import {
   type PendingProposal,
 } from '@/features/superadmin-auth'
 import BorderSparkler from './BorderSparkler.vue'
-import { getSupabase } from '@/shared/api'
+import { resolveCatalogIds } from '@/shared/api/catalogResolve'
 import {
   CRYSTAL_PRESETS,
   morphPresetFrom,
@@ -304,12 +304,8 @@ async function hydrateCombo(item: PendingProposal) {
     return
   }
   try {
-    const { data, error } = await getSupabase()
-      .from('skills')
-      .select('id, name_ru, icon_url, class_slug')
-      .in('id', ids)
-    if (error) throw error
-    const byId = new Map((data ?? []).map((s) => [s.id, s as Skill]))
+    const { skills } = await resolveCatalogIds({ skills: ids })
+    const byId = new Map(skills.map((s) => [s.id, s as Skill]))
     comboSteps[item.id] = ids.map((id) => ({ id, skills: byId.get(id) ?? null }))
   } catch {
     comboSteps[item.id] = []
@@ -327,15 +323,10 @@ async function hydrateBuffs(item: PendingProposal) {
     return
   }
   try {
-    const { data, error } = await getSupabase()
-      .from('buffs')
-      .select('id, name_ru, icon_url, description')
-      .in(
-        'id',
-        entries.map((e) => e.buff_id),
-      )
-    if (error) throw error
-    const byId = new Map((data ?? []).map((b) => [b.id, b as Buff]))
+    const { buffs } = await resolveCatalogIds({
+      buffs: entries.map((e) => e.buff_id),
+    })
+    const byId = new Map(buffs.map((b) => [b.id, b as Buff]))
     const byPreset: Partial<Record<CrystalPresetId, Array<{ id: string; buffs: Buff | null }>>> = {}
     for (const entry of entries) {
       const preset = (entry.preset || 't1') as CrystalPresetId
@@ -356,20 +347,16 @@ async function hydrateCrystals(item: PendingProposal) {
     return
   }
   try {
-    const { data, error } = await getSupabase()
-      .from('items')
-      .select('id, name_ru, icon_url, item_type')
-      .eq('item_type', 'crystal')
-      .in(
-        'id',
-        entries.map((e) => e.item_id),
-      )
-    if (error) throw error
+    const { items } = await resolveCatalogIds({
+      items: entries.map((e) => e.item_id),
+    })
     const byId = new Map(
-      (data ?? []).map((c) => [
-        c.id,
-        { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as CrystalFill,
-      ]),
+      items
+        .filter((c) => c.item_type === 'crystal')
+        .map((c) => [
+          c.id,
+          { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as CrystalFill,
+        ]),
     )
     const byPreset: Partial<Record<CrystalPresetId, Record<string, CrystalFill>>> = {}
     for (const entry of entries) {
@@ -394,20 +381,16 @@ async function hydrateRelics(item: PendingProposal) {
     return
   }
   try {
-    const { data, error } = await getSupabase()
-      .from('items')
-      .select('id, name_ru, icon_url, item_type')
-      .in('item_type', ['relic', 'lightstone'])
-      .in(
-        'id',
-        entries.map((e) => e.item_id),
-      )
-    if (error) throw error
+    const { items } = await resolveCatalogIds({
+      items: entries.map((e) => e.item_id),
+    })
     const byId = new Map(
-      (data ?? []).map((c) => [
-        c.id,
-        { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as RelicFill,
-      ]),
+      items
+        .filter((c) => c.item_type === 'relic' || c.item_type === 'lightstone')
+        .map((c) => [
+          c.id,
+          { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as RelicFill,
+        ]),
     )
     const byPreset: Partial<Record<CrystalPresetId, Record<string, RelicFill>>> = {}
     for (const entry of entries) {
@@ -433,21 +416,12 @@ async function hydrateMorphs(item: PendingProposal) {
   try {
     const skillIds = [...new Set(entries.map((e) => e.skill_id))]
     const effectIds = [...new Set(entries.flatMap((e) => e.effect_ids ?? []))]
-    const sb = getSupabase()
-    const [{ data: skills, error: sErr }, { data: fx, error: fErr }] = await Promise.all([
-      sb
-        .from('skills')
-        .select('id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier')
-        .in('id', skillIds),
-      sb
-        .from('skill_addon_effects')
-        .select('id, key, name_ru, effect_group, tier_labels')
-        .in('id', effectIds),
-    ])
-    if (sErr) throw sErr
-    if (fErr) throw fErr
-    const skillById = new Map((skills ?? []).map((s) => [s.id, s as Skill]))
-    const fxById = new Map((fx ?? []).map((e) => [e.id, e as SkillAddonEffect]))
+    const { skills, skill_addon_effects: fx } = await resolveCatalogIds({
+      skills: skillIds,
+      skill_addon_effects: effectIds,
+    })
+    const skillById = new Map(skills.map((s) => [s.id, s as Skill]))
+    const fxById = new Map(fx.map((e) => [e.id, e as SkillAddonEffect]))
     const byPreset: Partial<
       Record<MorphPresetId, Partial<Record<MorphSlotLevel, MorphSlotFill>>>
     > = {}

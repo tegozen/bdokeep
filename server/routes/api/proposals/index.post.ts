@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as Body
   const asSuperadmin = isAdminSession(event)
 
-  // Honeypot — bots fill hidden fields
   if (body.website) {
     return { ok: true }
   }
@@ -32,16 +31,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Некорректный раздел' })
   }
 
-  const rest = getServiceRest()
+  const sql = useDb()
 
-  const { data: klass, error: classErr } = await rest
-    .from('classes')
-    .select('id, slug, published')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle()
+  const klass = await withDbError(async () => {
+    const rows = await sql`
+      select id, slug, published
+      from classes
+      where slug = ${slug} and published = true
+      limit 1
+    `
+    return rows[0] ?? null
+  })
 
-  if (classErr) throw createError({ statusCode: 502, statusMessage: classErr.message })
   if (!klass) throw createError({ statusCode: 404, statusMessage: 'Класс не найден' })
 
   let payload: Record<string, unknown>
@@ -60,14 +61,9 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Некорректный skill id' })
     }
 
-    const { data: skills, error: skillsErr } = await rest
-      .from('skills')
-      .select('id')
-      .eq('class_slug', slug)
-      .in('id', skillIds)
-
-    if (skillsErr) throw createError({ statusCode: 502, statusMessage: skillsErr.message })
-    const allowed = new Set((skills ?? []).map((s: { id: string }) => s.id))
+    const allowed = await withDbError(() =>
+      idsExist(sql, 'skills', skillIds, { classSlug: slug }),
+    )
     if (skillIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Скилл не принадлежит этому классу' })
     }
@@ -75,7 +71,6 @@ export default defineEventHandler(async (event) => {
     payload = { mode, skill_ids: skillIds }
   } else if (isBuffsSection(section)) {
     const raw = body.payload?.buffs
-    // Legacy: buff_ids → treat as t1
     const legacyIds = body.payload?.buff_ids
     let entries: Array<{ preset?: unknown; buff_id?: unknown; sort_order?: unknown }> = []
     if (Array.isArray(raw) && raw.length) {
@@ -129,9 +124,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const buffIds = [...new Set(buffsPayload.map((b) => b.buff_id))]
-    const { data: buffs, error: buffsErr } = await rest.from('buffs').select('id').in('id', buffIds)
-    if (buffsErr) throw createError({ statusCode: 502, statusMessage: buffsErr.message })
-    const allowed = new Set((buffs ?? []).map((b: { id: string }) => b.id))
+    const allowed = await withDbError(() => idsExist(sql, 'buffs', buffIds))
     if (buffIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный баф' })
     }
@@ -189,14 +182,9 @@ export default defineEventHandler(async (event) => {
     }
 
     const itemIds = crystals.map((c) => c.item_id)
-    const { data: items, error: itemsErr } = await rest
-      .from('items')
-      .select('id')
-      .eq('item_type', 'crystal')
-      .in('id', itemIds)
-
-    if (itemsErr) throw createError({ statusCode: 502, statusMessage: itemsErr.message })
-    const allowed = new Set((items ?? []).map((x: { id: string }) => x.id))
+    const allowed = await withDbError(() =>
+      idsExist(sql, 'items', itemIds, { itemType: 'crystal' }),
+    )
     if (itemIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный кристалл' })
     }
@@ -289,26 +277,18 @@ export default defineEventHandler(async (event) => {
 
     if (relics.length) {
       const ids = relics.map((r) => r.item_id)
-      const { data: items, error: itemsErr } = await rest
-        .from('items')
-        .select('id')
-        .eq('item_type', 'relic')
-        .in('id', ids)
-      if (itemsErr) throw createError({ statusCode: 502, statusMessage: itemsErr.message })
-      const allowed = new Set((items ?? []).map((x: { id: string }) => x.id))
+      const allowed = await withDbError(() =>
+        idsExist(sql, 'items', ids, { itemType: 'relic' }),
+      )
       if (ids.some((id) => !allowed.has(id))) {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная реликвия' })
       }
     }
     if (lightstones.length) {
       const ids = lightstones.map((r) => r.item_id)
-      const { data: items, error: itemsErr } = await rest
-        .from('items')
-        .select('id')
-        .eq('item_type', 'lightstone')
-        .in('id', ids)
-      if (itemsErr) throw createError({ statusCode: 502, statusMessage: itemsErr.message })
-      const allowed = new Set((items ?? []).map((x: { id: string }) => x.id))
+      const allowed = await withDbError(() =>
+        idsExist(sql, 'items', ids, { itemType: 'lightstone' }),
+      )
       if (ids.some((id) => !allowed.has(id))) {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестный светящийся камень' })
       }
@@ -418,24 +398,15 @@ export default defineEventHandler(async (event) => {
     }
 
     const skillIds = [...new Set(morphs.map((m) => m.skill_id))]
-    const { data: skillRows, error: skillErr } = await rest
-      .from('skills')
-      .select('id')
-      .eq('class_slug', slug)
-      .in('id', skillIds)
-    if (skillErr) throw createError({ statusCode: 502, statusMessage: skillErr.message })
-    const allowedSkills = new Set((skillRows ?? []).map((s: { id: string }) => s.id))
+    const allowedSkills = await withDbError(() =>
+      idsExist(sql, 'skills', skillIds, { classSlug: slug }),
+    )
     if (skillIds.some((id) => !allowedSkills.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный скилл класса' })
     }
 
     const effectIds = [...new Set(morphs.flatMap((m) => m.effect_ids))]
-    const { data: fxRows, error: fxErr } = await rest
-      .from('skill_addon_effects')
-      .select('id')
-      .in('id', effectIds)
-    if (fxErr) throw createError({ statusCode: 502, statusMessage: fxErr.message })
-    const allowedFx = new Set((fxRows ?? []).map((s: { id: string }) => s.id))
+    const allowedFx = await withDbError(() => idsExist(sql, 'skill_addon_effects', effectIds))
     if (effectIds.some((id) => !allowedFx.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный эффект морфа' })
     }
@@ -460,23 +431,33 @@ export default defineEventHandler(async (event) => {
     authorLabel = 'superadmin'
   }
 
-  const { data: inserted, error: insertErr } = await rest
-    .from('guide_proposals')
-    .insert({
-      class_id: klass.id,
-      class_slug: klass.slug,
-      section,
-      payload,
-      author_label: authorLabel,
-      status: 'pending',
-    })
-    .select('id, class_id, section, payload, status')
-    .single()
-
-  if (insertErr) throw createError({ statusCode: 502, statusMessage: insertErr.message })
+  const inserted = await withDbError(async () => {
+    const rows = await sql`
+      insert into guide_proposals (class_id, class_slug, section, payload, author_label, status)
+      values (
+        ${klass.id},
+        ${klass.slug},
+        ${section},
+        ${sql.json(payload)},
+        ${authorLabel},
+        'pending'
+      )
+      returning id, class_id, section, payload, status
+    `
+    return rows[0]!
+  })
 
   if (asSuperadmin) {
-    await applyProposal(inserted, { reviewNote: 'auto-approved (superadmin)' })
+    await applyProposal(
+      {
+        id: String(inserted.id),
+        class_id: String(inserted.class_id),
+        section: String(inserted.section),
+        payload: (inserted.payload || {}) as Record<string, unknown>,
+        status: String(inserted.status),
+      },
+      { reviewNote: 'auto-approved (superadmin)' },
+    )
     return { ok: true, id: inserted.id, autoApproved: true }
   }
 

@@ -28,15 +28,11 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // SSR inside docker → PostgREST service name
-    supabaseInternalUrl:
-      process.env.NUXT_SUPABASE_INTERNAL_URL || process.env.SUPABASE_INTERNAL_URL || '',
-    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-    adminPassword: process.env.ADMIN_PASSWORD || '',
+    // Override at runtime: NUXT_DATABASE_URL (do not bake host .env at build time)
+    databaseUrl: '',
+    // Override at runtime: NUXT_ADMIN_PASSWORD
+    adminPassword: '',
     public: {
-      // Browser / host → published API port
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:8000',
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
       siteName: 'BDO Keep',
     },
   },
@@ -59,7 +55,7 @@ export default defineNuxtConfig({
           "font-src 'self' https://fonts.gstatic.com data:",
           "img-src 'self' data: blob: https:",
           "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
-          "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 http://127.0.0.1:* http://localhost:* https:",
+          "connect-src 'self' http://127.0.0.1:* http://localhost:* https:",
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self'",

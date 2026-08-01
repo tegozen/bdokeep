@@ -6,15 +6,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody<{ note?: string }>(event).catch(() => ({} as { note?: string }))
-  const rest = getServiceRest()
+  const sql = useDb()
 
-  const { data: proposal, error } = await rest
-    .from('guide_proposals')
-    .select('id, status')
-    .eq('id', id)
-    .maybeSingle()
+  const proposal = await withDbError(async () => {
+    const rows = await sql`
+      select id, status from guide_proposals where id = ${id} limit 1
+    `
+    return rows[0] ?? null
+  })
 
-  if (error) throw createError({ statusCode: 502, statusMessage: error.message })
   if (!proposal) throw createError({ statusCode: 404, statusMessage: 'Не найдено' })
   if (proposal.status !== 'pending') {
     throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
@@ -25,16 +25,16 @@ export default defineEventHandler(async (event) => {
       ? String(body.note).trim().slice(0, 500)
       : null
 
-  const { error: updErr } = await rest
-    .from('guide_proposals')
-    .update({
-      status: 'rejected',
-      reviewed_at: new Date().toISOString(),
-      review_note: note,
-    })
-    .eq('id', id)
-
-  if (updErr) throw createError({ statusCode: 502, statusMessage: updErr.message })
+  await withDbError(async () => {
+    await sql`
+      update guide_proposals
+      set
+        status = 'rejected',
+        reviewed_at = now(),
+        review_note = ${note}
+      where id = ${id}
+    `
+  })
 
   return { ok: true }
 })

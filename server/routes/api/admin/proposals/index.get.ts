@@ -6,20 +6,21 @@ export default defineEventHandler(async (event) => {
     typeof query.class_slug === 'string' ? query.class_slug.trim().toLowerCase() : ''
   const summary = query.summary === '1' || query.summary === 'true'
 
-  const rest = getServiceRest()
+  const sql = useDb()
 
   if (summary) {
-    const { data, error } = await rest
-      .from('guide_proposals')
-      .select('class_slug')
-      .eq('status', 'pending')
-      .limit(2000)
-
-    if (error) throw createError({ statusCode: 502, statusMessage: error.message })
+    const data = await withDbError(async () =>
+      sql`
+        select class_slug
+        from guide_proposals
+        where status = 'pending'
+        limit 2000
+      `,
+    )
 
     const byClass: Record<string, number> = {}
-    for (const row of data ?? []) {
-      const slug = String((row as { class_slug?: string }).class_slug || '')
+    for (const row of data) {
+      const slug = String(row.class_slug || '')
       if (!slug) continue
       byClass[slug] = (byClass[slug] || 0) + 1
     }
@@ -27,21 +28,41 @@ export default defineEventHandler(async (event) => {
     return { total, byClass }
   }
 
-  let req = rest
-    .from('guide_proposals')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(100)
+  const items = await withDbError(async () => {
+    if (status && status !== 'all' && classSlug && /^[a-z0-9-]+$/.test(classSlug)) {
+      return sql`
+        select *
+        from guide_proposals
+        where status = ${status} and class_slug = ${classSlug}
+        order by created_at desc
+        limit 100
+      `
+    }
+    if (status && status !== 'all') {
+      return sql`
+        select *
+        from guide_proposals
+        where status = ${status}
+        order by created_at desc
+        limit 100
+      `
+    }
+    if (classSlug && /^[a-z0-9-]+$/.test(classSlug)) {
+      return sql`
+        select *
+        from guide_proposals
+        where class_slug = ${classSlug}
+        order by created_at desc
+        limit 100
+      `
+    }
+    return sql`
+      select *
+      from guide_proposals
+      order by created_at desc
+      limit 100
+    `
+  })
 
-  if (status && status !== 'all') {
-    req = req.eq('status', status)
-  }
-  if (classSlug && /^[a-z0-9-]+$/.test(classSlug)) {
-    req = req.eq('class_slug', classSlug)
-  }
-
-  const { data, error } = await req
-  if (error) throw createError({ statusCode: 502, statusMessage: error.message })
-
-  return { items: data ?? [] }
+  return { items }
 })

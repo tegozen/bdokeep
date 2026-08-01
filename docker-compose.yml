@@ -1,6 +1,6 @@
 # BDO Keep — один compose, минимум сервисов
-# db (Postgres) + rest (PostgREST API) + web (Nuxt)
-# Studio/Kong/Auth/Realtime/Storage НЕ нужны для гильдейского гайда
+# db (Postgres) + web (Nuxt / Nitro API)
+# Studio/Kong/Auth/Realtime/Storage/PostgREST НЕ нужны
 
 name: bdokeep
 
@@ -35,51 +35,31 @@ services:
       - ./supabase/migrations/019_seed_skill_addon_effects.sql:/docker-entrypoint-initdb.d/99b-seed-addon-effects.sql:ro
       - ./supabase/migrations/020_morph_grants.sql:/docker-entrypoint-initdb.d/99c-morph-grants.sql:ro
       - ./supabase/migrations/021_morph_presets_guide.sql:/docker-entrypoint-initdb.d/99d-morph-presets.sql:ro
+      - ./supabase/migrations/022_bdokeep_app.sh:/docker-entrypoint-initdb.d/99e-bdokeep-app.sh:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s
       timeout: 5s
       retries: 20
-    # Postgres только во внутренней сети compose
-
-  rest:
-    image: postgrest/postgrest:v12.2.12
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
-      PGRST_DB_SCHEMAS: public
-      PGRST_DB_ANON_ROLE: anon
-      PGRST_JWT_SECRET: ${JWT_SECRET}
-      PGRST_DB_EXTRA_SEARCH_PATH: public
-      PGRST_SERVER_CORS_ALLOWED_ORIGINS: '*'
+    # Только localhost на хосте (npm run dev / psql); наружу в прод не публиковать
     ports:
-      - '${API_PORT:-8000}:3000'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        NUXT_PUBLIC_SUPABASE_URL: ${NUXT_PUBLIC_SUPABASE_URL:-http://127.0.0.1:8000}
-        NUXT_PUBLIC_SUPABASE_ANON_KEY: ${NUXT_PUBLIC_SUPABASE_ANON_KEY}
     restart: unless-stopped
     depends_on:
-      rest:
-        condition: service_started
+      db:
+        condition: service_healthy
     environment:
       HOST: 0.0.0.0
       PORT: 3000
-      # browser on host
-      NUXT_PUBLIC_SUPABASE_URL: ${NUXT_PUBLIC_SUPABASE_URL:-http://127.0.0.1:8000}
-      NUXT_PUBLIC_SUPABASE_ANON_KEY: ${NUXT_PUBLIC_SUPABASE_ANON_KEY}
-      # SSR inside this container → docker DNS (Nuxt maps NUXT_* → runtimeConfig)
-      NUXT_SUPABASE_INTERNAL_URL: http://rest:3000
-      SUPABASE_INTERNAL_URL: http://rest:3000
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      DATABASE_URL: postgres://bdokeep_app:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
+      NUXT_DATABASE_URL: postgres://bdokeep_app:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
+      NUXT_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
     ports:
       - '${HOST_PORT:-3000}:3000'
 

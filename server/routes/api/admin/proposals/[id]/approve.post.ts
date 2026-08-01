@@ -5,17 +5,21 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Некорректный id' })
   }
 
-  const rest = getServiceRest()
-  const { data: proposal, error } = await rest
-    .from('guide_proposals')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  const sql = useDb()
+  const proposal = await withDbError(async () => {
+    const rows = await sql`select * from guide_proposals where id = ${id} limit 1`
+    return rows[0] ?? null
+  })
 
-  if (error) throw createError({ statusCode: 502, statusMessage: error.message })
   if (!proposal) throw createError({ statusCode: 404, statusMessage: 'Не найдено' })
 
-  await applyProposal(proposal)
+  await applyProposal({
+    id: String(proposal.id),
+    class_id: String(proposal.class_id),
+    section: String(proposal.section),
+    payload: (proposal.payload || {}) as Record<string, unknown>,
+    status: String(proposal.status),
+  })
 
   return { ok: true }
 })

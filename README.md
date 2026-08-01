@@ -2,17 +2,16 @@
 
 Гильдейские PvP-гайды по классам Black Desert Online (только RU).
 
-Стек: **Nuxt 4.5+** (FSD) + Postgres + PostgREST. Один `docker-compose.yml`.
+Стек: **Nuxt 4.5+** (FSD) + Postgres. API — Nitro. Один `docker-compose.yml`.
 
-## Сервисы (всего 3)
+## Сервисы (всего 2)
 
 | Сервис | Зачем | Порт |
 |--------|--------|------|
-| `web` | сайт Nuxt | `HOST_PORT` (3000) |
-| `rest` | PostgREST API для фронта | `API_PORT` (8000) |
-| `db` | Postgres | внутренний (без публикации) |
+| `web` | сайт Nuxt + Nitro API | `HOST_PORT` (3000) |
+| `db` | Postgres | `127.0.0.1:POSTGRES_PORT` (5432) |
 
-Полный self-hosted Supabase (Kong, Auth, Realtime, Storage, Studio…) **не используем** — для гайда это оверхед.
+Полный self-hosted Supabase (Kong, Auth, Realtime, Storage, Studio, PostgREST…) **не используем**.
 
 ## Быстрый старт
 
@@ -23,9 +22,9 @@ npm run docker:up
 npm run dev   # или сразу сайт с compose: http://127.0.0.1:3000
 ```
 
-Env только в корне: `.env` / `.env.example`.
+Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`) и `ADMIN_PASSWORD`.
 
-SQL к БД при необходимости: `docker compose exec db psql -U postgres -d bdokeep`.
+SQL к БД: `docker compose exec db psql -U postgres -d bdokeep`.
 
 ## Модерация предложений
 
@@ -45,7 +44,7 @@ SQL к БД при необходимости: `docker compose exec db psql -U p
 
 ## Nginx (внешний)
 
-Проксируй только сайт (`HOST_PORT`). Postgres наружу не отдавай.
+Проксируй только сайт (`HOST_PORT`). Postgres наружу не отдавай (в compose он уже только на `127.0.0.1`).
 
 ```nginx
 location / {
