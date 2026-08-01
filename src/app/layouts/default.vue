@@ -1,5 +1,18 @@
 <template>
   <div :class="$style.root">
+    <ClientOnly>
+      <div v-if="pwa?.needRefresh" :class="$style.updateBanner" role="status">
+        <span>Доступно обновление приложения</span>
+        <button
+          type="button"
+          :class="$style.updateBtn"
+          @click="pwa?.updateServiceWorker(true)"
+        >
+          Обновить
+        </button>
+      </div>
+    </ClientOnly>
+
     <header :class="$style.header">
       <div :class="['mx-auto flex w-[min(100%-2rem,1920px)] flex-wrap items-center gap-x-4 gap-y-2 py-4', $style.headerInner]">
         <div :class="$style.left">
@@ -114,6 +127,12 @@ import GuideModePresetTabs from './GuideModePresetTabs.vue'
 import HomeClassFilters from './HomeClassFilters.vue'
 
 const route = useRoute()
+/** @vite-pwa/nuxt injects $pwa at runtime; types may be absent until prepare. */
+type PwaClient = {
+  needRefresh: boolean
+  updateServiceWorker: (reloadPage?: boolean) => Promise<void>
+}
+const pwa = computed(() => useNuxtApp().$pwa as PwaClient | undefined)
 const headerClass = useHeaderClass()
 const specMode = useGuideSpecMode()
 const presetFill = useHeaderPresetFill()
@@ -149,6 +168,34 @@ watch(isSuperadmin, () => {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
+}
+
+.updateBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-gold-dim) 80%, var(--color-bg-deep));
+  color: var(--color-gold);
+  font-size: 0.875rem;
+}
+
+.updateBtn {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-gold);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 0.35rem 0.75rem;
+}
+
+.updateBtn:hover {
+  background: var(--color-gold-dim);
 }
 
 .header {

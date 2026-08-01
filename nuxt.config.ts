@@ -3,10 +3,15 @@ import tailwindcss from '@tailwindcss/vite'
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
 
+const siteDescription =
+  'Неофициальные гильдейские PvP-гайды по классам Black Desert Online'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
+
+  modules: ['@vite-pwa/nuxt'],
 
   srcDir: 'src',
 
@@ -47,6 +52,56 @@ export default defineNuxtConfig({
     },
   },
 
+  pwa: {
+    registerType: 'autoUpdate',
+    registerWebManifestInRouteRules: true,
+    manifest: {
+      name: 'BDO Keep',
+      short_name: 'BDO Keep',
+      description: siteDescription,
+      lang: 'ru',
+      display: 'standalone',
+      start_url: '/',
+      scope: '/',
+      theme_color: '#07080c',
+      background_color: '#07080c',
+      icons: [
+        {
+          src: '/android-chrome-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/android-chrome-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: '/android-chrome-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable',
+        },
+      ],
+    },
+    workbox: {
+      cleanupOutdatedCaches: true,
+      clientsClaim: true,
+      // SSR app — do not fall back navigations to a static index.html
+      navigateFallback: null,
+      // Shell only — skip large class portraits under public/classes/
+      globPatterns: ['**/*.{js,css,ico,woff,woff2}', 'android-chrome-*.png', 'favicon*.png', 'apple-touch-icon.png', 'favicon.svg'],
+      globIgnores: ['**/classes/**'],
+    },
+    client: {
+      registerPlugin: true,
+    },
+    devOptions: {
+      enabled: false,
+    },
+  },
 
   routeRules: {
     '/**': {
@@ -67,6 +122,8 @@ export default defineNuxtConfig({
           "img-src 'self' data: blob: https:",
           "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
           "connect-src 'self' http://127.0.0.1:* http://localhost:*",
+          "worker-src 'self'",
+          "manifest-src 'self'",
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self'",
@@ -85,11 +142,15 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content: 'Неофициальные гильдейские PvP-гайды по классам Black Desert Online',
+          content: siteDescription,
         },
         { name: 'theme-color', content: '#07080c' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-title', content: 'BDO Keep' },
       ],
       link: [
+        { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
