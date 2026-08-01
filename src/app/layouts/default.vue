@@ -76,7 +76,21 @@
                 {{ pendingSummary.total }}
               </span>
             </NuxtLink>
-            <SuperadminAuth compact />
+            <!-- Defer auth UI CSS/JS until session or explicit login (keeps home Lighthouse clean). -->
+            <component
+              :is="SuperadminAuth"
+              v-if="SuperadminAuth && authUiReady"
+              compact
+              :open-login-on-mount="authOpenLoginOnMount"
+            />
+            <button
+              v-else-if="!authUiReady"
+              type="button"
+              :class="$style.authGate"
+              @click="openAuthLogin"
+            >
+              Войти как суперадмин
+            </button>
           </ClientOnly>
         </div>
       </div>
@@ -107,29 +121,39 @@
       </div>
     </footer>
 
-    <UiConfirm />
+    <component :is="UiConfirm" v-if="UiConfirm" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { type Component, computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue'
 import {
+  useConfirm,
   useGuideSpecMode,
   useHeaderClass,
   useHeaderPresetFill,
   usePendingSummary,
   useSuperadmin,
 } from '@/shared/lib'
-import { UiConfirm } from '@/shared/ui'
 import HomeClassFilters from './HomeClassFilters.vue'
 
 /** Keep class-header / auth CSS off the home critical path until needed. */
 const ClassIcon = defineAsyncComponent(() => import('@/entities/class/ui/ClassIcon.vue'))
 const ClassTierStars = defineAsyncComponent(() => import('@/entities/class/ui/ClassTierStars.vue'))
-const SuperadminAuth = defineAsyncComponent(
-  () => import('@/features/superadmin-auth/ui/SuperadminAuth.vue'),
-)
 const GuideModePresetTabs = defineAsyncComponent(() => import('./GuideModePresetTabs.vue'))
+/** Loaded on demand — avoid shipping auth CSS on anonymous home Lighthouse runs. */
+const SuperadminAuth = shallowRef<Component | null>(null)
+const UiConfirm = shallowRef<Component | null>(null)
+const { request: confirmRequest } = useConfirm()
+
+watch(
+  confirmRequest,
+  async (req) => {
+    if (!req || UiConfirm.value) return
+    UiConfirm.value = (await import('@/shared/ui/UiConfirm.vue')).default
+  },
+  { flush: 'sync' },
+)
 
 const route = useRoute()
 /** @vite-pwa/nuxt injects $pwa at runtime; types may be absent until prepare. */
@@ -144,7 +168,23 @@ const presetFill = useHeaderPresetFill()
 const { isSuperadmin, refresh } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
 const mobileNavOpen = ref(false)
+const authUiReady = ref(false)
+const authOpenLoginOnMount = ref(false)
 const showHomeFilters = computed(() => route.path === '/')
+
+async function ensureAuthUi() {
+  if (!SuperadminAuth.value) {
+    SuperadminAuth.value = (
+      await import('@/features/superadmin-auth/ui/SuperadminAuth.vue')
+    ).default
+  }
+  authUiReady.value = true
+}
+
+function openAuthLogin() {
+  authOpenLoginOnMount.value = true
+  void ensureAuthUi()
+}
 
 const headerActiveTier = computed(() => {
   const hc = headerClass.value
@@ -160,10 +200,12 @@ watch(headerClass, (v) => {
 
 onMounted(async () => {
   await refresh()
+  if (isSuperadmin.value) await ensureAuthUi()
   await refreshPending()
 })
 
-watch(isSuperadmin, () => {
+watch(isSuperadmin, (ok) => {
+  if (ok) void ensureAuthUi()
   void refreshPending()
 })
 </script>
@@ -252,7 +294,8 @@ watch(isSuperadmin, () => {
   border-right: 1px solid var(--color-border);
 }
 
-.mobileToggle {
+.mobileToggle,
+.authGate {
   box-sizing: border-box;
   height: 100%;
   border: 1px solid var(--color-border);
@@ -265,7 +308,8 @@ watch(isSuperadmin, () => {
   padding: 0 0.65rem;
 }
 
-.mobileToggle:hover {
+.mobileToggle:hover,
+.authGate:hover {
   border-color: var(--color-border-strong);
   color: var(--color-gold);
 }

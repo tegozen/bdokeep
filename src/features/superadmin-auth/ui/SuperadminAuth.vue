@@ -58,18 +58,22 @@
 
 <script setup lang="ts">
 import { useModalEscape, useSuperadmin } from '@/shared/lib'
-import { UiButton } from '@/shared/ui'
+import UiButton from '@/shared/ui/UiButton.vue'
 import LoginFields from './LoginFields.vue'
 
-withDefaults(defineProps<{ compact?: boolean }>(), {
-  compact: false,
-})
+const props = withDefaults(
+  defineProps<{ compact?: boolean; openLoginOnMount?: boolean }>(),
+  {
+    compact: false,
+    openLoginOnMount: false,
+  },
+)
 
 const { isSuperadmin, refresh, login, logout } = useSuperadmin()
 const password = ref('')
 const busy = ref(false)
 const error = ref('')
-const openLogin = ref(false)
+const openLogin = ref(props.openLoginOnMount)
 
 const { obscured } = useModalEscape(openLogin, closeLogin)
 

@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { useHomeClassFilters } from '@/shared/lib'
-import { UiSwitch } from '@/shared/ui'
+import UiSwitch from '@/shared/ui/UiSwitch.vue'
 
 const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
 </script>

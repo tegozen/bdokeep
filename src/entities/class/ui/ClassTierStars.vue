@@ -2,6 +2,7 @@
   <div
     :class="[
       $style.root,
+      size === 'xs' && $style.xs,
       size === 'sm' && $style.sm,
       editable && $style.editable,
       saving && $style.saving,
@@ -65,7 +66,7 @@ const props = withDefaults(
     tier?: number | null
     editable?: boolean
     saving?: boolean
-    size?: 'sm' | 'md'
+    size?: 'xs' | 'sm' | 'md'
   }>(),
   {
     tier: null,
@@ -105,12 +106,23 @@ function onPick(n: number) {
   user-select: none;
 }
 
+.xs {
+  gap: 0.06rem;
+}
+
+.xs .icon {
+  width: 0.78rem;
+  height: 0.78rem;
+  stroke-width: 1.5;
+  transform: translateY(0.5px);
+}
+
 .sm .icon {
   width: 1.1rem;
   height: 1.1rem;
 }
 
-.root:not(.sm) .icon {
+.root:not(.sm):not(.xs) .icon {
   width: 1.5rem;
   height: 1.5rem;
 }

@@ -13,6 +13,19 @@ export default defineNuxtConfig({
 
   modules: ['@vite-pwa/nuxt'],
 
+  hooks: {
+    // Auth UI is click-loaded on home — don't prefetch its CSS/JS into anonymous visits.
+    'build:manifest'(manifest) {
+      for (const item of Object.values(manifest)) {
+        const id = `${item.file ?? ''} ${item.src ?? ''}`
+        if (/SuperadminAuth|LoginFields|superadmin-auth\/ui|UiConfirm|UiModal\.vue/i.test(id)) {
+          item.prefetch = false
+          item.preload = false
+        }
+      }
+    },
+  },
+
   srcDir: 'src',
 
   dir: {

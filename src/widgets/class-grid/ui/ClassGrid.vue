@@ -22,6 +22,7 @@
         v-for="(klass, index) in classes"
         :key="klass.id"
         :to="`/class/${klass.slug}`"
+        :prefetch="false"
         :class="[$style.card, !klass.has_content && $style.cardEmpty]"
       >
         <div :class="$style.media">
@@ -29,9 +30,8 @@
             v-if="klass.portrait_url"
             :src="cardPortraitUrl(klass.portrait_url)"
             :alt="klass.name_ru"
-            width="240"
-            height="320"
-            sizes="(max-width: 767px) 45vw, 170px"
+            width="360"
+            height="480"
             :loading="index < EAGER_COUNT ? 'eager' : 'lazy'"
             :fetchpriority="index === 0 ? 'high' : undefined"
             decoding="async"
@@ -51,11 +51,11 @@
           >
             <div v-if="klass.tier_awakening" :class="$style.tierRow">
               <span :class="$style.tierLabel">Проб.</span>
-              <ClassTierStars :tier="klass.tier_awakening" size="sm" />
+              <ClassTierStars :tier="klass.tier_awakening" size="xs" />
             </div>
             <div v-if="klass.tier_succession" :class="$style.tierRow">
               <span :class="$style.tierLabel">Насл.</span>
-              <ClassTierStars :tier="klass.tier_succession" size="sm" />
+              <ClassTierStars :tier="klass.tier_succession" size="xs" />
             </div>
           </div>
         </div>
@@ -74,6 +74,7 @@
 </template>
 
 <script setup lang="ts">
+import { cardPortraitUrl } from '@/entities/class/lib/cardPortrait'
 import type { BdoClass } from '@/entities/class/model/types'
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
@@ -95,24 +96,19 @@ withDefaults(
     emptyMessage: null,
   },
 )
-
-/** `/classes/x/portrait.png` → `/classes/x/portrait-card.webp` for the home grid. */
-function cardPortraitUrl(portraitUrl: string) {
-  return portraitUrl.replace(/portrait\.png$/i, 'portrait-card.webp')
-}
 </script>
 
 <style module>
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 0.75rem;
 }
 
 @media (min-width: 768px) {
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.85rem;
   }
 }
 
@@ -192,33 +188,41 @@ function cardPortraitUrl(portraitUrl: string) {
 
 .tiers {
   position: absolute;
-  top: 0.45rem;
-  left: 0.45rem;
+  top: 0.28rem;
+  left: 0.28rem;
+  right: 0.28rem;
   z-index: 12;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  align-items: flex-start;
+  gap: 0.14rem;
+  align-items: stretch;
 }
 
 .tierRow {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.22rem 0.4rem;
+  gap: 0.2rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.12rem 0.3rem 0.12rem 0.35rem;
   border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
   border-radius: 999px;
   background: rgba(10, 11, 16, 0.82);
   line-height: 0;
 }
 
+.tierRow :global([class*='root']) {
+  margin-left: auto;
+}
+
 .tierLabel {
-  font-size: 0.65rem;
+  font-size: 0.52rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--color-gold);
   line-height: 1;
   user-select: none;
+  flex: none;
 }
 
 .meta {
@@ -228,13 +232,14 @@ function cardPortraitUrl(portraitUrl: string) {
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.75rem 0.625rem;
+  gap: 0.3rem;
+  padding: 0.55rem 0.45rem;
 }
 
 .name {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.82rem;
+  line-height: 1.2;
   color: var(--color-ink);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
 }
