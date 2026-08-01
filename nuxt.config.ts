@@ -53,8 +53,8 @@ export default defineNuxtConfig({
         'Content-Security-Policy': [
           "default-src 'self'",
           "script-src 'self' 'unsafe-inline'",
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-          "font-src 'self' https://fonts.gstatic.com data:",
+          "style-src 'self' 'unsafe-inline'",
+          "font-src 'self' data:",
           "img-src 'self' data: blob: https:",
           "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
           "connect-src 'self' http://127.0.0.1:* http://localhost:* https:",
@@ -77,14 +77,6 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content: 'Неофициальные гильдейские PvP-гайды по классам Black Desert Online',
-        },
-      ],
-      link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap',
         },
       ],
     },

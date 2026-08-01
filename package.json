@@ -14,8 +14,13 @@
     "docker:down": "docker compose --env-file .env down"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.0",
+    "echarts": "^6.1.0",
     "highlight.js": "^11.11.1",
+    "katex": "^0.18.1",
     "md-editor-v3": "^6.5.5",
+    "mermaid": "^11.16.0",
     "nuxt": "^4.5.1",
     "postgres": "^3.4.9",
     "screenfull": "^6.0.2",

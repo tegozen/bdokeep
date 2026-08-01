@@ -83,6 +83,13 @@ export async function ensureMdEditorConfigured() {
   if (configured) return
   configured = true
 
+  const [{ default: katex }, { default: mermaid }, echarts] = await Promise.all([
+    import('katex'),
+    import('mermaid'),
+    import('echarts'),
+  ])
+  await import('katex/dist/katex.min.css')
+
   config({
     editorConfig: {
       languageUserDefined: { ru },
@@ -91,6 +98,9 @@ export async function ensureMdEditorConfigured() {
     editorExtensions: {
       highlight: { instance: hljs },
       screenfull: { instance: screenfull },
+      katex: { instance: katex },
+      mermaid: { instance: mermaid },
+      echarts: { instance: echarts },
     },
     markdownItPlugins(plugins) {
       return [
