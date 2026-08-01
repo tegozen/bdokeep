@@ -1,8 +1,11 @@
 /**
- * Warm md-editor local extensions before any page mounts MdPreview/MdEditor.
- * Prevents a race where components mount before config() and hit unpkg CDN.
+ * Warm md-editor local extensions in the background (do not block app mount / hydration).
+ * Components still `await ensureMdEditorConfigured()` before mounting MdPreview/MdEditor.
  */
-export default defineNuxtPlugin(async () => {
-  const { ensureMdEditorConfigured } = await import('@/shared/ui/mdEditorSetup.client')
-  await ensureMdEditorConfigured()
+export default defineNuxtPlugin(() => {
+  void import('@/shared/ui/mdEditorSetup.client').then((m) =>
+    m.ensureMdEditorConfigured().catch((err) => {
+      console.error('[md-editor] init failed', err)
+    }),
+  )
 })

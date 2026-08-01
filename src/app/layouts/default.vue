@@ -51,17 +51,20 @@
               {{ mobileNavOpen ? 'Скрыть' : 'Режим' }}
             </button>
           </ClientOnly>
-          <NuxtLink
-            v-if="isSuperadmin"
-            to="/admin/proposals?status=pending"
-            :class="$style.proposals"
-          >
-            Заявки
-            <span v-if="pendingSummary.total > 0" :class="$style.proposalsBadge">
-              {{ pendingSummary.total }}
-            </span>
-          </NuxtLink>
-          <SuperadminAuth compact />
+          <!-- Cookie session known only after client refresh — keep out of SSR HTML. -->
+          <ClientOnly>
+            <NuxtLink
+              v-if="isSuperadmin"
+              to="/admin/proposals?status=pending"
+              :class="$style.proposals"
+            >
+              Заявки
+              <span v-if="pendingSummary.total > 0" :class="$style.proposalsBadge">
+                {{ pendingSummary.total }}
+              </span>
+            </NuxtLink>
+            <SuperadminAuth compact />
+          </ClientOnly>
         </div>
       </div>
 

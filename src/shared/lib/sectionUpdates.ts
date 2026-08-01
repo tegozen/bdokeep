@@ -38,6 +38,20 @@ export function displayAuthorLabel(raw: string | null | undefined): string | nul
   return t
 }
 
+/** Fixed zone so SSR (Docker UTC) and browser match — avoids hydration mismatches. */
+const DATE_FMT = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  timeZone: 'Europe/Moscow',
+})
+
+export function formatRuDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return DATE_FMT.format(d)
+}
+
 export function formatSectionUpdated(
   meta: SectionUpdateMeta | null | undefined,
 ): string {
@@ -45,13 +59,8 @@ export function formatSectionUpdated(
   if (!meta?.updated_at) return `Обновлено ${dash} · ${dash}`
   const d = new Date(meta.updated_at)
   if (Number.isNaN(d.getTime())) return `Обновлено ${dash} · ${dash}`
-  const date = new Intl.DateTimeFormat('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(d)
   const by = displayAuthorLabel(meta.updated_by) || dash
-  return `Обновлено ${date} · ${by}`
+  return `Обновлено ${DATE_FMT.format(d)} · ${by}`
 }
 
 export function parseSectionUpdates(raw: unknown): SectionUpdatesMap {

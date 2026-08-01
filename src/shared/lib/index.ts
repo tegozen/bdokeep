@@ -14,6 +14,7 @@ export {
 } from './useHomeClassFilters'
 export {
   displayAuthorLabel,
+  formatRuDate,
   formatSectionUpdated,
   parseSectionUpdates,
   sectionUpdateKey,
