@@ -7,7 +7,8 @@
         obscured && $style.obscured,
       ]"
       :style="zIndex != null ? { zIndex } : undefined"
-      @click.self="emit('close')"
+      @pointerdown="onBackdropPointerDown"
+      @click="onBackdropClick"
     >
       <div
         :class="[
@@ -21,6 +22,7 @@
         :aria-label="ariaLabel || title || undefined"
         :aria-labelledby="labelledBy"
         :aria-describedby="describedBy"
+        @pointerdown.stop
       >
         <header v-if="showHeader" :class="$style.head">
           <slot name="title">
@@ -86,6 +88,20 @@ withDefaults(
 const emit = defineEmits<{
   close: []
 }>()
+
+/** Close only if press started on backdrop — not drag-from-dialog release. */
+const backdropPress = ref(false)
+
+function onBackdropPointerDown(e: PointerEvent) {
+  backdropPress.value = e.target === e.currentTarget
+}
+
+function onBackdropClick(e: MouseEvent) {
+  if (e.target === e.currentTarget && backdropPress.value) {
+    emit('close')
+  }
+  backdropPress.value = false
+}
 </script>
 
 <style module>

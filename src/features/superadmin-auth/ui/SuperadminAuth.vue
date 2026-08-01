@@ -24,13 +24,15 @@
         <Teleport v-if="openLogin" to="body">
           <div
             :class="[$style.backdrop, obscured && $style.obscured]"
-            @click.self="closeLogin"
+            @pointerdown="onLoginBackdropPointerDown"
+            @click="onLoginBackdropClick"
           >
             <div
               :class="$style.modal"
               role="dialog"
               aria-modal="true"
               aria-label="Вход суперадмина"
+              @pointerdown.stop
             >
               <header :class="$style.head">
                 <h3 :class="$style.title">Войти как суперадмин</h3>
@@ -71,6 +73,20 @@ const openLogin = ref(false)
 
 const { obscured } = useModalEscape(openLogin, closeLogin)
 
+/** Close only if press started on backdrop — not drag-from-dialog release. */
+const loginBackdropPress = ref(false)
+
+function onLoginBackdropPointerDown(e: PointerEvent) {
+  loginBackdropPress.value = e.target === e.currentTarget
+}
+
+function onLoginBackdropClick(e: MouseEvent) {
+  if (e.target === e.currentTarget && loginBackdropPress.value) {
+    closeLogin()
+  }
+  loginBackdropPress.value = false
+}
+
 onMounted(() => {
   void refresh()
 })
@@ -79,6 +95,7 @@ function closeLogin() {
   openLogin.value = false
   password.value = ''
   error.value = ''
+  loginBackdropPress.value = false
 }
 
 async function onLogin() {
