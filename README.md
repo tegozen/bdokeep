@@ -88,6 +88,8 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 
 Миграции накатываются **сами** сервисом `migrate` при каждом `docker compose up` (таблица `schema_migrations`). Новые файлы в `db/migrations/NNN_*.sql` / `.sh` подхватятся на следующем up — вручную `psql -f` не нужен.
 
+Каталоги разделов (скиллы, реликвии/лайтстоуны, закалка, морф-эффекты, кристаллы, бафы) при каждом `up` **перезаливаются** из актуальных SQL-сидов (идемпотентный upsert; кристаллы/бафы ещё и prune). Старый volume на проде не останется с урезанным каталогом.
+
 Если БД уже была создана со старым общим паролем, достаточно поправить `BDOKEEP_APP_PASSWORD` в `.env` и снова `docker compose up -d` — `migrate` синхронизирует роль `bdokeep_app`.
 
 ## Данные и каталоги
@@ -108,8 +110,9 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 npm run garmoth:scrape              # dump API → merge → data/codex + SQL seeds
 # npx tsx scripts/scrape-garmoth-catalog.ts --merge-only
 npm run images:codex                # Playwright → public/codex
-docker compose --env-file .env up -d --build   # migrate подхватит новые NNN_*.sql
+docker compose --env-file .env up -d --build   # migrate: новые NNN_*.sql + refresh каталогов
 ```
+
 
 ## Nginx (внешний)
 

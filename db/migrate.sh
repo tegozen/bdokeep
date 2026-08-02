@@ -129,6 +129,27 @@ sh "${MIG_DIR}/022_bdokeep_app.sh"
 psql -v ON_ERROR_STOP=1 -c \
   "insert into public.schema_migrations (filename) values ('022_bdokeep_app.sh') on conflict do nothing"
 
+# Always re-apply catalog seeds/refreshes (idempotent upsert + prune where present).
+# Legacy volumes stamp old initdb seeds in schema_migrations without re-running them —
+# without this block prod keeps stale/partial catalogs (e.g. missing crystals/skills).
+refresh_catalog() {
+  name="$1"
+  path="${MIG_DIR}/${name}"
+  if [ ! -f "$path" ]; then
+    return 0
+  fi
+  echo "migrate: refresh catalog ${name}…"
+  psql -v ON_ERROR_STOP=1 -f "$path"
+}
+
+# Order: base skills/items → addon effects → morph overlays → crystals/buffs (upsert+prune) → icons.
+refresh_catalog 002_seed_skills.sql
+refresh_catalog 015_seed_relics_lightstones.sql
+refresh_catalog 029_seed_hardening.sql
+refresh_catalog 030_refresh_skill_addon_effects.sql
+refresh_catalog 032_refresh_morph_skills.sql
+refresh_catalog 034_refresh_garmoth_crystals_buffs.sql
+
 # Always rewrite any leftover bdocodex hotlinks (idempotent) so one compose up fixes prod DB.
 if [ -f "${MIG_DIR}/033_localize_bdocodex_icons.sql" ]; then
   echo "migrate: localize catalog icon URLs…"
