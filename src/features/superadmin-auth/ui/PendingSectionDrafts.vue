@@ -1,30 +1,58 @@
 <template>
   <div v-if="proposals.length" :class="$style.list">
-    <article v-for="item in proposals" :key="item.id" :class="$style.draft">
-      <BorderSparkler />
+    <!-- Sparkler on the carousel frame so ancestors with overflow don't clip the bleed. -->
+    <BorderSparkler />
+
+    <article v-if="current" :class="$style.draft">
+      <header v-if="proposals.length > 1" :class="$style.nav">
+        <UiButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          :disabled="!canPrev || acting === current.id"
+          aria-label="Предыдущий черновик"
+          @click="goPrev"
+        >
+          ←
+        </UiButton>
+        <span :class="$style.navMeta">
+          Черновик {{ activeIndex + 1 }} / {{ proposals.length }}
+        </span>
+        <UiButton
+          variant="ghost"
+          size="sm"
+          type="button"
+          :disabled="!canNext || acting === current.id"
+          aria-label="Следующий черновик"
+          @click="goNext"
+        >
+          →
+        </UiButton>
+      </header>
+
       <header :class="$style.head">
         <div :class="$style.meta">
           <span>Черновик</span>
-          <span v-if="item.author_label">{{ item.author_label }}</span>
-          <span>{{ formatDate(item.created_at) }}</span>
-          <span v-if="modeLabel(item.section)">{{ modeLabel(item.section) }}</span>
+          <span v-if="current.author_label">{{ current.author_label }}</span>
+          <span>{{ formatDate(current.created_at) }}</span>
+          <span v-if="modeLabel(current.section)">{{ modeLabel(current.section) }}</span>
         </div>
         <div :class="$style.actions">
           <UiButton
-            v-if="isSummary(item.section)"
+            v-if="isSummary(current.section)"
             variant="ghost"
             size="sm"
             type="button"
-            :disabled="acting === item.id"
-            @click="startEdit(item)"
+            :disabled="acting === current.id"
+            @click="startEdit(current)"
           >
             Редактировать
           </UiButton>
           <UiButton
             size="sm"
             type="button"
-            :disabled="acting === item.id"
-            @click="onApprove(item)"
+            :disabled="acting === current.id"
+            @click="onApprove(current)"
           >
             Одобрить
           </UiButton>
@@ -32,8 +60,8 @@
             variant="danger"
             size="sm"
             type="button"
-            :disabled="acting === item.id"
-            @click="onReject(item.id)"
+            :disabled="acting === current.id"
+            @click="onReject(current.id)"
           >
             Отклонить
           </UiButton>
@@ -42,7 +70,8 @@
 
       <div :class="$style.scrollCard">
         <ProposalSectionPreview
-          :item="item"
+          :key="current.id"
+          :item="current"
           :muted-class="$style.muted"
           :text-class="$style.text"
           :tabs-class="$style.presetTabs"
@@ -51,6 +80,25 @@
           :buff-list-class="$style.buffList"
           :buff-item-class="$style.buffItem"
           :icon-class="$style.icon"
+        />
+      </div>
+
+      <div
+        v-if="proposals.length > 1"
+        :class="$style.dots"
+        role="tablist"
+        aria-label="Черновики"
+      >
+        <button
+          v-for="(item, i) in proposals"
+          :key="item.id"
+          type="button"
+          role="tab"
+          :aria-selected="i === activeIndex"
+          :class="[$style.dot, i === activeIndex && $style.dotOn]"
+          :aria-label="`Черновик ${i + 1}`"
+          :disabled="acting === current.id"
+          @click="activeIndex = i"
         />
       </div>
     </article>
@@ -66,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   approveProposal,
   rejectProposal,
@@ -88,9 +136,35 @@ const emit = defineEmits<{
   'optimistic-restore': [item: PendingProposal]
 }>()
 
+const activeIndex = ref(0)
 const acting = ref<string | null>(null)
 const editingId = ref<string | null>(null)
 const editText = ref('')
+
+const current = computed(() => props.proposals[activeIndex.value] ?? null)
+const canPrev = computed(() => activeIndex.value > 0)
+const canNext = computed(() => activeIndex.value < props.proposals.length - 1)
+
+watch(
+  () => props.proposals.map((p) => p.id).join(','),
+  () => {
+    if (!props.proposals.length) {
+      activeIndex.value = 0
+      return
+    }
+    if (activeIndex.value >= props.proposals.length) {
+      activeIndex.value = props.proposals.length - 1
+    }
+  },
+)
+
+function goPrev() {
+  if (canPrev.value) activeIndex.value -= 1
+}
+
+function goNext() {
+  if (canNext.value) activeIndex.value += 1
+}
 
 function isSummary(section: string) {
   return section === 'summary_awakening' || section === 'summary_succession'
@@ -189,18 +263,38 @@ async function onReject(id: string) {
 
 <style module>
 .list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-}
-
-.draft {
   position: relative;
+  min-width: 0;
+  height: 100%;
   border: 1px solid color-mix(in srgb, var(--color-gold) 35%, var(--color-border));
   background: color-mix(in srgb, var(--color-gold) 6%, var(--color-bg-elevated));
   padding: 0.75rem 0.85rem 0.85rem;
-  overflow: hidden;
+  /* Must stay visible so BorderSparkler can bleed past the frame. */
+  overflow: visible;
+  min-height: min(32rem, 70vh);
+}
+
+.draft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  height: 100%;
+  overflow: visible;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.navMeta {
+  flex: 1;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--color-muted);
 }
 
 .head {
@@ -209,7 +303,6 @@ async function onReject(id: string) {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.55rem;
 }
 
 .meta {
@@ -232,9 +325,34 @@ async function onReject(id: string) {
 }
 
 .scrollCard {
-  max-height: min(420px, 55vh);
+  flex: 1;
+  min-height: min(18rem, 40vh);
+  height: min(22rem, 48vh);
+  max-height: min(22rem, 48vh);
   overflow: auto;
   padding-right: 0.15rem;
+}
+
+.dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dotOn {
+  border-color: color-mix(in srgb, var(--color-gold) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-gold) 55%, transparent);
 }
 
 .muted {

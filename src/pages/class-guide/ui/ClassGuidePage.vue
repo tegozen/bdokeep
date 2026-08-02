@@ -211,7 +211,7 @@
           </GuideSection>
         </div>
 
-        <div :class="[$style.gearCell, $style.gearLive, $style.hardeningCol]">
+        <div :class="[$style.gearCell, $style.gearLive]">
           <GuideSection
             flush
             title="Закалки"
@@ -278,6 +278,7 @@
         <template v-if="isSuperadmin && gearDraftsVisible">
           <div :class="[$style.gearCell, $style.gearDraft]">
             <PendingSectionDrafts
+              v-if="sectionCount('crystals')"
               :proposals="pendingFor('crystals')"
               @changed="onDraftChanged"
               @optimistic-remove="onOptimisticRemove"
@@ -286,6 +287,7 @@
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
             <PendingSectionDrafts
+              v-if="sectionCount('relics')"
               :proposals="pendingFor('relics')"
               @changed="onDraftChanged"
               @optimistic-remove="onOptimisticRemove"
@@ -294,6 +296,7 @@
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
             <PendingSectionDrafts
+              v-if="sectionCount('hardening')"
               :proposals="pendingFor('hardening')"
               @changed="onDraftChanged"
               @optimistic-remove="onOptimisticRemove"
@@ -302,6 +305,7 @@
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
             <PendingSectionDrafts
+              v-if="sectionCount('buffs')"
               :proposals="pendingFor('buffs')"
               @changed="onDraftChanged"
               @optimistic-remove="onOptimisticRemove"
@@ -837,6 +841,7 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
   grid-template-columns: auto auto auto minmax(14rem, 1fr);
   gap: 1px;
   margin-bottom: 2.5rem;
+  /* Gap lines = border color; cells cover with page bg so empties stay dark. */
   background: var(--color-border);
   border: 1px solid var(--color-border);
   overflow: visible;
@@ -940,11 +945,6 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
 
 .relicStage {
   width: min(100%, 28rem);
-}
-
-.hardeningCol {
-  width: max-content;
-  max-width: 100%;
 }
 
 .hardeningStage {
