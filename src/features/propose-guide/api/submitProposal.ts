@@ -31,6 +31,12 @@ export type SubmitProposalInput = {
       item_id: string
       sort_order?: number
     }>
+    hardening?: Array<{
+      preset: string
+      slot: string
+      item_id: string
+      sort_order?: number
+    }>
     videos?: Array<{
       title?: string
       youtube_url: string

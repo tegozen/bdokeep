@@ -68,7 +68,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     relics: [] as unknown[],
     lightstones: [] as unknown[],
     crystals: [] as unknown[],
-    essence: [] as unknown[],
+    hardening: [] as unknown[],
     morphs: [] as unknown[],
   }
 
@@ -119,7 +119,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
 
   const guideId = guide.id
 
-  const [comboSteps, buffs, relics, lightstones, crystals, essence, morphs] = await Promise.all([
+  const [comboSteps, buffs, relics, lightstones, crystals, hardening, morphs] = await Promise.all([
     sql`
       select
         gcs.id,
@@ -214,6 +214,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
       select
         ge.id,
         ge.slot,
+        ge.preset,
         ge.notes,
         ge.sort_order,
         case when i.id is null then null else json_build_object(
@@ -274,7 +275,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     relics,
     lightstones,
     crystals,
-    essence,
+    hardening,
     morphs,
   }
 }

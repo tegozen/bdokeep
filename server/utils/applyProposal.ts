@@ -4,6 +4,7 @@ import {
   isBuffsSection,
   isComboSection,
   isCrystalsSection,
+  isHardeningSection,
   isMorphsSection,
   isRelicsSection,
   isSummarySection,
@@ -207,6 +208,30 @@ export async function applyProposal(
         if (lightRows.length) {
           await tx`
             insert into guide_lightstones ${tx(lightRows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
+          `
+        }
+      } else if (isHardeningSection(section)) {
+        const raw = Array.isArray(payload.hardening) ? payload.hardening : []
+        const rows = raw.map((entry, i) => {
+          const e = entry as {
+            preset?: unknown
+            slot?: unknown
+            item_id?: unknown
+            sort_order?: unknown
+          }
+          return {
+            guide_id: guide.id,
+            item_id: String(e.item_id || ''),
+            slot: String(e.slot || ''),
+            preset: String(e.preset || ''),
+            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
+          }
+        })
+
+        await tx`delete from guide_essence where guide_id = ${guide.id}`
+        if (rows.length) {
+          await tx`
+            insert into guide_essence ${tx(rows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
           `
         }
       } else if (isVideosSection(section)) {

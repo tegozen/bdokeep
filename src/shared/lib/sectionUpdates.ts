@@ -14,6 +14,7 @@ export type GuideUiSection =
   | 'morphs'
   | 'crystals'
   | 'relics'
+  | 'hardening'
   | 'buffs'
   | 'videos'
 

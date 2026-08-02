@@ -80,6 +80,15 @@ export {
   type RelicSlotId,
 } from './relicSlots'
 export {
+  HARDENING_SLOT_IDS,
+  HARDENING_SLOTS,
+  MAX_HARDENING,
+  MAX_HARDENING_ALL_PRESETS,
+  isHardeningSlotId,
+  type HardeningSlotDef,
+  type HardeningSlotId,
+} from './hardeningSlots'
+export {
   MAX_MORPHS_ALL_PRESETS,
   MORPH_PRESETS,
   MORPH_PRESET_IDS,

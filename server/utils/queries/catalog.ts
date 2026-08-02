@@ -34,7 +34,10 @@ export async function listBuffs(sql: Sql) {
   `
 }
 
-export async function listItemsByType(sql: Sql, itemType: 'crystal' | 'relic' | 'lightstone') {
+export async function listItemsByType(
+  sql: Sql,
+  itemType: 'crystal' | 'relic' | 'lightstone' | 'essence',
+) {
   return sql`
     select id, name_ru, icon_url, item_type
     from items

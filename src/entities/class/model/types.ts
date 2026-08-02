@@ -95,7 +95,7 @@ export type GuideBuffRow = {
 export type GuideItemRow = {
   id: string
   slot: string | null
-  /** Preset: t1 / t2 / besp / sub (crystals, relics, lightstones). */
+  /** Preset: t1 / t2 / besp / sub (crystals, relics, lightstones, hardening). */
   preset?: string | null
   notes: string | null
   sort_order: number
@@ -121,7 +121,7 @@ export type ClassGuideBundle = {
   relics: GuideItemRow[]
   lightstones: GuideItemRow[]
   crystals: GuideItemRow[]
-  essence: GuideItemRow[]
+  hardening: GuideItemRow[]
   morphs: GuideMorphRow[]
 }
 

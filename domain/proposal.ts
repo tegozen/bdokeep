@@ -8,6 +8,7 @@ export const PROPOSAL_SECTIONS = [
   'combo_succession',
   'crystals',
   'relics',
+  'hardening',
   'videos_awakening',
   'videos_succession',
   'morphs',
@@ -26,6 +27,8 @@ export const MAX_CRYSTALS = 23
 export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
 export const MAX_RELICS_ALL_PRESETS = 2 * 4
 export const MAX_LIGHTSTONES_ALL_PRESETS = 4 * 4
+export const MAX_HARDENING = 5
+export const MAX_HARDENING_ALL_PRESETS = 5 * 4
 export const MAX_VIDEOS = 3
 export const MAX_MORPHS_ALL_PRESETS = 6 * 8
 export const MAX_AUTHOR_LEN = 80
@@ -49,6 +52,7 @@ export const MORPH_SLOT_LEVELS = [50, 52, 54, 56, 58, 60] as const
 
 export const RELIC_SLOT_IDS = ['r0', 'r1'] as const
 export const LIGHTSTONE_SLOT_IDS = ['r0_a', 'r0_b', 'r1_a', 'r1_b'] as const
+export const HARDENING_SLOT_IDS = ['h0', 'h1', 'h2', 'h3', 'h4'] as const
 
 export const CRYSTAL_SLOT_IDS = [
   'nw',
@@ -90,6 +94,10 @@ export function isCrystalsSection(section: ProposalSection): boolean {
 
 export function isRelicsSection(section: ProposalSection): boolean {
   return section === 'relics'
+}
+
+export function isHardeningSection(section: ProposalSection): boolean {
+  return section === 'hardening'
 }
 
 export function isSummarySection(section: ProposalSection): boolean {
@@ -140,6 +148,10 @@ export function isLightstoneSlotId(id: string): boolean {
   return (LIGHTSTONE_SLOT_IDS as readonly string[]).includes(id)
 }
 
+export function isHardeningSlotId(id: string): boolean {
+  return (HARDENING_SLOT_IDS as readonly string[]).includes(id)
+}
+
 /** Proposal section → section_updates / UI meta key. */
 export function uiSectionFromProposal(section: string): string | null {
   switch (section) {
@@ -154,6 +166,7 @@ export function uiSectionFromProposal(section: string): string | null {
     case 'morphs':
     case 'crystals':
     case 'relics':
+    case 'hardening':
     case 'buffs':
       return section
     default:
@@ -177,6 +190,8 @@ export function sectionLabel(section: string): string {
       return 'Инкрустация'
     case 'relics':
       return 'Реликвии'
+    case 'hardening':
+      return 'Закалки'
     case 'videos_awakening':
       return 'Видео (пробуждение)'
     case 'videos_succession':

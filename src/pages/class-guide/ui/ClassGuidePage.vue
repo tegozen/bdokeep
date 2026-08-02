@@ -211,6 +211,28 @@
           </GuideSection>
         </div>
 
+        <div :class="[$style.gearCell, $style.gearLive, $style.hardeningCol]">
+          <GuideSection
+            flush
+            title="Закалки"
+            anchor="hardening"
+            :subtitle="sectionSubtitle('hardening')"
+          >
+            <template v-if="sectionCount('hardening')" #badge>
+              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('hardening') }}</span>
+            </template>
+            <template #actions>
+              <ProposeHardeningForm
+                :class-slug="bundle.class.slug"
+                :initial-hardening="bundle.hardening"
+              />
+            </template>
+            <div :class="[$style.hardeningStage, $style.fade]">
+              <HardeningBoard :filled="hardeningFilled" />
+            </div>
+          </GuideSection>
+        </div>
+
         <div
           :class="[$style.gearCell, $style.gearLive, $style.buffCol]"
           :style="buffColStyle"
@@ -226,12 +248,10 @@
               <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('buffs') }}</span>
             </template>
             <template #actions>
-              
-                <ProposeBuffsForm
-                  :class-slug="bundle.class.slug"
-                  :initial-buffs="bundle.buffs"
-                />
-
+              <ProposeBuffsForm
+                :class-slug="bundle.class.slug"
+                :initial-buffs="bundle.buffs"
+              />
             </template>
             <div :class="$style.scrollCard">
               <ul v-if="activeBuffs.length" :class="[$style.buffList, $style.fade]">
@@ -257,34 +277,36 @@
 
         <template v-if="isSuperadmin && gearDraftsVisible">
           <div :class="[$style.gearCell, $style.gearDraft]">
-            
-              <PendingSectionDrafts
-                :proposals="pendingFor('crystals')"
-                @changed="onDraftChanged"
-                @optimistic-remove="onOptimisticRemove"
-                @optimistic-restore="onOptimisticRestore"
-              />
-
+            <PendingSectionDrafts
+              :proposals="pendingFor('crystals')"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
-            
-              <PendingSectionDrafts
-                :proposals="pendingFor('relics')"
-                @changed="onDraftChanged"
-                @optimistic-remove="onOptimisticRemove"
-                @optimistic-restore="onOptimisticRestore"
-              />
-
+            <PendingSectionDrafts
+              :proposals="pendingFor('relics')"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
           </div>
           <div :class="[$style.gearCell, $style.gearDraft]">
-            
-              <PendingSectionDrafts
-                :proposals="pendingFor('buffs')"
-                @changed="onDraftChanged"
-                @optimistic-remove="onOptimisticRemove"
-                @optimistic-restore="onOptimisticRestore"
-              />
-
+            <PendingSectionDrafts
+              :proposals="pendingFor('hardening')"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
+          </div>
+          <div :class="[$style.gearCell, $style.gearDraft]">
+            <PendingSectionDrafts
+              :proposals="pendingFor('buffs')"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
           </div>
         </template>
       </div>
@@ -356,6 +378,7 @@ import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard } from '@/widgets/crystal-board'
 import { GuideSection } from '@/widgets/guide-section'
+import { HardeningBoard } from '@/widgets/hardening-board'
 import { MorphBoard } from '@/widgets/morph-board'
 import { RelicBoard } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
@@ -376,6 +399,9 @@ const ProposeMorphForm = defineAsyncComponent(
 )
 const ProposeRelicForm = defineAsyncComponent(
   () => import('@/features/propose-guide/ui/ProposeRelicForm.vue'),
+)
+const ProposeHardeningForm = defineAsyncComponent(
+  () => import('@/features/propose-guide/ui/ProposeHardeningForm.vue'),
 )
 const ProposeSummaryForm = defineAsyncComponent(
   () => import('@/features/propose-guide/ui/ProposeSummaryForm.vue'),
@@ -529,7 +555,8 @@ const gearDraftsVisible = computed(
   () =>
     sectionCount('crystals') > 0 ||
     sectionCount('relics') > 0 ||
-    sectionCount('buffs') > 0,
+    sectionCount('buffs') > 0 ||
+    sectionCount('hardening') > 0,
 )
 
 const topDraftsVisible = computed(
@@ -656,11 +683,8 @@ const activeBuffs = computed(() =>
 )
 
 const bundleRef = computed(() => props.bundle)
-const { crystalFilled, crystalPickedList, relicFilled, morphFilled } = useGuideBoardFills(
-  bundleRef,
-  guidePreset,
-  activeMorphPreset,
-)
+const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFilled } =
+  useGuideBoardFills(bundleRef, guidePreset, activeMorphPreset)
 </script>
 
 <style module>
@@ -809,7 +833,8 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled } = useGuideB
 
 .gearBlock {
   display: grid;
-  grid-template-columns: auto auto minmax(14rem, 1fr);
+  /* crystals | relics | hardening (fit 5 slots) | buffs (rest) */
+  grid-template-columns: auto auto auto minmax(14rem, 1fr);
   gap: 1px;
   margin-bottom: 2.5rem;
   background: var(--color-border);
@@ -917,6 +942,16 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled } = useGuideB
   width: min(100%, 28rem);
 }
 
+.hardeningCol {
+  width: max-content;
+  max-width: 100%;
+}
+
+.hardeningStage {
+  width: max-content;
+  max-width: 100%;
+}
+
 .videoBlock {
   display: grid;
   grid-template-columns: 1fr;
@@ -937,14 +972,19 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled } = useGuideB
   overflow: visible;
 }
 
-@media (max-width: 1100px) {
-  .comboMorphRow,
+@media (max-width: 1280px) {
   .gearBlock {
     grid-template-columns: 1fr;
   }
 
   .buffCol {
     max-height: none !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .comboMorphRow {
+    grid-template-columns: 1fr;
   }
 }
 

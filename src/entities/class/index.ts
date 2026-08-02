@@ -22,6 +22,7 @@ export {
   fetchCrystals,
   fetchRelics,
   fetchLightstones,
+  fetchHardening,
   updateClassTier,
 } from './api/classApi'
 export { default as ClassIcon } from './ui/ClassIcon.vue'

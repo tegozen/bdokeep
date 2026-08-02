@@ -9,6 +9,7 @@ import {
   type MorphSlotLevel,
 } from '@/shared/lib'
 import type { CrystalFill } from '@/widgets/crystal-board'
+import type { HardeningFill } from '@/widgets/hardening-board'
 import type { MorphSlotFill } from '@/widgets/morph-board'
 import type { RelicFill } from '@/widgets/relic-board'
 
@@ -20,6 +21,7 @@ export type ProposalPreviewPayload = {
   crystals?: Array<{ preset?: string; slot: string; item_id: string }>
   relics?: Array<{ preset?: string; slot: string; item_id: string }>
   lightstones?: Array<{ preset?: string; slot: string; item_id: string }>
+  hardening?: Array<{ preset?: string; slot: string; item_id: string }>
   videos?: Array<{ title?: string; youtube_url: string }>
   morphs?: Array<{
     preset?: string
@@ -62,6 +64,10 @@ export function useProposalPreviewHydration(
     Record<string, Partial<Record<CrystalPresetId, Record<string, RelicFill>>> | null>
   >({})
   const relicPreset = reactive<Record<string, CrystalPresetId>>({})
+  const hardeningByPreset = reactive<
+    Record<string, Partial<Record<CrystalPresetId, Record<string, HardeningFill>>> | null>
+  >({})
+  const hardeningPreset = reactive<Record<string, CrystalPresetId>>({})
   const morphByPreset = reactive<
     Record<
       string,
@@ -84,6 +90,10 @@ export function useProposalPreviewHydration(
 
   function relicFilled(id: string): Record<string, RelicFill> {
     return relicByPreset[id]?.[relicPreset[id] || 't1'] || {}
+  }
+
+  function hardeningFilled(id: string): Record<string, HardeningFill> {
+    return hardeningByPreset[id]?.[hardeningPreset[id] || 't1'] || {}
   }
 
   function morphFilled(id: string): Partial<Record<MorphSlotLevel, MorphSlotFill>> {
@@ -206,6 +216,39 @@ export function useProposalPreviewHydration(
     }
   }
 
+  async function hydrateHardening(item: ProposalPreviewItem) {
+    hardeningPreset[item.id] = 't1'
+    const entries = payloadOf(item).hardening ?? []
+    if (!entries.length) {
+      hardeningByPreset[item.id] = {}
+      return
+    }
+    try {
+      const { items: catalog } = await resolveCatalogIds({
+        items: entries.map((e) => e.item_id),
+      })
+      const byId = new Map(
+        catalog
+          .filter((c) => c.item_type === 'essence')
+          .map((c) => [
+            c.id,
+            { id: c.id, name_ru: c.name_ru, icon_url: c.icon_url } as HardeningFill,
+          ]),
+      )
+      const byPreset: Partial<Record<CrystalPresetId, Record<string, HardeningFill>>> = {}
+      for (const entry of entries) {
+        const fill = byId.get(entry.item_id)
+        if (!fill) continue
+        const preset = (entry.preset || 't1') as CrystalPresetId
+        if (!byPreset[preset]) byPreset[preset] = {}
+        byPreset[preset]![entry.slot] = fill
+      }
+      hardeningByPreset[item.id] = byPreset
+    } catch {
+      hardeningByPreset[item.id] = {}
+    }
+  }
+
   async function hydrateMorphs(item: ProposalPreviewItem) {
     morphGuideTab[item.id] = 't1'
     const entries = payloadOf(item).morphs ?? []
@@ -257,6 +300,7 @@ export function useProposalPreviewHydration(
     for (const key of Object.keys(buffByPreset)) delete buffByPreset[key]
     for (const key of Object.keys(crystalByPreset)) delete crystalByPreset[key]
     for (const key of Object.keys(relicByPreset)) delete relicByPreset[key]
+    for (const key of Object.keys(hardeningByPreset)) delete hardeningByPreset[key]
     for (const key of Object.keys(morphByPreset)) delete morphByPreset[key]
 
     await Promise.all(
@@ -265,6 +309,7 @@ export function useProposalPreviewHydration(
         else if (item.section === 'buffs') await hydrateBuffs(item)
         else if (item.section === 'crystals') await hydrateCrystals(item)
         else if (item.section === 'relics') await hydrateRelics(item)
+        else if (item.section === 'hardening') await hydrateHardening(item)
         else if (item.section === 'morphs') await hydrateMorphs(item)
       }),
     )
@@ -286,11 +331,14 @@ export function useProposalPreviewHydration(
     crystalPreset,
     relicByPreset,
     relicPreset,
+    hardeningByPreset,
+    hardeningPreset,
     morphByPreset,
     morphGuideTab,
     buffsFor,
     crystalFilled,
     relicFilled,
+    hardeningFilled,
     morphFilled,
     hydrate,
   }

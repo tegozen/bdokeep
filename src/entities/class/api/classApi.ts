@@ -48,6 +48,10 @@ export async function fetchLightstones(): Promise<Item[]> {
   return $fetch<Item[]>('/api/catalog/lightstones')
 }
 
+export async function fetchHardening(): Promise<Item[]> {
+  return $fetch<Item[]>('/api/catalog/hardening')
+}
+
 export async function fetchClassGuideBySlug(slug: string): Promise<ClassGuideBundle | null> {
   try {
     return await $fetch<ClassGuideBundle>(`/api/classes/${encodeURIComponent(slug)}/guide`)

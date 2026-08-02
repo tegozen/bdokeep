@@ -8,6 +8,7 @@ import {
 } from '@/shared/lib'
 import type { CrystalFill } from '@/widgets/crystal-board'
 import type { MorphSlotFill } from '@/widgets/morph-board'
+import type { HardeningFill } from '@/widgets/hardening-board'
 import type { RelicFill } from '@/widgets/relic-board'
 
 /** Map live guide bundle rows → board `filled` props for the active preset/mode. */
@@ -95,5 +96,18 @@ export function useGuideBoardFills(
     return map
   })
 
-  return { crystalFilled, crystalPickedList, relicFilled, morphFilled }
+  const hardeningFilled = computed(() => {
+    const map: Record<string, HardeningFill> = {}
+    for (const row of bundle.value?.hardening ?? []) {
+      const preset = row.preset || 't1'
+      if (preset !== guidePreset.value) continue
+      const slot = row.slot
+      const item = row.items
+      if (!slot || !item) continue
+      map[slot] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
+    }
+    return map
+  })
+
+  return { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFilled }
 }

@@ -8,7 +8,7 @@ export function emptyPresetFill(): PresetFillMap {
   return { t1: false, t2: false, besp: false, sub: false }
 }
 
-/** Whether a guide preset has any filled crystals / relics / lightstones / buffs / morphs. */
+/** Whether a guide preset has any filled crystals / relics / lightstones / hardening / buffs / morphs. */
 export function computePresetFill(bundle: ClassGuideBundle | null | undefined): PresetFillMap {
   const out = emptyPresetFill()
   if (!bundle) return out
@@ -23,6 +23,9 @@ export function computePresetFill(bundle: ClassGuideBundle | null | undefined): 
     const hasLightstone = bundle.lightstones.some(
       (row) => (row.preset || 't1') === id && Boolean(row.items),
     )
+    const hasHardening = bundle.hardening.some(
+      (row) => (row.preset || 't1') === id && Boolean(row.items),
+    )
     const hasBuff = bundle.buffs.some(
       (row) => (row.preset || 't1') === id && Boolean(row.buffs),
     )
@@ -31,7 +34,8 @@ export function computePresetFill(bundle: ClassGuideBundle | null | undefined): 
       if (!row.skills || !isMorphPresetId(preset)) return false
       return morphGuidePreset(preset) === id
     })
-    out[id] = hasCrystal || hasRelic || hasLightstone || hasBuff || hasMorph
+    out[id] =
+      hasCrystal || hasRelic || hasLightstone || hasHardening || hasBuff || hasMorph
   }
 
   return out

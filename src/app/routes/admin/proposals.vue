@@ -128,6 +128,7 @@ type Proposal = {
     crystals?: Array<{ preset?: string; slot: string; item_id: string }>
     relics?: Array<{ preset?: string; slot: string; item_id: string }>
     lightstones?: Array<{ preset?: string; slot: string; item_id: string }>
+    hardening?: Array<{ preset?: string; slot: string; item_id: string }>
     videos?: Array<{ title?: string; youtube_url: string }>
     morphs?: Array<{
       preset?: string

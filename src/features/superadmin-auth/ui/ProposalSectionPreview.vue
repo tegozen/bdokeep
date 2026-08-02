@@ -83,6 +83,27 @@
       <RelicBoard :filled="relicFilled(item.id)" />
     </template>
 
+    <template v-else-if="item.section === 'hardening'">
+      <div v-if="hardeningByPreset[item.id]" :class="tabsClass" role="tablist">
+        <button
+          v-for="p in presets"
+          :key="p.id"
+          type="button"
+          role="tab"
+          :class="[tabClass, hardeningPreset[item.id] === p.id && tabOnClass]"
+          @click="hardeningPreset[item.id] = p.id"
+        >
+          {{ p.label }}
+        </button>
+      </div>
+      <HardeningBoard
+        v-if="Object.keys(hardeningFilled(item.id)).length"
+        :filled="hardeningFilled(item.id)"
+      />
+      <p v-else-if="hardeningByPreset[item.id] === undefined" :class="mutedClass">Загрузка…</p>
+      <p v-else :class="mutedClass">Нет камней закалки в этом пресете</p>
+    </template>
+
     <VideoList
       v-else-if="isVideos"
       :videos="videosFor"
@@ -125,6 +146,7 @@ import { CRYSTAL_PRESETS, useGuideSpecMode } from '@/shared/lib'
 import { UiMarkdownPreview } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard } from '@/widgets/crystal-board'
+import { HardeningBoard } from '@/widgets/hardening-board'
 import { MorphBoard } from '@/widgets/morph-board'
 import { RelicBoard } from '@/widgets/relic-board'
 import { VideoList } from '@/widgets/video-list'
@@ -166,11 +188,14 @@ const {
   crystalPreset,
   relicByPreset,
   relicPreset,
+  hardeningByPreset,
+  hardeningPreset,
   morphByPreset,
   morphGuideTab,
   buffsFor,
   crystalFilled,
   relicFilled,
+  hardeningFilled,
   morphFilled,
 } = useProposalPreviewHydration(items, { specMode })
 

@@ -4,6 +4,7 @@ import {
   MAX_BUFFS_ALL_PRESETS,
   MAX_COMBO_STEPS,
   MAX_CRYSTALS_ALL_PRESETS,
+  MAX_HARDENING_ALL_PRESETS,
   MAX_LIGHTSTONES_ALL_PRESETS,
   MAX_MORPHS_ALL_PRESETS,
   MAX_RELICS_ALL_PRESETS,
@@ -16,6 +17,8 @@ import {
   isCrystalPresetId,
   isCrystalSlotId,
   isCrystalsSection,
+  isHardeningSection,
+  isHardeningSlotId,
   isLightstoneSlotId,
   isMorphPresetId,
   isMorphSlotLevel,
@@ -299,6 +302,75 @@ export async function parseAndValidatePayload(
     }
 
     return { payload: { relics, lightstones }, verifiedVideos: null }
+  }
+
+  if (isHardeningSection(section)) {
+    const raw = body.hardening
+    if (!Array.isArray(raw) || raw.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
+    }
+    if (raw.length > MAX_HARDENING_ALL_PRESETS) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Максимум ${MAX_HARDENING_ALL_PRESETS} слотов`,
+      })
+    }
+
+    const hardening: Array<{
+      preset: string
+      slot: string
+      item_id: string
+      sort_order: number
+    }> = []
+    const usedSlots = new Set<string>()
+    const usedItems = new Set<string>()
+
+    for (let i = 0; i < raw.length; i++) {
+      const entry = raw[i] as {
+        preset?: unknown
+        slot?: unknown
+        item_id?: unknown
+        sort_order?: unknown
+      }
+      const preset = String(entry?.preset || '')
+      const slot = String(entry?.slot || '')
+      const itemId = String(entry?.item_id || '')
+      if (!isCrystalPresetId(preset)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
+      }
+      if (!isHardeningSlotId(slot)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный слот' })
+      }
+      const slotKey = `${preset}:${slot}`
+      if (usedSlots.has(slotKey)) {
+        throw createError({ statusCode: 400, statusMessage: 'Дубликат слота в пресете' })
+      }
+      usedSlots.add(slotKey)
+      const itemKey = `${preset}:${itemId}`
+      if (usedItems.has(itemKey)) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'Одинаковые камни закалки в одном пресете нельзя',
+        })
+      }
+      usedItems.add(itemKey)
+      if (!UUID_RE.test(itemId)) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректный id камня закалки' })
+      }
+      hardening.push({
+        preset,
+        slot,
+        item_id: itemId,
+        sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : i,
+      })
+    }
+
+    const itemIds = hardening.map((c) => c.item_id)
+    const allowed = await idsExist(sql, 'items', itemIds, { itemType: 'essence' })
+    if (itemIds.some((id) => !allowed.has(id))) {
+      throw createError({ statusCode: 400, statusMessage: 'Неизвестный камень закалки' })
+    }
+    return { payload: { hardening }, verifiedVideos: null }
   }
 
   if (isVideosSection(section)) {
