@@ -7,6 +7,13 @@ RUN npm ci
 
 FROM node:22-alpine AS build
 WORKDIR /app
+# Cap Nuxt/Vite/esbuild so a rebuild doesn't pin every VPS core (override via compose build.args).
+# Tuned for small VPS (~4 CPU / 6G, ~1 core + ~4G already in use idle).
+ARG BUILD_CPU_COUNT=1
+ARG BUILD_NODE_MAX_OLD_SPACE=768
+ENV GOMAXPROCS=${BUILD_CPU_COUNT}
+ENV UV_THREADPOOL_SIZE=${BUILD_CPU_COUNT}
+ENV NODE_OPTIONS=--max-old-space-size=${BUILD_NODE_MAX_OLD_SPACE}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Fail fast if catalog icons were not deployed with the repo (CSP forbids CDN hotlink).

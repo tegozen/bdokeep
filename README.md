@@ -82,6 +82,9 @@ npm run docker:up        # db + migrate + web
 # или: docker compose --env-file .env up -d --build
 ```
 
+На VPS ~4 CPU / 6G (idle уже ~1 ядро + ~4G) билд Nuxt иначе упирается в потолок. Дефолт: `BUILD_CPU_COUNT=1`, heap `768` МБ; runtime `web`: `WEB_CPUS=1` / `WEB_MEM_LIMIT=512m` (см. `.env.example`).
+
+
 Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля).
 
 SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты на хосте не нужны).

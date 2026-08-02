@@ -49,6 +49,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Soft caps inside Node/esbuild (always applied on compose build).
+        # Defaults for ~4CPU/6G VPS with ~1 core + ~4G already used idle.
+        BUILD_CPU_COUNT: ${BUILD_CPU_COUNT:-1}
+        BUILD_NODE_MAX_OLD_SPACE: ${BUILD_NODE_MAX_OLD_SPACE:-768}
     restart: unless-stopped
     depends_on:
       db:
@@ -66,6 +71,9 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-0}
     ports:
       - '${HOST_PORT:-3000}:3000'
+    # Runtime caps (running container, not the image build).
+    mem_limit: ${WEB_MEM_LIMIT:-512m}
+    cpus: ${WEB_CPUS:-1.0}
 
 volumes:
   db_data:
