@@ -9,6 +9,10 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Fail fast if catalog icons were not deployed with the repo (CSP forbids CDN hotlink).
+RUN test -d public/codex/items \
+  && test "$(find public/codex/items -type f | wc -l)" -ge 100 \
+  || (echo "ERROR: public/codex/items is missing or empty — copy the full repo including public/codex before build" >&2 && exit 1)
 ENV NODE_ENV=production
 RUN npm run build
 

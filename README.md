@@ -100,7 +100,7 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 - обновления каталогов (030+)
 
 Картинки классов: `public/classes/<slug>/{portrait.png,icon.svg}`.
-Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (зеркало bdocodex; в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет.
+Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (зеркало bdocodex; в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При `up` migrate сам переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`.
 
 Каталоги кристаллов / забафа / морфов / скиллов обновляются с [Garmoth](https://garmoth.com) (`region=ru&lang=ru` — официальные RU-строки в поле `lang`; skill-addons даёт карту скилл→доступные морфы):
 

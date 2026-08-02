@@ -5,7 +5,7 @@
       <span :class="$style.tile" :title="step.skills?.name_ru || 'Скилл'">
         <img
           v-if="step.skills?.icon_url"
-          :src="step.skills.icon_url"
+          :src="codexIconSrc(step.skills.icon_url) || undefined"
           alt=""
           :class="$style.icon"
           loading="lazy"
@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import type { GuideComboStepRow, Skill } from '@/entities/class'
+import { codexIconSrc } from '@/shared/lib/codexIcon'
 
 export type ComboStepView = {
   id?: string

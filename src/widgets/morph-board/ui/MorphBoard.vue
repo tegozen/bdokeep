@@ -19,7 +19,7 @@
       >
         <img
           v-if="filled[level]?.skill?.icon_url"
-          :src="filled[level]!.skill!.icon_url!"
+          :src="codexIconSrc(filled[level]!.skill!.icon_url) || undefined"
           alt=""
           :class="$style.icon"
           draggable="false"
@@ -83,6 +83,7 @@
 <script setup lang="ts">
 import {
   MORPH_SLOT_LEVELS,
+  codexIconSrc,
   morphEffectSlotId,
   morphSkillSlotId,
   parseMorphBoardSlot,

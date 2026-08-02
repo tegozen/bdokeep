@@ -3,7 +3,7 @@
     <li v-for="row in rows" :key="row.id" :class="$style.item">
       <img
         v-if="row.items?.icon_url"
-        :src="row.items.icon_url"
+        :src="codexIconSrc(row.items.icon_url) || undefined"
         alt=""
         :class="$style.icon"
         loading="lazy"
@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import type { GuideItemRow } from '@/entities/class'
+import { codexIconSrc } from '@/shared/lib/codexIcon'
 
 defineProps<{
   rows: GuideItemRow[]

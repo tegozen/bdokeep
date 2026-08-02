@@ -19,7 +19,7 @@
       >
         <img
           v-if="filled[panel.relic]?.icon_url"
-          :src="filled[panel.relic]!.icon_url!"
+          :src="codexIconSrc(filled[panel.relic]!.icon_url) || undefined"
           alt=""
           :class="$style.relicIcon"
           draggable="false"
@@ -61,7 +61,7 @@
           >
             <img
               v-if="filled[lightId]?.icon_url"
-              :src="filled[lightId]!.icon_url!"
+              :src="codexIconSrc(filled[lightId]!.icon_url) || undefined"
               alt=""
               :class="$style.lightIcon"
               draggable="false"
@@ -89,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+import { codexIconSrc } from '@/shared/lib/codexIcon'
 import { RELIC_BOARD_PANELS, type RelicSlotId } from '@/shared/lib/relicSlots'
 
 export type RelicFill = {

@@ -184,7 +184,7 @@
                   >
                     <img
                       v-if="row.icon_url"
-                      :src="row.icon_url"
+                      :src="codexIconSrc(row.icon_url) || undefined"
                       alt=""
                       :class="$style.pickedIcon"
                       loading="lazy"
@@ -286,7 +286,7 @@
                 >
                   <img
                     v-if="row.buffs?.icon_url"
-                    :src="row.buffs.icon_url"
+                    :src="codexIconSrc(row.buffs.icon_url) || undefined"
                     alt=""
                     :class="$style.buffIcon"
                     loading="lazy"
@@ -411,6 +411,7 @@ import {
 import { ShowEmptyGuide } from "@/features/show-empty-guide";
 
 import {
+  codexIconSrc,
   computePresetFill,
   emptyPresetFill,
   formatSectionUpdated,

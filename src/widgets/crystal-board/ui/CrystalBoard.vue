@@ -26,7 +26,7 @@
           >
             <img
               v-if="filled[slot.id]?.icon_url"
-              :src="filled[slot.id]!.icon_url!"
+              :src="codexIconSrc(filled[slot.id]!.icon_url) || undefined"
               alt=""
               :class="$style.icon"
               draggable="false"
@@ -64,7 +64,7 @@
         >
           <img
             v-if="filled[slot.id]?.icon_url"
-            :src="filled[slot.id]!.icon_url!"
+            :src="codexIconSrc(filled[slot.id]!.icon_url) || undefined"
             alt=""
             :class="$style.icon"
             draggable="false"
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { codexIconSrc } from '@/shared/lib/codexIcon'
 import {
   CRYSTAL_BOARD_SLOTS,
   CRYSTAL_DAWN_SLOTS,

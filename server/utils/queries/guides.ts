@@ -1,4 +1,5 @@
 import type postgres from 'postgres'
+import { rewriteIconUrlsDeep } from '@/shared/lib/codexIcon'
 
 type Sql = ReturnType<typeof postgres>
 
@@ -58,7 +59,7 @@ export async function listPublishedClasses(sql: Sql) {
     return Number(a.sort_order) - Number(b.sort_order)
   })
 
-  return mapped
+  return rewriteIconUrlsDeep(mapped)
 }
 
 export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
@@ -109,12 +110,12 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
   const videos = videoRows
 
   if (!guide) {
-    return {
+    return rewriteIconUrlsDeep({
       class: klass,
       guide: null,
       videos,
       ...empty,
-    }
+    })
   }
 
   const guideId = guide.id
@@ -267,7 +268,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     `,
   ])
 
-  return {
+  return rewriteIconUrlsDeep({
     class: klass,
     guide,
     videos,
@@ -278,5 +279,5 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     crystals,
     hardening,
     morphs,
-  }
+  })
 }

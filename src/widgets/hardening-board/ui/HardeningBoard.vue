@@ -23,7 +23,7 @@
       >
         <img
           v-if="filled[slot.id]?.icon_url"
-          :src="filled[slot.id]!.icon_url!"
+          :src="codexIconSrc(filled[slot.id]!.icon_url) || undefined"
           alt=""
           :class="$style.icon"
           draggable="false"
@@ -47,7 +47,7 @@
         <li v-for="row in effectRows" :key="row.id" :class="$style.effectItem">
           <img
             v-if="row.icon_url"
-            :src="row.icon_url"
+            :src="codexIconSrc(row.icon_url) || undefined"
             alt=""
             :class="$style.effectIcon"
             loading="lazy"
@@ -62,6 +62,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { codexIconSrc } from '@/shared/lib/codexIcon'
 import { HARDENING_SLOTS } from '@/shared/lib/hardeningSlots'
 
 export type HardeningFill = {

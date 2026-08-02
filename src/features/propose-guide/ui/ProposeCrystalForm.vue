@@ -29,7 +29,7 @@
             <li v-for="row in pickedList" :key="row.id" :class="$style.pickedItem">
               <img
                 v-if="row.icon_url"
-                :src="row.icon_url"
+                :src="codexIconSrc(row.icon_url) || undefined"
                 alt=""
                 :class="$style.pickedIcon"
                 loading="lazy"
@@ -84,6 +84,7 @@ import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
   CRYSTAL_PRESET_IDS,
+  codexIconSrc,
   isCenterSlotId,
   isCrystalPresetId,
   isDawnCrystalName,

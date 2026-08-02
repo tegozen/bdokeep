@@ -128,3 +128,9 @@ echo "migrate: sync bdokeep_app role…"
 sh "${MIG_DIR}/022_bdokeep_app.sh"
 psql -v ON_ERROR_STOP=1 -c \
   "insert into public.schema_migrations (filename) values ('022_bdokeep_app.sh') on conflict do nothing"
+
+# Always rewrite any leftover bdocodex hotlinks (idempotent) so one compose up fixes prod DB.
+if [ -f "${MIG_DIR}/033_localize_bdocodex_icons.sql" ]; then
+  echo "migrate: localize catalog icon URLs…"
+  psql -v ON_ERROR_STOP=1 -f "${MIG_DIR}/033_localize_bdocodex_icons.sql"
+fi

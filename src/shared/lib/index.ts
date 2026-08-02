@@ -1,7 +1,10 @@
 export {
   CODEX_ICON_CACHE_V,
+  codexIconDbPath,
   codexIconSrc,
   isLocalAppImageUrl,
+  rewriteIconUrlsDeep,
+  rewriteRemoteIconToLocal,
   withCodexIconCacheBust,
 } from './codexIcon'
 export {
