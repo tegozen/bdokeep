@@ -3,7 +3,6 @@
     :bundle="bundle"
     :pending="pending"
     :error="!!error"
-    @tier-change="onTierChange"
   />
 </template>
 
@@ -45,17 +44,6 @@ watch(
   },
   { immediate: true },
 )
-
-function onTierChange(mode: 'awakening' | 'succession', tier: number | null) {
-  if (!bundle.value?.class) return
-  bundle.value = {
-    ...bundle.value,
-    class: {
-      ...bundle.value.class,
-      ...(mode === 'succession' ? { tier_succession: tier } : { tier_awakening: tier }),
-    },
-  }
-}
 
 onBeforeUnmount(() => {
   headerClass.value = null

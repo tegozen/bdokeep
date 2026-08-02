@@ -81,6 +81,23 @@ export type Item = {
   } | null
 }
 
+export type LightstoneSetStone = {
+  id: string
+  codex_id: string
+  name_ru: string
+  icon_url: string | null
+}
+
+export type LightstoneSet = {
+  id: string
+  name_ru: string
+  name_en: string | null
+  category: 'combat' | 'lifeskill'
+  bonuses: Array<{ key: string; label: string; value: number }>
+  normal: LightstoneSetStone[]
+  enhanced: LightstoneSetStone[]
+}
+
 export type GuideComboStepRow = {
   id: string
   mode: 'awakening' | 'succession' | string

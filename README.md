@@ -109,6 +109,7 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 ```bash
 npm run garmoth:scrape              # dump API → merge → data/codex + SQL seeds
 # npx tsx scripts/scrape-garmoth-catalog.ts --merge-only
+npx tsx scripts/gen-lightstone-sets.ts   # если уже есть data/garmoth/lightstone_sets.raw.json
 npm run images:codex                # Playwright → public/codex
 docker compose --env-file .env up -d --build   # migrate: новые NNN_*.sql + refresh каталогов
 ```

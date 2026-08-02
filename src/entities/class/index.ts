@@ -11,6 +11,8 @@ export type {
   SkillAddonEffect,
   Buff,
   Item,
+  LightstoneSet,
+  LightstoneSetStone,
   ProposalSection,
 } from './model/types'
 export {
@@ -22,6 +24,7 @@ export {
   fetchCrystals,
   fetchRelics,
   fetchLightstones,
+  fetchLightstoneSets,
   fetchHardening,
   updateClassTier,
 } from './api/classApi'

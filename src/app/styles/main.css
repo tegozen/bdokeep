@@ -75,7 +75,6 @@
 
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 5.5rem;
     scrollbar-gutter: stable;
     color-scheme: dark;
     overflow-x: clip;

@@ -80,23 +80,26 @@ function onSelect(id: T) {
 }
 
 .tab {
+  box-sizing: border-box;
+  min-height: 2rem;
   border: 1px solid var(--color-border);
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
   font: inherit;
   font-size: 0.78rem;
-  padding: 0.32rem 0.55rem;
+  line-height: 1;
+  padding: 0 0.55rem;
 }
 
 .tabsMd .tab {
   font-size: 0.9rem;
-  padding: 0.45rem 0.5rem;
+  padding: 0 0.5rem;
 }
 
 .autoFit .tab {
   font-size: 0.78rem;
-  padding: 0.4rem 0.35rem;
+  padding: 0 0.35rem;
 }
 
 .tab:disabled {

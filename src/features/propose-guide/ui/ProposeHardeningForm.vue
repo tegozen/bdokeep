@@ -10,7 +10,7 @@
     :obscured="obscured"
     :is-superadmin="isSuperadmin"
     :request-close="requestClose"
-    size="xl"
+    size="lg"
     @submit="onSubmit"
   >
     <template #headerExtra>
@@ -260,7 +260,7 @@ async function onSubmit() {
 <style module>
 .workspace {
   display: grid;
-  grid-template-columns: minmax(14rem, 22rem) minmax(16rem, 1fr);
+  grid-template-columns: max-content minmax(14rem, 1fr);
   gap: 0.75rem 1rem;
   align-items: start;
   min-height: 0;
@@ -268,7 +268,8 @@ async function onSubmit() {
 }
 
 .left {
-  min-width: 0;
+  width: max-content;
+  max-width: 100%;
 }
 
 .rightMain {

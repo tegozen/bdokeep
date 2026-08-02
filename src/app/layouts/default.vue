@@ -27,11 +27,7 @@
           -->
           <ClientOnly>
             <div v-if="headerClass" :class="$style.classBlock">
-              <a
-                href="#summary"
-                :class="$style.classMeta"
-                :aria-label="`${headerClass.name_ru} — роль на осаде`"
-              >
+              <div :class="$style.classMeta">
                 <ClassIcon
                   :slug="headerClass.slug"
                   :icon-url="headerClass.icon_url"
@@ -39,11 +35,14 @@
                   size="sm"
                 />
                 <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
-              </a>
+              </div>
               <ClassTierStars
-                v-if="headerActiveTier"
+                v-if="isSuperadmin || headerActiveTier"
                 :tier="headerActiveTier"
+                :editable="isSuperadmin"
+                :saving="tierSaving"
                 size="sm"
+                @change="onHeaderTierChange"
               />
             </div>
           </ClientOnly>
@@ -127,6 +126,7 @@
 
 <script setup lang="ts">
 import { type Component, computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue'
+import { updateClassTier, type ClassGuideBundle } from '@/entities/class'
 import {
   useConfirm,
   useGuideSpecMode,
@@ -165,11 +165,12 @@ const pwa = computed(() => useNuxtApp().$pwa as PwaClient | undefined)
 const headerClass = useHeaderClass()
 const specMode = useGuideSpecMode()
 const presetFill = useHeaderPresetFill()
-const { isSuperadmin, refresh } = useSuperadmin()
+const { isSuperadmin } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
 const mobileNavOpen = ref(false)
 const authUiReady = ref(false)
 const authOpenLoginOnMount = ref(false)
+const tierSaving = ref(false)
 const showHomeFilters = computed(() => route.path === '/')
 
 async function ensureAuthUi() {
@@ -194,12 +195,49 @@ const headerActiveTier = computed(() => {
     : (hc.tier_awakening ?? null)
 })
 
+function patchClassTier(tier: number | null, mode: 'awakening' | 'succession') {
+  const hc = headerClass.value
+  if (!hc) return
+  const patch =
+    mode === 'succession' ? { tier_succession: tier } : { tier_awakening: tier }
+  headerClass.value = { ...hc, ...patch }
+
+  const cached = useNuxtData<ClassGuideBundle | null>(`class-${hc.slug}`)
+  const bundle = cached.data.value
+  if (bundle?.class) {
+    cached.data.value = {
+      ...bundle,
+      class: { ...bundle.class, ...patch },
+    }
+  }
+}
+
+async function onHeaderTierChange(tier: number | null) {
+  const hc = headerClass.value
+  if (!hc || !isSuperadmin.value || tierSaving.value) return
+
+  const mode = specMode.value
+  const prev =
+    mode === 'succession' ? (hc.tier_succession ?? null) : (hc.tier_awakening ?? null)
+
+  patchClassTier(tier, mode)
+  tierSaving.value = true
+  try {
+    await updateClassTier(hc.slug, tier, mode)
+    clearNuxtData('classes')
+  } catch {
+    patchClassTier(prev, mode)
+  } finally {
+    tierSaving.value = false
+  }
+}
+
 watch(headerClass, (v) => {
   if (!v) mobileNavOpen.value = false
 })
 
 onMounted(async () => {
-  await refresh()
+  // Session is resolved in plugins/superadmin-session.ts before pages paint.
   if (isSuperadmin.value) await ensureAuthUi()
   await refreshPending()
 })
@@ -418,11 +456,6 @@ watch(isSuperadmin, (ok) => {
   align-items: center;
   gap: 0.45rem;
   color: inherit;
-  text-decoration: none;
-}
-
-.classMeta:hover .className {
-  color: var(--color-gold-soft);
 }
 
 .className {

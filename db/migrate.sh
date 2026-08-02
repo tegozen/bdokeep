@@ -149,6 +149,7 @@ refresh_catalog 029_seed_hardening.sql
 refresh_catalog 030_refresh_skill_addon_effects.sql
 refresh_catalog 032_refresh_morph_skills.sql
 refresh_catalog 034_refresh_garmoth_crystals_buffs.sql
+refresh_catalog 035_seed_lightstone_sets.sql
 
 # Always rewrite any leftover bdocodex hotlinks (idempotent) so one compose up fixes prod DB.
 if [ -f "${MIG_DIR}/033_localize_bdocodex_icons.sql" ]; then

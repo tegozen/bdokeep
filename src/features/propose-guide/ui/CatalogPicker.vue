@@ -1,16 +1,19 @@
 <template>
   <div :class="[$style.root, (fill || tall) && $style.rootGrow]">
-    <slot name="tabs" />
-
-    <input
-      :value="query"
-      type="search"
-      :class="[$style.input, searchClass]"
-      :placeholder="placeholder"
-      :aria-label="ariaLabel || placeholder"
-      :disabled="disabled"
-      @input="onQuery"
-    >
+    <div :class="[$style.toolbar, !$slots.tabs && $style.toolbarSolo]">
+      <div v-if="$slots.tabs" :class="$style.tabs">
+        <slot name="tabs" />
+      </div>
+      <input
+        :value="query"
+        type="search"
+        :class="[$style.input, searchClass]"
+        :placeholder="placeholder"
+        :aria-label="ariaLabel || placeholder"
+        :disabled="disabled"
+        @input="onQuery"
+      >
+    </div>
 
     <div v-if="pending" :class="$style.muted">{{ pendingText }}</div>
     <div v-else-if="error" :class="$style.error">{{ errorText }}</div>
@@ -122,16 +125,42 @@ function onQuery(e: Event) {
   min-height: 0;
 }
 
+.toolbar {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.toolbarSolo .input {
+  flex: 1;
+}
+
+.tabs {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.tabs > :deep(*) {
+  height: 100%;
+}
+
 .input {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  flex-shrink: 0;
+  min-height: 2rem;
+  flex: 1 1 auto;
+  flex-shrink: 1;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-ink);
   font: inherit;
-  padding: 0.5rem 0.65rem;
+  line-height: 1;
+  padding: 0 0.65rem;
 }
 
 .catalog {

@@ -4,7 +4,7 @@
  *
  * Bump CODEX_ICON_CACHE_V when re-mirroring icons so browsers drop poisoned 404 caches.
  */
-export const CODEX_ICON_CACHE_V = '3'
+export const CODEX_ICON_CACHE_V = '4'
 
 /** Rewrite known CDN hosts to local /codex paths (DB may still hold old URLs). */
 export function rewriteRemoteIconToLocal(url: string): string {

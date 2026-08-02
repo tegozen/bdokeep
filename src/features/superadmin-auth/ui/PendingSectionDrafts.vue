@@ -273,8 +273,8 @@ async function onReject(id: string) {
   flex-direction: column;
   min-width: 0;
   height: 100%;
-  min-height: min(32rem, 70vh);
-  border: 1px solid color-mix(in srgb, var(--color-gold) 35%, var(--color-border));
+  min-height: 0;
+  /* No own border — parent guide grids already draw the cell frame. */
   background: color-mix(in srgb, var(--color-gold) 6%, var(--color-bg-elevated));
   padding: 0.75rem 0.85rem 0.85rem;
   /* Must stay visible so BorderSparkler can bleed past the frame. */
@@ -362,6 +362,7 @@ async function onReject(id: string) {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  overflow: auto;
 }
 
 .dots {

@@ -1,4 +1,11 @@
-import type { BdoClass, Buff, ClassGuideBundle, Item, Skill } from '../model/types'
+import type {
+  BdoClass,
+  Buff,
+  ClassGuideBundle,
+  Item,
+  LightstoneSet,
+  Skill,
+} from '../model/types'
 
 export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   return $fetch<BdoClass[]>('/api/classes')
@@ -46,6 +53,10 @@ export async function fetchRelics(): Promise<Item[]> {
 
 export async function fetchLightstones(): Promise<Item[]> {
   return $fetch<Item[]>('/api/catalog/lightstones')
+}
+
+export async function fetchLightstoneSets(): Promise<LightstoneSet[]> {
+  return $fetch<LightstoneSet[]>('/api/catalog/lightstone-sets')
 }
 
 export async function fetchHardening(): Promise<Item[]> {

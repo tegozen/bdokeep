@@ -28,21 +28,12 @@
           <GuideSection
             flush
             title="Роль на осаде"
-            anchor="summary"
             :subtitle="sectionSubtitle('summary')"
           >
             <template v-if="summaryPendingCount" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{
                 summaryPendingCount
               }}</span>
-            </template>
-            <template v-if="isSuperadmin || activeTier" #beside>
-              <ClassTierStars
-                :tier="activeTier"
-                :editable="isSuperadmin"
-                :saving="tierSaving"
-                @change="onTierChange"
-              />
             </template>
             <template #actions>
               <ProposeSummaryForm
@@ -66,7 +57,6 @@
           <GuideSection
             flush
             title="Комба"
-            anchor="combo"
             :subtitle="sectionSubtitle('combo')"
           >
             <template v-if="comboPendingCount" #badge>
@@ -104,7 +94,6 @@
           <GuideSection
             flush
             title="Морфы"
-            anchor="morphs"
             :subtitle="sectionSubtitle('morphs')"
           >
             <template v-if="sectionCount('morphs')" #badge>
@@ -153,11 +142,10 @@
       </div>
 
       <div :class="$style.gearBlock">
-        <div ref="crystalColRef" :class="[$style.gearCell, $style.gearLive]">
+        <div :class="[$style.gearCell, $style.gearLive]">
           <GuideSection
             flush
             title="Инкрустация"
-            anchor="crystals"
             :subtitle="sectionSubtitle('crystals')"
           >
             <template v-if="sectionCount('crystals')" #badge>
@@ -207,7 +195,6 @@
           <GuideSection
             flush
             title="Реликвии"
-            anchor="relics"
             :subtitle="sectionSubtitle('relics')"
           >
             <template v-if="sectionCount('relics')" #badge>
@@ -232,7 +219,6 @@
           <GuideSection
             flush
             title="Закалки"
-            anchor="hardening"
             :subtitle="sectionSubtitle('hardening')"
           >
             <template v-if="sectionCount('hardening')" #badge>
@@ -252,15 +238,11 @@
           </GuideSection>
         </div>
 
-        <div
-          :class="[$style.gearCell, $style.gearLive, $style.buffCol]"
-          :style="buffColStyle"
-        >
+        <div :class="[$style.gearCell, $style.gearLive, $style.buffCol]">
           <GuideSection
             fill
             flush
             title="Забаф"
-            anchor="buffs"
             :subtitle="sectionSubtitle('buffs')"
           >
             <template v-if="sectionCount('buffs')" #badge>
@@ -354,7 +336,6 @@
           <GuideSection
             flush
             title="Видео"
-            anchor="videos"
             :subtitle="sectionSubtitle('videos')"
           >
             <template v-if="videosPendingCount" #badge>
@@ -393,21 +374,18 @@
 import {
   computed,
   defineAsyncComponent,
-  nextTick,
   onBeforeUnmount,
-  onMounted,
   ref,
   watch,
 } from "vue";
 import {
-  ClassTierStars,
-  updateClassTier,
   type ClassGuideBundle,
 } from "@/entities/class";
 import {
   fetchPendingForClass,
   type PendingProposal,
 } from "@/features/superadmin-auth/api/pendingProposals";
+import PendingSectionDrafts from "@/features/superadmin-auth/ui/PendingSectionDrafts.vue";
 import { ShowEmptyGuide } from "@/features/show-empty-guide";
 
 import {
@@ -420,7 +398,6 @@ import {
   sectionUpdateKey,
   useGuidePreset,
   useGuideSpecMode,
-  useHeaderClass,
   useHeaderPresetFill,
   usePendingSummary,
   useSuperadmin,
@@ -462,9 +439,6 @@ const ProposeSummaryForm = defineAsyncComponent(
 const ProposeVideosForm = defineAsyncComponent(
   () => import("@/features/propose-guide/ui/ProposeVideosForm.vue"),
 );
-const PendingSectionDrafts = defineAsyncComponent(
-  () => import("@/features/superadmin-auth/ui/PendingSectionDrafts.vue"),
-);
 
 const props = defineProps<{
   bundle: ClassGuideBundle | null;
@@ -472,18 +446,12 @@ const props = defineProps<{
   error?: boolean;
 }>();
 
-const emit = defineEmits<{
-  "tier-change": [mode: "awakening" | "succession", tier: number | null];
-}>();
-
 const { isSuperadmin } = useSuperadmin();
-const headerClass = useHeaderClass();
 const headerPresetFill = useHeaderPresetFill();
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } =
   usePendingSummary();
 const classPending = ref<PendingProposal[]>([]);
 const pendingRestoreAt = new Map<string, number>();
-const tierSaving = ref(false);
 const specMode = useGuideSpecMode();
 const guidePreset = useGuidePreset();
 
@@ -503,52 +471,6 @@ watch(
   },
   { immediate: true, deep: true },
 );
-
-const activeTier = computed(() => {
-  const klass = props.bundle?.class;
-  if (!klass) return null;
-  return specMode.value === "succession"
-    ? (klass.tier_succession ?? null)
-    : (klass.tier_awakening ?? null);
-});
-
-async function onTierChange(tier: number | null) {
-  const klass = props.bundle?.class;
-  if (!klass || !isSuperadmin.value || tierSaving.value) return;
-
-  const mode = specMode.value;
-  const prev =
-    mode === "succession"
-      ? (klass.tier_succession ?? null)
-      : (klass.tier_awakening ?? null);
-  emit("tier-change", mode, tier);
-  if (headerClass.value?.slug === klass.slug) {
-    headerClass.value = {
-      ...headerClass.value,
-      ...(mode === "succession"
-        ? { tier_succession: tier }
-        : { tier_awakening: tier }),
-    };
-  }
-
-  tierSaving.value = true;
-  try {
-    await updateClassTier(klass.slug, tier, mode);
-    clearNuxtData("classes");
-  } catch {
-    emit("tier-change", mode, prev);
-    if (headerClass.value?.slug === klass.slug) {
-      headerClass.value = {
-        ...headerClass.value,
-        ...(mode === "succession"
-          ? { tier_succession: prev }
-          : { tier_awakening: prev }),
-      };
-    }
-  } finally {
-    tierSaving.value = false;
-  }
-}
 
 async function loadClassPending() {
   if (!isSuperadmin.value || !props.bundle?.class.slug) {
@@ -635,81 +557,24 @@ async function onDraftChanged(action: "approve" | "reject") {
   void refreshPendingSummary();
 }
 
+// Session is resolved in plugins/superadmin-session.ts before this page runs.
+// Await pending drafts on first paint so huge draft cards don't insert mid-scroll.
+if (isSuperadmin.value && props.bundle?.class.slug) {
+  await loadClassPending();
+}
+
 watch(
   [isSuperadmin, () => props.bundle?.class.slug],
   () => {
     void loadClassPending();
   },
-  { immediate: true },
 );
 
 const activeMorphPreset = computed(() =>
   morphPresetFrom(specMode.value, guidePreset.value),
 );
-const crystalColRef = ref<HTMLElement | null>(null);
-const buffMaxHeight = ref<number | null>(null);
-let crystalObserver: ResizeObserver | null = null;
-
-const buffColStyle = computed(() =>
-  buffMaxHeight.value != null
-    ? { maxHeight: `${buffMaxHeight.value}px` }
-    : undefined,
-);
-
-function syncBuffMaxHeight() {
-  const el = crystalColRef.value;
-  if (!el) {
-    buffMaxHeight.value = null;
-    return;
-  }
-  // Read layout in rAF to avoid forced reflow during ResizeObserver/style invalidation.
-  requestAnimationFrame(() => {
-    const h = el.getBoundingClientRect().height;
-    if (!h || h < 80) {
-      buffMaxHeight.value = null;
-      return;
-    }
-    buffMaxHeight.value = Math.round(h);
-  });
-}
-
-function bindCrystalObserver() {
-  crystalObserver?.disconnect();
-  crystalObserver = null;
-  const el = crystalColRef.value;
-  if (!el || typeof ResizeObserver === "undefined") {
-    syncBuffMaxHeight();
-    return;
-  }
-  crystalObserver = new ResizeObserver(() => syncBuffMaxHeight());
-  crystalObserver.observe(el);
-  syncBuffMaxHeight();
-}
-
-watch(
-  () => [props.bundle, props.pending, guidePreset.value] as const,
-  async () => {
-    if (!import.meta.client) return;
-    if (props.pending || !props.bundle) {
-      buffMaxHeight.value = null;
-      crystalObserver?.disconnect();
-      crystalObserver = null;
-      return;
-    }
-    await nextTick();
-    bindCrystalObserver();
-  },
-);
-
-onMounted(async () => {
-  if (props.pending || !props.bundle) return;
-  await nextTick();
-  bindCrystalObserver();
-});
 
 onBeforeUnmount(() => {
-  crystalObserver?.disconnect();
-  crystalObserver = null;
   headerPresetFill.value = emptyPresetFill();
 });
 
@@ -901,7 +766,9 @@ const {
 .comboMorphDraft {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  /* Reserve draft chrome so catalog hydrate doesn't grow the page mid-scroll. */
+  height: min(32rem, 70vh);
+  min-height: min(32rem, 70vh);
   overflow: visible;
   padding: 0;
 }
@@ -909,6 +776,7 @@ const {
 .comboMorphDraft > * {
   flex: 1;
   min-height: 0;
+  height: 100%;
 }
 
 .morphStage {
@@ -938,7 +806,8 @@ const {
 .gearDraft {
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  height: min(32rem, 70vh);
+  min-height: min(32rem, 70vh);
   overflow: visible;
   padding: 0;
 }
@@ -946,12 +815,15 @@ const {
 .gearDraft > * {
   flex: 1;
   min-height: 0;
+  height: 100%;
 }
 
 .buffCol {
+  /* Size row from crystals/relics/hardening; scroll buffs inside that height. */
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  height: 0;
+  min-height: 100%;
   overflow: hidden;
 }
 
@@ -1035,7 +907,8 @@ const {
 }
 
 .relicStage {
-  width: min(100%, 28rem);
+  width: 100%;
+  max-width: 18rem;
 }
 
 .hardeningStage {

@@ -19,7 +19,12 @@
       </template>
 
       <form
-        :class="[$style.form, full && $style.formFull, formClass]"
+        :class="[
+          $style.form,
+          full && $style.formFull,
+          fillBody && $style.formFillBody,
+          formClass,
+        ]"
         @submit.prevent="emit('submit')"
       >
         <input
@@ -49,7 +54,7 @@
           </SuperadminAuth>
         </div>
 
-        <div :class="[$style.body, full && $style.bodyFull]">
+        <div :class="[$style.body, (full || fillBody) && $style.bodyFull]">
           <slot />
           <p v-if="formError" :class="$style.error">{{ formError }}</p>
         </div>
@@ -89,6 +94,8 @@ withDefaults(
     isSuperadmin: boolean
     requestClose: () => void | Promise<void>
     full?: boolean
+    /** Keep chrome/actions fixed; only inner catalogs scroll (xl boards). */
+    fillBody?: boolean
     size?: UiModalSize
     borderStrong?: boolean
     formClass?: string
@@ -97,6 +104,7 @@ withDefaults(
   {
     triggerLabel: 'Предложить',
     full: false,
+    fillBody: false,
     size: 'md',
     borderStrong: false,
     formClass: undefined,
@@ -154,7 +162,18 @@ const author = defineModel<string>('author', { required: true })
   overflow: hidden;
 }
 
-.formFull .actions {
+.formFillBody {
+  overflow: hidden;
+  /* flex:1 + basis 0 ignores height when the modal has no definite size — pin it.
+     Leave room for UiModal header + backdrop padding so actions stay on-screen.
+     ~half of the previous 52rem fill so the catalog isn't a giant scroll wall. */
+  flex: none;
+  height: min(calc(94vh - 7rem), 26rem);
+  max-height: min(calc(94vh - 7rem), 26rem);
+}
+
+.formFull .actions,
+.formFillBody .actions {
   flex-shrink: 0;
   margin-top: 0;
   padding: 0.25rem 1rem 1rem;
@@ -176,11 +195,14 @@ const author = defineModel<string>('author', { required: true })
 }
 
 .input {
+  box-sizing: border-box;
+  min-height: 2rem;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-ink);
   font: inherit;
-  padding: 0.5rem 0.65rem;
+  line-height: 1;
+  padding: 0 0.65rem;
 }
 
 .error {

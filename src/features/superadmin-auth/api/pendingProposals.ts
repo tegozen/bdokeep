@@ -17,13 +17,15 @@ export type PendingSummary = {
 }
 
 export async function fetchPendingSummary(): Promise<PendingSummary> {
-  return $fetch<PendingSummary>('/api/admin/proposals', {
+  const requestFetch = useRequestFetch()
+  return requestFetch<PendingSummary>('/api/admin/proposals', {
     query: { summary: '1' },
   })
 }
 
 export async function fetchPendingForClass(classSlug: string): Promise<PendingProposal[]> {
-  const res = await $fetch<{ items: PendingProposal[] }>('/api/admin/proposals', {
+  const requestFetch = useRequestFetch()
+  const res = await requestFetch<{ items: PendingProposal[] }>('/api/admin/proposals', {
     query: { status: 'pending', class_slug: classSlug },
   })
   return res.items ?? []

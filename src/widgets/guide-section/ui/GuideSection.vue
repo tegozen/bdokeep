@@ -1,6 +1,5 @@
 <template>
   <section
-    :id="anchor"
     :class="[$style.section, flush && $style.flush, fill && $style.fill]"
   >
     <header :class="$style.head">
@@ -29,7 +28,6 @@ withDefaults(
   defineProps<{
     title: string
     subtitle?: string
-    anchor: string
     /** Drop bottom margin (e.g. when nested in a row). */
     flush?: boolean
     /** Fill parent height; body scrolls when content overflows. */
@@ -42,7 +40,6 @@ withDefaults(
 <style module>
 .section {
   margin-bottom: 2.5rem;
-  scroll-margin-top: 5rem;
 }
 
 .flush {

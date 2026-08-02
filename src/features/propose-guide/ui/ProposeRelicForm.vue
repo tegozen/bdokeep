@@ -10,7 +10,8 @@
     :obscured="obscured"
     :is-superadmin="isSuperadmin"
     :request-close="requestClose"
-    size="xl"
+    size="lg"
+    fill-body
     @submit="onSubmit"
   >
     <template #headerExtra>
@@ -27,38 +28,65 @@
           :filled="filledMap"
           :selected-id="activeSlot"
           interactive
+          lightstones-as-set
           @select="onSelectSlot"
-          @clear="clearSlot"
         />
       </div>
 
       <div :class="$style.rightMain">
-        <UiPresetTabs
-          v-model="catalogTab"
-          :tabs="catalogTabs"
-          aria-label="Каталог"
-          size="sm"
-        />
-
         <CatalogPicker
+          v-if="catalogTab === 'relics'"
           v-model:query="query"
           fill
-          :items="filteredCatalog"
+          :items="filteredRelics"
           :pending="catalogPending"
           :error="catalogError"
-          :disabled="!activeSlot"
-          :catalog-off="!activeSlot"
-          :placeholder="catalogTab === 'relics' ? 'Название реликвии' : 'Название камня'"
-          :aria-label="catalogTab === 'relics' ? 'Поиск реликвии' : 'Поиск камня'"
+          :disabled="!relicSlotSelected"
+          :catalog-off="!relicSlotSelected"
+          placeholder="Название реликвии"
+          aria-label="Поиск реликвии"
           pending-text="Загрузка каталога…"
           :show-empty="
-            Boolean(activeSlot) && !catalogPending && !catalogError && !filteredCatalog.length
+            Boolean(relicSlotSelected) &&
+              !catalogPending &&
+              !catalogError &&
+              !filteredRelics.length
           "
-          :empty-text="
-            `Нет ${catalogTab === 'relics' ? 'реликвий' : 'камней'}${query ? ' по поиску' : ''}.`
-          "
-          @pick="assignItem"
-        />
+          :empty-text="`Нет реликвий${query ? ' по поиску' : ''}.`"
+          @pick="assignRelic"
+        >
+          <template #tabs>
+            <UiPresetTabs
+              v-model="catalogTab"
+              :tabs="catalogTabs"
+              aria-label="Каталог"
+              size="sm"
+            />
+          </template>
+        </CatalogPicker>
+
+        <LightstoneSetPicker
+          v-else
+          v-model:query="query"
+          fill
+          :sets="lightstoneSets"
+          :pending="catalogPending"
+          :error="catalogError"
+          placeholder="Поиск набора"
+          aria-label="Поиск набора камней"
+          pending-text="Загрузка наборов…"
+          :empty-text="`Нет наборов${query ? ' по поиску' : ''}.`"
+          @apply="applySet"
+        >
+          <template #tabs>
+            <UiPresetTabs
+              v-model="catalogTab"
+              :tabs="catalogTabs"
+              aria-label="Каталог"
+              size="sm"
+            />
+          </template>
+        </LightstoneSetPicker>
       </div>
     </div>
   </ProposeModalShell>
@@ -67,10 +95,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
-  fetchLightstones,
+  fetchLightstoneSets,
   fetchRelics,
   type GuideItemRow,
   type Item,
+  type LightstoneSet,
+  type LightstoneSetStone,
 } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
@@ -78,6 +108,7 @@ import {
   isCrystalPresetId,
   isLightstoneSlotId,
   isRelicSlotId,
+  LIGHTSTONE_SLOT_IDS,
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
@@ -85,18 +116,28 @@ import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
+import LightstoneSetPicker from './LightstoneSetPicker.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 
-type CatalogTab = 'relics' | 'lightstones'
+type CatalogTab = 'relics' | 'sets'
 type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
 
 const catalogTabs = [
   { id: 'relics' as const, label: 'Реликвии' },
-  { id: 'lightstones' as const, label: 'Светящиеся камни' },
+  { id: 'sets' as const, label: 'Наборы' },
 ]
 
 function emptyPresets(): PresetBoards {
   return { t1: {}, t2: {}, besp: {}, sub: {} }
+}
+
+function stoneToItem(stone: LightstoneSetStone): Item {
+  return {
+    id: stone.id,
+    name_ru: stone.name_ru,
+    icon_url: stone.icon_url,
+    item_type: 'lightstone',
+  }
 }
 
 const props = withDefaults(
@@ -120,7 +161,7 @@ const activePreset = ref<CrystalPresetId>('t1')
 const activeSlot = ref<string | null>(null)
 const presets = ref<PresetBoards>(emptyPresets())
 const relics = ref<Item[]>([])
-const lightstones = ref<Item[]>([])
+const lightstoneSets = ref<LightstoneSet[]>([])
 const catalogPending = ref(false)
 const catalogError = ref(false)
 
@@ -170,13 +211,13 @@ const {
   serialize: serializeState,
   onOpen: async () => {
     hydrateFromInitial()
-    if (relics.value.length && lightstones.value.length) return
+    if (relics.value.length && lightstoneSets.value.length) return
     catalogPending.value = true
     catalogError.value = false
     try {
-      const [r, l] = await Promise.all([fetchRelics(), fetchLightstones()])
+      const [r, sets] = await Promise.all([fetchRelics(), fetchLightstoneSets()])
       relics.value = r
-      lightstones.value = l
+      lightstoneSets.value = sets
     } catch {
       catalogError.value = true
     } finally {
@@ -208,11 +249,14 @@ const filledMap = computed(() => {
   return map
 })
 
-const filteredCatalog = computed(() => {
+const relicSlotSelected = computed(
+  () => Boolean(activeSlot.value && isRelicSlotId(activeSlot.value)),
+)
+
+const filteredRelics = computed(() => {
   const q = query.value.trim().toLowerCase()
-  const list = catalogTab.value === 'relics' ? relics.value : lightstones.value
-  if (!q) return list
-  return list.filter((item) => item.name_ru.toLowerCase().includes(q))
+  if (!q) return relics.value
+  return relics.value.filter((item) => item.name_ru.toLowerCase().includes(q))
 })
 
 watch(activePreset, () => {
@@ -220,34 +264,45 @@ watch(activePreset, () => {
   query.value = ''
 })
 
+watch(catalogTab, () => {
+  query.value = ''
+})
+
 function onSelectSlot(id: string) {
   activeSlot.value = id
   formError.value = ''
   if (isRelicSlotId(id)) catalogTab.value = 'relics'
-  else if (isLightstoneSlotId(id)) catalogTab.value = 'lightstones'
+  else if (isLightstoneSlotId(id)) catalogTab.value = 'sets'
 }
 
-function assignItem(item: Item) {
-  if (!activeSlot.value) return
-  const slot = activeSlot.value
-  if (isRelicSlotId(slot) && catalogTab.value !== 'relics') {
-    formError.value = 'Выберите реликвию из вкладки «Реликвии»'
-    return
-  }
-  if (isLightstoneSlotId(slot) && catalogTab.value !== 'lightstones') {
-    formError.value = 'Выберите камень из вкладки «Светящиеся камни»'
+function assignRelic(item: Item) {
+  if (!activeSlot.value || !isRelicSlotId(activeSlot.value)) {
+    formError.value = 'Выберите слот реликвии на доске'
     return
   }
   formError.value = ''
-  setCurrentSlots({ ...currentSlots(), [slot]: item })
+  setCurrentSlots({ ...currentSlots(), [activeSlot.value]: item })
 }
 
-function clearSlot(slotId?: string) {
-  const id = slotId || activeSlot.value
-  if (!id) return
+function applySet(set: LightstoneSet, variant: 'normal' | 'enhanced') {
+  const stones = variant === 'enhanced' ? set.enhanced : set.normal
+  if (!stones.length) {
+    formError.value = 'В наборе нет камней (каталог неполный)'
+    return
+  }
+  formError.value = ''
   const next = { ...currentSlots() }
-  delete next[id]
+  for (const slot of LIGHTSTONE_SLOT_IDS) delete next[slot]
+  const limit = Math.min(stones.length, LIGHTSTONE_SLOT_IDS.length)
+  for (let i = 0; i < limit; i++) {
+    const slot = LIGHTSTONE_SLOT_IDS[i]
+    const stone = stones[i]
+    if (!slot || !stone) continue
+    next[slot] = stoneToItem(stone)
+  }
   setCurrentSlots(next)
+  catalogTab.value = 'sets'
+  activeSlot.value = null
 }
 
 async function onSubmit() {
@@ -302,15 +357,17 @@ async function onSubmit() {
 <style module>
 .workspace {
   display: grid;
-  grid-template-columns: minmax(16rem, 28rem) minmax(16rem, 1fr);
+  grid-template-columns: minmax(14rem, 18rem) minmax(14rem, 1fr);
   gap: 0.75rem 1rem;
-  align-items: start;
+  align-items: stretch;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 
 .left {
   min-width: 0;
+  min-height: 0;
 }
 
 .rightMain {
@@ -318,7 +375,9 @@ async function onSubmit() {
   flex-direction: column;
   gap: 0.65rem;
   min-width: 0;
-  min-height: 22rem;
+  min-height: 0;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 
 @media (max-width: 820px) {

@@ -51,11 +51,14 @@ function onInput(e: Event) {
 }
 
 .input {
+  box-sizing: border-box;
+  min-height: 2rem;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-ink);
   font: inherit;
-  padding: 0.5rem 0.65rem;
+  line-height: 1;
+  padding: 0 0.65rem;
 }
 
 .error {

@@ -6,7 +6,9 @@ export function useSuperadmin() {
 
   async function refresh() {
     try {
-      const res = await $fetch<{ ok: boolean }>('/api/admin/me')
+      // useRequestFetch forwards cookie on SSR; plain $fetch does not.
+      const requestFetch = useRequestFetch()
+      const res = await requestFetch<{ ok: boolean }>('/api/admin/me')
       isSuperadmin.value = Boolean(res.ok)
     } catch {
       isSuperadmin.value = false

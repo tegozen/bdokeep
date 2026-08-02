@@ -57,6 +57,75 @@ export async function listSkillAddonEffects(sql: Sql) {
   `
 }
 
+export type LightstoneSetCatalogRow = {
+  id: string
+  name_ru: string
+  name_en: string | null
+  category: 'combat' | 'lifeskill'
+  bonuses: Array<{ key: string; label: string; value: number }>
+  normal: Array<{ id: string; codex_id: string; name_ru: string; icon_url: string | null }>
+  enhanced: Array<{ id: string; codex_id: string; name_ru: string; icon_url: string | null }>
+}
+
+export async function listLightstoneSets(sql: Sql): Promise<LightstoneSetCatalogRow[]> {
+  const rows = await sql`
+    select
+      s.id,
+      s.name_ru,
+      s.name_en,
+      s.category,
+      s.bonuses,
+      s.normal_codex_ids,
+      s.enhanced_codex_ids
+    from lightstone_sets s
+    where s.category = 'combat'
+    order by s.name_ru asc
+  `
+
+  const allIds = new Set<string>()
+  for (const row of rows) {
+    for (const id of row.normal_codex_ids as string[]) allIds.add(String(id))
+    for (const id of row.enhanced_codex_ids as string[]) allIds.add(String(id))
+  }
+
+  const idList = [...allIds]
+  const items =
+    idList.length === 0
+      ? []
+      : await sql`
+          select id, codex_id, name_ru, icon_url
+          from items
+          where item_type = 'lightstone'
+            and codex_id = any(${idList}::text[])
+        `
+  const byCodex = new Map(
+    withCodexIconCacheBust(items).map((it) => [
+      String(it.codex_id),
+      {
+        id: String(it.id),
+        codex_id: String(it.codex_id),
+        name_ru: String(it.name_ru),
+        icon_url: (it.icon_url as string | null) ?? null,
+      },
+    ]),
+  )
+
+  const resolve = (codexIds: string[]) =>
+    (codexIds || [])
+      .map((cid) => byCodex.get(String(cid)))
+      .filter((x): x is NonNullable<typeof x> => Boolean(x))
+
+  return rows.map((row) => ({
+    id: String(row.id),
+    name_ru: String(row.name_ru),
+    name_en: row.name_en != null ? String(row.name_en) : null,
+    category: row.category === 'lifeskill' ? 'lifeskill' : 'combat',
+    bonuses: (Array.isArray(row.bonuses) ? row.bonuses : []) as LightstoneSetCatalogRow['bonuses'],
+    normal: resolve(row.normal_codex_ids as string[]),
+    enhanced: resolve(row.enhanced_codex_ids as string[]),
+  }))
+}
+
 export async function listSkillsForClass(sql: Sql, classSlug: string) {
   const rows = await sql`
     select id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier, addon_effect_keys

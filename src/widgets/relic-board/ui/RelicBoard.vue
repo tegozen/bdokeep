@@ -1,12 +1,11 @@
 <template>
   <div :class="[$style.wrap, interactive && $style.interactive]">
-    <div
-      v-for="panel in panels"
-      :key="panel.relic"
-      :class="[$style.panel, isPanelActive(panel.relic) && $style.panelOn]"
-    >
+    <div :class="$style.relics" role="list" aria-label="Реликвии">
       <button
+        v-for="panel in panels"
+        :key="panel.relic"
         type="button"
+        role="listitem"
         :class="[
           $style.relicSlot,
           selectedId === panel.relic && $style.selected,
@@ -25,40 +24,31 @@
           draggable="false"
           loading="lazy"
         >
-        <span
-          v-if="interactive && filled[panel.relic]"
-          :class="$style.clear"
-          role="presentation"
-          aria-hidden="true"
-          title="Очистить"
-          @click.stop="onClear(panel.relic)"
-        >×</span>
         <span v-else-if="interactive" :class="$style.plus">+</span>
       </button>
+    </div>
 
-      <div :class="$style.branch" aria-hidden="true">
-        <span :class="$style.branchStem" />
-        <span :class="$style.branchFork" />
-      </div>
-
-      <div :class="$style.lights">
-        <div
-          v-for="lightId in panel.lights"
+    <!-- Propose: whole set is one control -->
+    <button
+      v-if="lightstonesAsSet"
+      type="button"
+      :class="[
+        $style.setBtn,
+        lightsSelected && $style.selected,
+        anyLightFilled && $style.filled,
+      ]"
+      :disabled="!interactive"
+      :title="setTitle"
+      :aria-label="setTitle"
+      @click="onSelectSet"
+    >
+      <ul :class="$style.lights" aria-hidden="true">
+        <li
+          v-for="lightId in lightIds"
           :key="lightId"
           :class="$style.lightRow"
         >
-          <button
-            type="button"
-            :class="[
-              $style.lightSlot,
-              selectedId === lightId && $style.selected,
-              filled[lightId] && $style.filled,
-            ]"
-            :disabled="!interactive"
-            :title="filled[lightId]?.name_ru || 'Светящийся камень'"
-            :aria-label="filled[lightId]?.name_ru || 'Светящийся камень'"
-            @click="onSelect(lightId)"
-          >
+          <span :class="[$style.lightSlot, filled[lightId] && $style.lightFilled]">
             <img
               v-if="filled[lightId]?.icon_url"
               :src="codexIconSrc(filled[lightId]!.icon_url) || undefined"
@@ -67,30 +57,64 @@
               draggable="false"
               loading="lazy"
             >
-            <span
-              v-if="interactive && filled[lightId]"
-              :class="$style.clear"
-              role="presentation"
-              aria-hidden="true"
-              title="Очистить"
-              @click.stop="onClear(lightId)"
-            >×</span>
-            <span v-else-if="interactive" :class="$style.plus">+</span>
-          </button>
-          <p :class="[$style.lightName, !filled[lightId] && $style.lightEmpty]">
-            {{
-              filled[lightId]?.name_ru || 'Нет используемых светящихся камней.'
-            }}
-          </p>
-        </div>
-      </div>
-    </div>
+          </span>
+          <span :class="[$style.lightName, !filled[lightId] && $style.lightEmpty]">
+            {{ filled[lightId]?.name_ru || 'Пусто' }}
+          </span>
+        </li>
+      </ul>
+      <span v-if="interactive && !anyLightFilled" :class="$style.setPlus">+</span>
+    </button>
+
+    <!-- Read-only / per-stone: plain list -->
+    <ul
+      v-else
+      :class="$style.lights"
+      aria-label="Светящиеся камни"
+    >
+      <li
+        v-for="lightId in lightIds"
+        :key="lightId"
+        :class="$style.lightRow"
+      >
+        <button
+          type="button"
+          :class="[
+            $style.lightSlot,
+            selectedId === lightId && $style.selected,
+            filled[lightId] && $style.filled,
+          ]"
+          :disabled="!interactive"
+          :title="filled[lightId]?.name_ru || 'Светящийся камень'"
+          :aria-label="filled[lightId]?.name_ru || 'Светящийся камень'"
+          @click="onSelectLight(lightId)"
+        >
+          <img
+            v-if="filled[lightId]?.icon_url"
+            :src="codexIconSrc(filled[lightId]!.icon_url) || undefined"
+            alt=""
+            :class="$style.lightIcon"
+            draggable="false"
+            loading="lazy"
+          >
+          <span v-else-if="interactive" :class="$style.plus">+</span>
+        </button>
+        <p :class="[$style.lightName, !filled[lightId] && $style.lightEmpty]">
+          {{ filled[lightId]?.name_ru || 'Пусто' }}
+        </p>
+      </li>
+    </ul>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { codexIconSrc } from '@/shared/lib/codexIcon'
-import { RELIC_BOARD_PANELS, type RelicSlotId } from '@/shared/lib/relicSlots'
+import {
+  isLightstoneSlotId,
+  LIGHTSTONE_SLOT_IDS,
+  RELIC_BOARD_PANELS,
+} from '@/shared/lib/relicSlots'
 
 export type RelicFill = {
   id: string
@@ -103,65 +127,75 @@ const props = withDefaults(
     filled?: Record<string, RelicFill | null | undefined>
     selectedId?: string | null
     interactive?: boolean
+    /** Propose UI: stones are a set — one control for the whole set. */
+    lightstonesAsSet?: boolean
   }>(),
   {
     filled: () => ({}),
     selectedId: null,
     interactive: false,
+    lightstonesAsSet: false,
   },
 )
 
 const emit = defineEmits<{
   select: [id: string]
-  clear: [id: string]
 }>()
 
 const panels = RELIC_BOARD_PANELS
+const lightIds = LIGHTSTONE_SLOT_IDS
 
-function isPanelActive(relic: RelicSlotId): boolean {
+const lightsSelected = computed(() => {
   const sel = props.selectedId
-  if (!sel) return false
-  if (sel === relic) return true
-  return sel.startsWith(`${relic}_`)
-}
+  return Boolean(sel && isLightstoneSlotId(sel))
+})
+
+const anyLightFilled = computed(() =>
+  LIGHTSTONE_SLOT_IDS.some((id) => Boolean(props.filled[id])),
+)
+
+const setTitle = computed(() => {
+  if (!anyLightFilled.value) return 'Выбрать набор камней'
+  const names = LIGHTSTONE_SLOT_IDS.map((id) => props.filled[id]?.name_ru).filter(Boolean)
+  return names.length ? names.join(', ') : 'Набор камней'
+})
 
 function onSelect(id: string) {
   if (!props.interactive) return
   emit('select', id)
 }
 
-function onClear(id: string) {
+function onSelectSet() {
   if (!props.interactive) return
-  emit('clear', id)
+  const first = LIGHTSTONE_SLOT_IDS[0]
+  if (first) emit('select', first)
+}
+
+function onSelectLight(id: string) {
+  if (!props.interactive) return
+  emit('select', id)
 }
 </script>
 
 <style module>
 .wrap {
-  display: grid;
-  gap: 0.85rem;
-  width: min(100%, 28rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .interactive .relicSlot,
-.interactive .lightSlot {
+.interactive .lightSlot,
+.interactive .setBtn {
   cursor: pointer;
 }
 
-.panel {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.35rem 0.55rem;
-  border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-panel) 88%, #000);
-  padding: 0.85rem 0.9rem;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
-}
-
-.panelOn {
-  border-color: var(--color-gold);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-gold) 45%, transparent);
+.relics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .relicSlot,
@@ -176,14 +210,33 @@ function onClear(id: string) {
 }
 
 .relicSlot {
-  width: 4.25rem;
-  height: 4.25rem;
+  /* 2.75rem × 1.7 */
+  width: 4.675rem;
+  height: 4.675rem;
+  flex-shrink: 0;
 }
 
 .lightSlot {
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.1rem;
+  height: 2.1rem;
   flex-shrink: 0;
+}
+
+.setBtn {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-panel) 88%, #000);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.setBtn:disabled {
+  cursor: default;
 }
 
 .selected {
@@ -195,6 +248,10 @@ function onClear(id: string) {
   border-color: color-mix(in srgb, var(--color-border-strong) 70%, var(--color-gold));
 }
 
+.lightFilled {
+  border-color: color-mix(in srgb, var(--color-border-strong) 70%, var(--color-gold));
+}
+
 .relicIcon,
 .lightIcon {
   width: 100%;
@@ -203,120 +260,52 @@ function onClear(id: string) {
   pointer-events: none;
 }
 
-.plus {
+.plus,
+.setPlus {
   font-size: 1.15rem;
   line-height: 1;
   color: var(--color-muted);
 }
 
-.clear {
+.setPlus {
   position: absolute;
-  top: -0.35rem;
-  right: -0.35rem;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 1.1rem;
-  height: 1.1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-bg-elevated);
-  color: var(--color-muted);
-  font-size: 0.75rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.clear:hover {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-}
-
-.branch {
-  position: relative;
-  width: 1.1rem;
-  height: 3.6rem;
-  align-self: center;
-}
-
-.branchStem {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 0.55rem;
-  height: 1px;
-  background: color-mix(in srgb, var(--color-gold) 55%, var(--color-border));
-  transform: translateY(-50%);
-}
-
-.branchFork {
-  position: absolute;
-  top: 0.55rem;
-  bottom: 0.55rem;
-  left: 0.55rem;
-  width: 1px;
-  background: color-mix(in srgb, var(--color-gold) 55%, var(--color-border));
-}
-
-.branchFork::before,
-.branchFork::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  width: 0.55rem;
-  height: 1px;
-  background: color-mix(in srgb, var(--color-gold) 55%, var(--color-border));
-}
-
-.branchFork::before {
-  top: 0;
-}
-
-.branchFork::after {
-  bottom: 0;
+  top: 0.35rem;
+  right: 0.45rem;
 }
 
 .lights {
-  display: grid;
-  gap: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   min-width: 0;
 }
 
 .lightRow {
   display: flex;
-  align-items: center;
-  gap: 0.55rem;
+  align-items: flex-start;
+  gap: 0.45rem;
   min-width: 0;
 }
 
 .lightName {
   margin: 0;
   min-width: 0;
+  flex: 1 1 auto;
   font-size: 0.78rem;
   line-height: 1.25;
   color: var(--color-ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .lightEmpty {
   color: var(--color-muted);
-}
-
-@media (max-width: 520px) {
-  .wrap {
-    width: 100%;
-  }
-
-  .panel {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-rows: auto auto;
-  }
-
-  .branch {
-    display: none;
-  }
-
-  .lights {
-    grid-column: 1 / -1;
-  }
 }
 </style>

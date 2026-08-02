@@ -421,6 +421,7 @@ function hardeningLabel(name: string) {
 }
 
 .relicStage {
-  width: min(100%, 28rem);
+  width: 100%;
+  max-width: 18rem;
 }
 </style>

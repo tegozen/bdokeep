@@ -47,14 +47,16 @@ const forwardedAttrs = computed(() => {
 
 <style module>
 .btn {
+  box-sizing: border-box;
+  min-height: 2rem;
   border: 1px solid var(--color-border);
   background: transparent;
   color: var(--color-ink);
   cursor: pointer;
   font: inherit;
   font-size: 0.88rem;
-  line-height: 1.25;
-  padding: 0.45rem 0.9rem;
+  line-height: 1;
+  padding: 0 0.9rem;
 }
 
 .btn:disabled {
@@ -66,7 +68,7 @@ const forwardedAttrs = computed(() => {
   box-sizing: border-box;
   min-height: 2rem;
   font-size: 0.82rem;
-  padding: 0.25rem 0.65rem;
+  padding: 0 0.65rem;
   line-height: 1;
 }
 
