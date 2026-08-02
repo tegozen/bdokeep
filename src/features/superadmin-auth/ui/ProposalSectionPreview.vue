@@ -1,21 +1,12 @@
 <template>
   <div :class="pinTabs ? $style.split : undefined">
-    <div
-      v-if="showPresetTabs"
-      :class="[tabsClass, pinTabs && $style.tabsPinned]"
-      role="tablist"
-    >
-      <button
-        v-for="p in presets"
-        :key="p.id"
-        type="button"
-        role="tab"
-        :aria-selected="activePreset === p.id"
-        :class="[tabClass, activePreset === p.id && tabOnClass]"
-        @click="setPreset(p.id)"
-      >
-        {{ p.label }}
-      </button>
+    <div v-if="showPresetTabs" :class="pinTabs && $style.tabsPinned">
+      <UiPresetTabs
+        :model-value="activePreset || 't1'"
+        :tabs="presets"
+        aria-label="Пресет"
+        @update:model-value="setPreset"
+      />
     </div>
 
     <div :class="pinTabs ? $style.scrollBody : undefined">
@@ -140,7 +131,7 @@ import {
   useGuideSpecMode,
   type CrystalPresetId,
 } from '@/shared/lib'
-import { UiMarkdownPreview } from '@/shared/ui'
+import { UiMarkdownPreview, UiPresetTabs } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard } from '@/widgets/crystal-board'
 import { MorphBoard } from '@/widgets/morph-board'
@@ -155,9 +146,6 @@ const props = withDefaults(
     /** Optional style class hooks from parent module CSS. */
     mutedClass?: string
     textClass?: string
-    tabsClass?: string
-    tabClass?: string
-    tabOnClass?: string
     buffListClass?: string
     buffItemClass?: string
     iconClass?: string
@@ -166,9 +154,6 @@ const props = withDefaults(
     pinTabs: false,
     mutedClass: '',
     textClass: '',
-    tabsClass: '',
-    tabClass: '',
-    tabOnClass: '',
     buffListClass: '',
     buffItemClass: '',
     iconClass: '',
@@ -340,6 +325,7 @@ function hardeningLabel(name: string) {
   align-self: start;
   width: fit-content;
   max-width: 100%;
+  margin-bottom: 0.55rem;
 }
 
 .scrollBody {
@@ -347,6 +333,7 @@ function hardeningLabel(name: string) {
   min-height: 0;
   overflow: auto;
   padding-right: 0.15rem;
+  padding-bottom: 0.35rem;
 }
 
 /* Match ClassGuidePage crystal layout (picked list + board). */
@@ -417,6 +404,8 @@ function hardeningLabel(name: string) {
   width: 22rem;
   max-width: 100%;
   min-width: 0;
+  height: max-content;
+  align-self: start;
   justify-self: start;
 }
 

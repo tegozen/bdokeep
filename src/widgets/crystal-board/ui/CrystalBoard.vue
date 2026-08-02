@@ -158,6 +158,8 @@ function onClear(id: string) {
 .stack {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: max-content max-content;
+  align-content: start;
   gap: 0.65rem;
   width: 100%;
   min-width: 0;
@@ -222,17 +224,21 @@ function onClear(id: string) {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  min-height: max-content;
   padding: 0.55rem;
   border: 1px solid rgba(201, 168, 76, 0.28);
   background:
     radial-gradient(ellipse at 50% 50%, rgba(40, 55, 95, 0.35), transparent 70%),
     linear-gradient(180deg, #0c1018 0%, #07090e 100%);
+  overflow: visible;
 }
 
 .dawnCanvas .cell {
   aspect-ratio: 1 / 1;
   width: 100%;
   height: auto;
+  max-height: none;
+  align-self: start;
 }
 
 .cell {

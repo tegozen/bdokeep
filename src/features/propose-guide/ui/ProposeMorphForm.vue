@@ -15,11 +15,26 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <UiPresetTabs
-        v-model="activeGuidePreset"
-        :tabs="guidePresets"
-        aria-label="Пресет морфов"
-      />
+      <div :class="$style.headerTools">
+        <UiPresetTabs
+          v-model="activeGuidePreset"
+          :tabs="guidePresets"
+          aria-label="Пресет морфов"
+        />
+        <ProposeCopyFromPreset
+          :target-preset="activeGuidePreset"
+          :target-has-content="!isGuidePresetEmpty(activeGuidePreset)"
+          :is-empty="isGuidePresetEmpty"
+          size="lg"
+          @copy="copyFromPreset"
+        >
+          <template #default="{ preset }">
+            <div :class="$style.copyPreview">
+              <MorphBoard :filled="filledMapForGuide(preset)" />
+            </div>
+          </template>
+        </ProposeCopyFromPreset>
+      </div>
     </template>
 
     <div :class="$style.workspace">
@@ -125,6 +140,7 @@ import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
+import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 
 type EffectPair = [string | null, string | null]
@@ -326,18 +342,35 @@ function slotAt(level: MorphSlotLevel): SlotState | undefined {
   return presets.value[activePreset.value][level]
 }
 
-const activeSlotSkill = computed(() =>
-  activeLevel.value ? slotAt(activeLevel.value)?.skill ?? null : null,
-)
+function morphKey(guide: CrystalPresetId): MorphPresetId {
+  return morphPresetFrom(specMode.value, guide)
+}
 
-const effectCount = computed(() =>
-  activeLevel.value ? effectCountOf(slotAt(activeLevel.value)?.effectIds ?? emptyEffects()) : 0,
-)
+function isGuidePresetEmpty(guide: CrystalPresetId) {
+  const board = presets.value[morphKey(guide)]
+  return !MORPH_SLOT_LEVELS.some((level) => Boolean(board[level]?.skill))
+}
 
-const filledMap = computed(() => {
+function cloneMorphBoard(
+  board: Partial<Record<MorphSlotLevel, SlotState>>,
+): Partial<Record<MorphSlotLevel, SlotState>> {
+  const next: Partial<Record<MorphSlotLevel, SlotState>> = {}
+  for (const level of MORPH_SLOT_LEVELS) {
+    const slot = board[level]
+    if (!slot?.skill) continue
+    next[level] = {
+      skill: { ...slot.skill },
+      effectIds: [slot.effectIds[0], slot.effectIds[1]],
+    }
+  }
+  return next
+}
+
+function filledMapForGuide(guide: CrystalPresetId): Partial<Record<MorphSlotLevel, MorphSlotFill>> {
+  const board = presets.value[morphKey(guide)]
   const map: Partial<Record<MorphSlotLevel, MorphSlotFill>> = {}
   for (const level of MORPH_SLOT_LEVELS) {
-    const slot = slotAt(level)
+    const slot = board[level]
     if (!slot?.skill) continue
     const tier = slot.skill.addon_tier ?? 2
     const e1 = slot.effectIds[0] ? effects.value.find((e) => e.id === slot.effectIds[0]) : null
@@ -349,7 +382,30 @@ const filledMap = computed(() => {
     }
   }
   return map
-})
+}
+
+function copyFromPreset(sourceGuide: CrystalPresetId) {
+  const from = morphKey(sourceGuide)
+  const to = activePreset.value
+  presets.value = {
+    ...presets.value,
+    [to]: cloneMorphBoard(presets.value[from]),
+  }
+  activeSlot.value = null
+  catalogTab.value = 'skills'
+  query.value = ''
+  formError.value = ''
+}
+
+const activeSlotSkill = computed(() =>
+  activeLevel.value ? slotAt(activeLevel.value)?.skill ?? null : null,
+)
+
+const effectCount = computed(() =>
+  activeLevel.value ? effectCountOf(slotAt(activeLevel.value)?.effectIds ?? emptyEffects()) : 0,
+)
+
+const filledMap = computed(() => filledMapForGuide(activeGuidePreset.value))
 
 const filteredSkills = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -528,7 +584,10 @@ async function onSubmit() {
     return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'morphs',
-      payload: { morphs },
+      payload: {
+        morphs,
+        replaced_presets: [...MORPH_PRESET_IDS],
+      },
       author_label: author.value.trim() || undefined,
       website: honeypot.value,
     })
@@ -537,6 +596,21 @@ async function onSubmit() {
 </script>
 
 <style module>
+.headerTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.copyPreview {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(18rem, 1.1fr) minmax(16rem, 1fr);

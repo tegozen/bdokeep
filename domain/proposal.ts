@@ -136,6 +136,24 @@ export function isMorphPresetId(id: string): id is MorphPresetId {
   return (MORPH_PRESET_IDS as readonly string[]).includes(id)
 }
 
+/**
+ * Presets this proposal replaces on approve (merge: other live presets stay).
+ * Prefer explicit `replaced_presets`; else derive from row presets (legacy payloads).
+ */
+export function resolveReplacedPresets(
+  raw: unknown,
+  fromRows: readonly string[],
+  isValid: (id: string) => boolean,
+): string[] {
+  if (Array.isArray(raw)) {
+    const ids = [
+      ...new Set(raw.map((x) => String(x)).filter((id) => isValid(id))),
+    ]
+    if (ids.length) return ids
+  }
+  return [...new Set(fromRows.filter((id) => isValid(id)))]
+}
+
 export function isMorphSlotLevel(v: number): boolean {
   return (MORPH_SLOT_LEVELS as readonly number[]).includes(v)
 }

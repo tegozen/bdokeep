@@ -27,6 +27,7 @@ import {
   isRelicsSection,
   isSummarySection,
   isVideosSection,
+  resolveReplacedPresets,
   type ProposalSection,
 } from '@domain'
 import { idsExist } from './queries/catalog'
@@ -139,7 +140,12 @@ export async function parseAndValidatePayload(
     if (buffIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный баф' })
     }
-    return { payload: { buffs: buffsPayload }, verifiedVideos: null }
+    const replaced_presets = resolveReplacedPresets(
+      body.replaced_presets,
+      buffsPayload.map((b) => b.preset),
+      isCrystalPresetId,
+    )
+    return { payload: { buffs: buffsPayload, replaced_presets }, verifiedVideos: null }
   }
 
   if (isCrystalsSection(section)) {
@@ -198,7 +204,12 @@ export async function parseAndValidatePayload(
     if (itemIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный кристалл' })
     }
-    return { payload: { crystals }, verifiedVideos: null }
+    const replaced_presets = resolveReplacedPresets(
+      body.replaced_presets,
+      crystals.map((c) => c.preset),
+      isCrystalPresetId,
+    )
+    return { payload: { crystals, replaced_presets }, verifiedVideos: null }
   }
 
   if (isRelicsSection(section)) {
@@ -301,7 +312,12 @@ export async function parseAndValidatePayload(
       }
     }
 
-    return { payload: { relics, lightstones }, verifiedVideos: null }
+    const replaced_presets = resolveReplacedPresets(
+      body.replaced_presets,
+      [...relics.map((r) => r.preset), ...lightstones.map((r) => r.preset)],
+      isCrystalPresetId,
+    )
+    return { payload: { relics, lightstones, replaced_presets }, verifiedVideos: null }
   }
 
   if (isHardeningSection(section)) {
@@ -370,7 +386,12 @@ export async function parseAndValidatePayload(
     if (itemIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный камень закалки' })
     }
-    return { payload: { hardening }, verifiedVideos: null }
+    const replaced_presets = resolveReplacedPresets(
+      body.replaced_presets,
+      hardening.map((c) => c.preset),
+      isCrystalPresetId,
+    )
+    return { payload: { hardening, replaced_presets }, verifiedVideos: null }
   }
 
   if (isVideosSection(section)) {
@@ -490,7 +511,12 @@ export async function parseAndValidatePayload(
       }
     }
 
-    return { payload: { morphs }, verifiedVideos: null }
+    const replaced_presets = resolveReplacedPresets(
+      body.replaced_presets,
+      morphs.map((m) => m.preset),
+      isMorphPresetId,
+    )
+    return { payload: { morphs, replaced_presets }, verifiedVideos: null }
   }
 
   if (isSummarySection(section)) {

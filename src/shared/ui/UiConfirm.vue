@@ -9,17 +9,24 @@
     :title-id="titleId"
     :labelled-by="titleId"
     :described-by="messageId"
-    :title="request?.title || 'Подтверждение'"
-    @close="settle(false)"
+    :title="request?.title || (isAlert ? 'Сообщение' : 'Подтверждение')"
+    @close="onClose"
   >
     <div :class="$style.body">
       <p :id="messageId" :class="$style.message">{{ request?.message }}</p>
       <div :class="$style.actions">
-        <UiButton variant="secondary" type="button" @click="settle(false)">
+        <UiButton
+          v-if="!isAlert"
+          variant="secondary"
+          type="button"
+          @click="settle(false)"
+        >
           {{ request?.cancelLabel || 'Отмена' }}
         </UiButton>
         <UiButton type="button" @click="settle(true)">
-          {{ request?.confirmLabel || 'Подтвердить' }}
+          {{
+            request?.confirmLabel || (isAlert ? 'ОК' : 'Подтвердить')
+          }}
         </UiButton>
       </div>
     </div>
@@ -35,8 +42,14 @@ const titleId = useId()
 const messageId = useId()
 const { request, settle } = useConfirm()
 const confirmOpen = computed(() => Boolean(request.value))
+const isAlert = computed(() => request.value?.variant === 'alert')
 
-const { obscured } = useModalEscape(confirmOpen, () => settle(false))
+const { obscured } = useModalEscape(confirmOpen, () => onClose())
+
+function onClose() {
+  // Esc / backdrop: cancel for confirm, acknowledge for alert.
+  settle(isAlert.value)
+}
 </script>
 
 <style module>

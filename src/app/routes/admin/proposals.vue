@@ -55,9 +55,6 @@
               :item="item"
               :muted-class="$style.muted"
               :text-class="$style.text"
-              :tabs-class="$style.presetTabs"
-              :tab-class="$style.presetTab"
-              :tab-on-class="$style.presetTabOn"
               :buff-list-class="$style.buffList"
               :buff-item-class="$style.buffItem"
               :icon-class="$style.buffIcon"
@@ -111,7 +108,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { sectionLabel as domainSectionLabel } from '@domain'
 import { ProposalSectionPreview, ReviewSummaryModal } from '@/features/superadmin-auth'
-import { usePendingSummary, useSuperadmin } from '@/shared/lib'
+import { useConfirm, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 useHead({ title: 'Админ — предложения | BDO Keep' })
@@ -149,6 +146,7 @@ type Proposal = {
 const route = useRoute()
 const router = useRouter()
 const { isSuperadmin } = useSuperadmin()
+const { alert } = useConfirm()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 
 const authed = ref(false)
@@ -327,7 +325,10 @@ async function approve(item: Proposal) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка одобрения')
+    await alert({
+      title: 'Ошибка',
+      message: msg || 'Ошибка одобрения',
+    })
   } finally {
     acting.value = null
   }
@@ -352,7 +353,10 @@ async function reject(id: string) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка отклонения')
+    await alert({
+      title: 'Ошибка',
+      message: msg || 'Ошибка отклонения',
+    })
   } finally {
     acting.value = null
   }
@@ -526,28 +530,6 @@ onMounted(async () => {
 .videoItem a {
   color: var(--color-gold);
   word-break: break-all;
-}
-
-.presetTabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.presetTab {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.78rem;
-  padding: 0.3rem 0.55rem;
-}
-
-.presetTabOn {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
 }
 
 .buffIcon {

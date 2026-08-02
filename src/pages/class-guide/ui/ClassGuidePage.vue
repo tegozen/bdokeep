@@ -806,8 +806,9 @@ const {
 .gearDraft {
   display: flex;
   flex-direction: column;
-  height: min(32rem, 70vh);
-  min-height: min(32rem, 70vh);
+  /* Crystal board ≈ square + dawn row + draft chrome; 32rem clipped the dawn strip. */
+  height: min(40rem, 82vh);
+  min-height: min(40rem, 82vh);
   overflow: visible;
   padding: 0;
 }
@@ -903,6 +904,8 @@ const {
   width: 22rem;
   max-width: 100%;
   min-width: 0;
+  height: max-content;
+  align-self: start;
   justify-self: start;
 }
 

@@ -1,5 +1,13 @@
 <template>
-  <div :class="[$style.wrap, interactive && $style.interactive, listOnly && $style.listOnly]">
+  <div
+    :class="[
+      $style.wrap,
+      interactive && $style.interactive,
+      listOnly && $style.listOnly,
+      slotsOnly && $style.slotsOnly,
+      fill && $style.fill,
+    ]"
+  >
     <div
       v-if="!listOnly"
       :class="$style.slots"
@@ -41,7 +49,10 @@
       </button>
     </div>
 
-    <div :class="[$style.effects, listOnly && $style.effectsGrow]">
+    <div
+      v-if="!slotsOnly"
+      :class="[$style.effects, (listOnly || fill) && $style.effectsGrow]"
+    >
       <p :class="$style.effectsTitle">Эффекты оружия</p>
       <ul v-if="effectRows.length" :class="$style.effectsList">
         <li v-for="row in effectRows" :key="row.id" :class="$style.effectItem">
@@ -78,12 +89,18 @@ const props = withDefaults(
     interactive?: boolean
     /** Draft/preview: only the effects list, no slot row / fixed height. */
     listOnly?: boolean
+    /** Propose layout: only the slot row (effects rendered separately). */
+    slotsOnly?: boolean
+    /** Stretch effects pane to fill parent height (propose modal panels). */
+    fill?: boolean
   }>(),
   {
     filled: () => ({}),
     selectedId: null,
     interactive: false,
     listOnly: false,
+    slotsOnly: false,
+    fill: false,
   },
 )
 
@@ -198,6 +215,19 @@ function onClear(id: string) {
   width: 100%;
 }
 
+.slotsOnly {
+  width: max-content;
+  max-width: 100%;
+}
+
+.fill {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
 .effects {
   display: flex;
   flex-direction: column;
@@ -217,6 +247,18 @@ function onClear(id: string) {
 
 .effectsGrow .effectsList {
   overflow: visible;
+}
+
+.fill .effectsGrow {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fill .effectsGrow .effectsList {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
 }
 
 .effectsTitle {

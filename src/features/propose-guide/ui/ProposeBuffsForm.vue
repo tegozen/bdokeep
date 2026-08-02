@@ -13,11 +13,42 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <UiPresetTabs
-        v-model="activeBuffPreset"
-        :tabs="guidePresets"
-        aria-label="Пресет забафа"
-      />
+      <div :class="$style.headerTools">
+        <UiPresetTabs
+          v-model="activeBuffPreset"
+          :tabs="guidePresets"
+          aria-label="Пресет забафа"
+        />
+        <ProposeCopyFromPreset
+          :target-preset="activeBuffPreset"
+          :target-has-content="picked.length > 0"
+          :is-empty="isPresetEmpty"
+          size="md"
+          @copy="copyFromPreset"
+        >
+          <template #default="{ preset }">
+            <div :class="$style.copyPreview">
+              <ul v-if="buffByPreset[preset].length" :class="$style.copyList">
+                <li
+                  v-for="(row, i) in buffByPreset[preset]"
+                  :key="`${row.id}-${i}`"
+                  :class="$style.copyItem"
+                >
+                  <img
+                    v-if="row.icon_url"
+                    :src="codexIconSrc(row.icon_url) || undefined"
+                    alt=""
+                    :class="$style.copyIcon"
+                    loading="lazy"
+                  >
+                  <span>{{ row.name_ru }}</span>
+                </li>
+              </ul>
+              <p v-else :class="$style.copyEmpty">Пока пусто</p>
+            </div>
+          </template>
+        </ProposeCopyFromPreset>
+      </div>
     </template>
 
     <p :class="$style.hint">Выберите бафы для забафа класса.</p>
@@ -59,14 +90,17 @@ import { fetchBuffs, type Buff, type GuideBuffRow } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
+  codexIconSrc,
   isCrystalPresetId,
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
+import { cloneItemList } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import { useReorderableList } from '../lib/useReorderableList'
 import CatalogPicker from './CatalogPicker.vue'
+import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 import ReorderableTiles from './ReorderableTiles.vue'
 
@@ -187,6 +221,18 @@ const filteredCatalog = computed(() => {
   return buffs.value.filter((b) => b.name_ru.toLowerCase().includes(q))
 })
 
+function isPresetEmpty(preset: CrystalPresetId) {
+  return buffByPreset.value[preset].length === 0
+}
+
+function copyFromPreset(source: CrystalPresetId) {
+  buffByPreset.value = {
+    ...buffByPreset.value,
+    [activeBuffPreset.value]: cloneItemList(buffByPreset.value[source]),
+  }
+  formError.value = ''
+}
+
 function addItem(item: PickItem) {
   if (picked.value.length >= maxPicked) {
     formError.value = `Максимум ${maxPicked} бафов`
@@ -225,7 +271,10 @@ async function onSubmit() {
     return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'buffs',
-      payload: { buffs: buffsPayload },
+      payload: {
+        buffs: buffsPayload,
+        replaced_presets: [...CRYSTAL_PRESET_IDS],
+      },
       author_label: author.value.trim() || undefined,
       website: honeypot.value,
     })
@@ -234,6 +283,58 @@ async function onSubmit() {
 </script>
 
 <style module>
+.headerTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.copyPreview {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.copyList {
+  margin: 0;
+  list-style: none;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.copyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.4rem 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-ink);
+}
+
+.copyItem:last-child {
+  border-bottom: 0;
+}
+
+.copyIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  background: #000;
+  object-fit: contain;
+}
+
+.copyEmpty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-muted);
+}
+
 .hint {
   margin: 0;
   font-size: 0.92rem;

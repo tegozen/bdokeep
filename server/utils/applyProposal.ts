@@ -3,12 +3,15 @@ import {
   comboModeFromSection,
   isBuffsSection,
   isComboSection,
+  isCrystalPresetId,
   isCrystalsSection,
   isHardeningSection,
+  isMorphPresetId,
   isMorphsSection,
   isRelicsSection,
   isSummarySection,
   isVideosSection,
+  resolveReplacedPresets,
   summaryModeFromSection,
   uiSectionFromProposal,
   videoModeFromSection,
@@ -134,11 +137,24 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
+        const replaced = resolveReplacedPresets(
+          payload.replaced_presets,
+          rows.map((r) => r.preset),
+          isCrystalPresetId,
+        )
+        if (!replaced.length) {
+          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
+        }
 
-        await tx`delete from guide_buffs where guide_id = ${guide.id}`
         await tx`
-          insert into guide_buffs ${tx(rows, 'guide_id', 'buff_id', 'preset', 'sort_order')}
+          delete from guide_buffs
+          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
         `
+        if (rows.length) {
+          await tx`
+            insert into guide_buffs ${tx(rows, 'guide_id', 'buff_id', 'preset', 'sort_order')}
+          `
+        }
       } else if (isCrystalsSection(section)) {
         const raw = Array.isArray(payload.crystals) ? payload.crystals : []
         const rows = raw.map((entry, i) => {
@@ -156,11 +172,24 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
+        const replaced = resolveReplacedPresets(
+          payload.replaced_presets,
+          rows.map((r) => r.preset),
+          isCrystalPresetId,
+        )
+        if (!replaced.length) {
+          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
+        }
 
-        await tx`delete from guide_crystals where guide_id = ${guide.id}`
         await tx`
-          insert into guide_crystals ${tx(rows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
+          delete from guide_crystals
+          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
         `
+        if (rows.length) {
+          await tx`
+            insert into guide_crystals ${tx(rows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
+          `
+        }
       } else if (isRelicsSection(section)) {
         const rawRelics = Array.isArray(payload.relics) ? payload.relics : []
         const rawLights = Array.isArray(payload.lightstones) ? payload.lightstones : []
@@ -197,8 +226,23 @@ export async function applyProposal(
           }
         })
 
-        await tx`delete from guide_relics where guide_id = ${guide.id}`
-        await tx`delete from guide_lightstones where guide_id = ${guide.id}`
+        const replaced = resolveReplacedPresets(
+          payload.replaced_presets,
+          [...relicRows.map((r) => r.preset), ...lightRows.map((r) => r.preset)],
+          isCrystalPresetId,
+        )
+        if (!replaced.length) {
+          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
+        }
+
+        await tx`
+          delete from guide_relics
+          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
+        `
+        await tx`
+          delete from guide_lightstones
+          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
+        `
 
         if (relicRows.length) {
           await tx`
@@ -227,8 +271,19 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
+        const replaced = resolveReplacedPresets(
+          payload.replaced_presets,
+          rows.map((r) => r.preset),
+          isCrystalPresetId,
+        )
+        if (!replaced.length) {
+          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
+        }
 
-        await tx`delete from guide_essence where guide_id = ${guide.id}`
+        await tx`
+          delete from guide_essence
+          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
+        `
         if (rows.length) {
           await tx`
             insert into guide_essence ${tx(rows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
@@ -276,20 +331,33 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
+        const replaced = resolveReplacedPresets(
+          payload.replaced_presets,
+          rows.map((r) => r.preset),
+          isMorphPresetId,
+        )
+        if (!replaced.length) {
+          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
+        }
 
-        await tx`delete from guide_morphs where guide_id = ${guide.id}`
         await tx`
-          insert into guide_morphs ${tx(
-            rows,
-            'guide_id',
-            'preset',
-            'slot_level',
-            'skill_id',
-            'effect_id_1',
-            'effect_id_2',
-            'sort_order',
-          )}
+          delete from guide_morphs
+          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
         `
+        if (rows.length) {
+          await tx`
+            insert into guide_morphs ${tx(
+              rows,
+              'guide_id',
+              'preset',
+              'slot_level',
+              'skill_id',
+              'effect_id_1',
+              'effect_id_2',
+              'sort_order',
+            )}
+          `
+        }
       } else if (isSummarySection(section)) {
         const text = String(payload.text || '').trim()
         if (summaryModeFromSection(section) === 'succession') {

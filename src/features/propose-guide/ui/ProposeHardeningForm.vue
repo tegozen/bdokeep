@@ -14,33 +14,48 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <UiPresetTabs
-        v-model="activePreset"
-        :tabs="guidePresets"
-        aria-label="Пресет закалок"
-      />
+      <div :class="$style.headerTools">
+        <UiPresetTabs
+          v-model="activePreset"
+          :tabs="guidePresets"
+          aria-label="Пресет закалок"
+        />
+        <ProposeCopyFromPreset
+          :target-preset="activePreset"
+          :target-has-content="Object.keys(currentSlots()).length > 0"
+          :is-empty="isPresetEmpty"
+          size="lg"
+          @copy="copyFromPreset"
+        >
+          <template #default="{ preset }">
+            <div :class="$style.copyPreview">
+              <HardeningBoard :filled="filledMapFor(preset)" list-only fill />
+            </div>
+          </template>
+        </ProposeCopyFromPreset>
+      </div>
     </template>
 
     <div :class="$style.workspace">
-      <div :class="$style.left">
-        <HardeningBoard
-          :filled="filledMap"
-          :selected-id="activeSlot"
-          interactive
-          @select="onSelectSlot"
-          @clear="clearSlot"
-        />
-      </div>
+      <HardeningBoard
+        :filled="filledMap"
+        :selected-id="activeSlot"
+        interactive
+        slots-only
+        @select="onSelectSlot"
+        @clear="clearSlot"
+      />
 
-      <div :class="$style.rightMain">
+      <div :class="$style.panels">
+        <HardeningBoard list-only fill :filled="filledMap" />
         <CatalogPicker
           v-model:query="query"
+          fill
           :items="filteredCatalog"
           :pending="catalogPending"
           :error="catalogError"
           :disabled="!activeSlot"
           :catalog-off="!activeSlot"
-          :catalog-class="$style.catalogFixed"
           placeholder="Название камня закалки"
           aria-label="Поиск камня закалки"
           pending-text="Загрузка каталога…"
@@ -73,8 +88,10 @@ import {
 import { UiPresetTabs } from '@/shared/ui'
 import { HardeningBoard, type HardeningFill } from '@/widgets/hardening-board'
 import { submitGuideProposal } from '../api/submitProposal'
+import { cloneItemBoard } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
+import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 
 type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
@@ -171,13 +188,26 @@ function setCurrentSlots(next: Record<string, Item>) {
   presets.value = { ...presets.value, [activePreset.value]: next }
 }
 
-const filledMap = computed(() => {
+function isPresetEmpty(preset: CrystalPresetId) {
+  return Object.keys(presets.value[preset]).length === 0
+}
+
+function filledMapFor(preset: CrystalPresetId): Record<string, HardeningFill> {
   const map: Record<string, HardeningFill> = {}
-  for (const [id, item] of Object.entries(currentSlots())) {
+  for (const [id, item] of Object.entries(presets.value[preset])) {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
-})
+}
+
+function copyFromPreset(source: CrystalPresetId) {
+  setCurrentSlots(cloneItemBoard(presets.value[source]))
+  activeSlot.value = null
+  query.value = ''
+  formError.value = ''
+}
+
+const filledMap = computed(() => filledMapFor(activePreset.value))
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -249,7 +279,10 @@ async function onSubmit() {
     return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'hardening',
-      payload: { hardening: hardeningPayload },
+      payload: {
+        hardening: hardeningPayload,
+        replaced_presets: [...CRYSTAL_PRESET_IDS],
+      },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
     })
@@ -258,40 +291,44 @@ async function onSubmit() {
 </script>
 
 <style module>
+.headerTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.copyPreview {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
 .workspace {
-  display: grid;
-  grid-template-columns: max-content minmax(14rem, 1fr);
-  gap: 0.75rem 1rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   min-height: 0;
   flex: 1;
 }
 
-.left {
-  width: max-content;
-  max-width: 100%;
-}
-
-.rightMain {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+.panels {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(14rem, 1fr);
+  gap: 0.75rem 1rem;
+  align-items: stretch;
+  min-height: 16rem;
+  height: 16rem;
+  max-height: 16rem;
   min-width: 0;
-  min-height: 0;
-}
-
-/* Fixed catalog box — scroll here so the modal height stays put. */
-.catalogFixed {
-  flex: none !important;
-  height: 14rem !important;
-  max-height: 14rem !important;
-  min-height: 14rem !important;
-  overflow: auto !important;
 }
 
 @media (max-width: 820px) {
-  .workspace {
+  .panels {
     grid-template-columns: 1fr;
+    height: auto;
+    max-height: none;
   }
 }
 </style>

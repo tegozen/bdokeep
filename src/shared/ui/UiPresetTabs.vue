@@ -1,6 +1,10 @@
 <template>
   <div
-    :class="[$style.tabs, size === 'md' && $style.tabsMd, autoFit && $style.autoFit]"
+    :class="[
+      $style.tabs,
+      size === 'md' && $style.tabsMd,
+      autoFit && $style.autoFit,
+    ]"
     role="tablist"
     :aria-label="ariaLabel"
   >
@@ -58,38 +62,47 @@ function onSelect(id: T) {
 </script>
 
 <style module>
+/* Segmented control — same as header GuideModePresetTabs. */
 .tabs {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  align-items: stretch;
+  box-sizing: border-box;
+  min-height: 2rem;
   min-width: 0;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, #000 35%, transparent);
+  padding: 2px;
+  gap: 0;
 }
 
 .tabsMd {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
+  width: 100%;
 }
 
 .autoFit {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.35rem;
   width: 100%;
-  min-width: 0;
 }
 
 .tab {
   box-sizing: border-box;
-  min-height: 2rem;
-  border: 1px solid var(--color-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: calc(2rem - 4px);
+  border: 0;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   line-height: 1;
-  padding: 0 0.55rem;
+  padding: 0 0.75rem;
 }
 
 .tabsMd .tab {
@@ -102,13 +115,16 @@ function onSelect(id: T) {
   padding: 0 0.35rem;
 }
 
+.tab:hover:not(:disabled) {
+  color: var(--color-gold-soft);
+}
+
 .tab:disabled {
   cursor: default;
   opacity: 0.55;
 }
 
 .tabOn {
-  border-color: var(--color-border-strong);
   background: var(--color-gold-dim);
   color: var(--color-gold);
 }

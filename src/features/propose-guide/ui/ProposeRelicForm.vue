@@ -15,11 +15,26 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <UiPresetTabs
-        v-model="activePreset"
-        :tabs="guidePresets"
-        aria-label="Пресет реликвий"
-      />
+      <div :class="$style.headerTools">
+        <UiPresetTabs
+          v-model="activePreset"
+          :tabs="guidePresets"
+          aria-label="Пресет реликвий"
+        />
+        <ProposeCopyFromPreset
+          :target-preset="activePreset"
+          :target-has-content="Object.keys(currentSlots()).length > 0"
+          :is-empty="isPresetEmpty"
+          size="lg"
+          @copy="copyFromPreset"
+        >
+          <template #default="{ preset }">
+            <div :class="$style.copyPreview">
+              <RelicBoard :filled="filledMapFor(preset)" lightstones-as-set />
+            </div>
+          </template>
+        </ProposeCopyFromPreset>
+      </div>
     </template>
 
     <div :class="$style.workspace">
@@ -114,9 +129,11 @@ import {
 import { UiPresetTabs } from '@/shared/ui'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { submitGuideProposal } from '../api/submitProposal'
+import { cloneItemBoard } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
 import LightstoneSetPicker from './LightstoneSetPicker.vue'
+import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 
 type CatalogTab = 'relics' | 'sets'
@@ -241,13 +258,26 @@ function setCurrentSlots(next: Record<string, Item>) {
   presets.value = { ...presets.value, [activePreset.value]: next }
 }
 
-const filledMap = computed(() => {
+function isPresetEmpty(preset: CrystalPresetId) {
+  return Object.keys(presets.value[preset]).length === 0
+}
+
+function filledMapFor(preset: CrystalPresetId): Record<string, RelicFill> {
   const map: Record<string, RelicFill> = {}
-  for (const [id, item] of Object.entries(currentSlots())) {
+  for (const [id, item] of Object.entries(presets.value[preset])) {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
-})
+}
+
+function copyFromPreset(source: CrystalPresetId) {
+  setCurrentSlots(cloneItemBoard(presets.value[source]))
+  activeSlot.value = null
+  query.value = ''
+  formError.value = ''
+}
+
+const filledMap = computed(() => filledMapFor(activePreset.value))
 
 const relicSlotSelected = computed(
   () => Boolean(activeSlot.value && isRelicSlotId(activeSlot.value)),
@@ -346,7 +376,11 @@ async function onSubmit() {
     return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'relics',
-      payload: { relics: relicsPayload, lightstones: lightstonesPayload },
+      payload: {
+        relics: relicsPayload,
+        lightstones: lightstonesPayload,
+        replaced_presets: [...CRYSTAL_PRESET_IDS],
+      },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
     })
@@ -355,6 +389,20 @@ async function onSubmit() {
 </script>
 
 <style module>
+.headerTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.copyPreview {
+  width: 100%;
+  max-width: 18rem;
+  height: 100%;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(14rem, 18rem) minmax(14rem, 1fr);

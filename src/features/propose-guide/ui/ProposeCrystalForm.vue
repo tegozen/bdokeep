@@ -14,11 +14,48 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <UiPresetTabs
-        v-model="activePreset"
-        :tabs="crystalPresets"
-        aria-label="Пресет инкрустации"
-      />
+      <div :class="$style.headerTools">
+        <UiPresetTabs
+          v-model="activePreset"
+          :tabs="crystalPresets"
+          aria-label="Пресет инкрустации"
+        />
+        <ProposeCopyFromPreset
+          :target-preset="activePreset"
+          :target-has-content="Object.keys(currentSlots()).length > 0"
+          :is-empty="isPresetEmpty"
+          size="lg"
+          @copy="copyFromPreset"
+        >
+          <template #default="{ preset }">
+            <div :class="$style.copyPreview">
+              <div :class="$style.copyPicked">
+                <p v-if="!pickedListFor(preset).length" :class="$style.pickedEmpty">Пока пусто</p>
+                <ul v-else :class="$style.pickedList">
+                  <li
+                    v-for="row in pickedListFor(preset)"
+                    :key="row.id"
+                    :class="$style.pickedItem"
+                  >
+                    <img
+                      v-if="row.icon_url"
+                      :src="codexIconSrc(row.icon_url) || undefined"
+                      alt=""
+                      :class="$style.pickedIcon"
+                      loading="lazy"
+                    >
+                    <span :class="$style.pickedName">{{ row.name_ru }}</span>
+                    <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+                  </li>
+                </ul>
+              </div>
+              <div :class="$style.copyBoard">
+                <CrystalBoard :filled="filledMapFor(preset)" />
+              </div>
+            </div>
+          </template>
+        </ProposeCopyFromPreset>
+      </div>
     </template>
 
     <div :class="$style.workspace">
@@ -95,8 +132,10 @@ import {
 import { UiPresetTabs } from '@/shared/ui'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
+import { cloneItemBoard } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
+import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 
 type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
@@ -241,18 +280,22 @@ function setCurrentSlots(next: Record<string, Item>) {
   presets.value = { ...presets.value, [activePreset.value]: next }
 }
 
-const filledMap = computed(() => {
+function isPresetEmpty(preset: CrystalPresetId) {
+  return Object.keys(presets.value[preset]).length === 0
+}
+
+function filledMapFor(preset: CrystalPresetId): Record<string, CrystalFill> {
   const map: Record<string, CrystalFill> = {}
-  for (const [id, item] of Object.entries(currentSlots())) {
+  for (const [id, item] of Object.entries(presets.value[preset])) {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
-})
+}
 
-const pickedList = computed(() => {
+function pickedListFor(preset: CrystalPresetId) {
   const counts = new Map<string, { id: string; name_ru: string; icon_url: string | null; count: number }>()
   for (const slot of CRYSTAL_ALL_SLOTS) {
-    const item = currentSlots()[slot.id]
+    const item = presets.value[preset][slot.id]
     if (!item) continue
     const prev = counts.get(item.id)
     if (prev) {
@@ -267,7 +310,18 @@ const pickedList = computed(() => {
     }
   }
   return [...counts.values()]
-})
+}
+
+function copyFromPreset(source: CrystalPresetId) {
+  setCurrentSlots(cloneItemBoard(presets.value[source]))
+  activeSlot.value = null
+  query.value = ''
+  formError.value = ''
+}
+
+const filledMap = computed(() => filledMapFor(activePreset.value))
+
+const pickedList = computed(() => pickedListFor(activePreset.value))
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -367,7 +421,10 @@ async function onSubmit() {
     return submitGuideProposal({
       class_slug: props.classSlug,
       section: 'crystals',
-      payload: { crystals: crystalsPayload },
+      payload: {
+        crystals: crystalsPayload,
+        replaced_presets: [...CRYSTAL_PRESET_IDS],
+      },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
     })
@@ -376,6 +433,40 @@ async function onSubmit() {
 </script>
 
 <style module>
+.headerTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.copyPreview {
+  display: grid;
+  grid-template-columns: 12rem 16rem;
+  gap: 0.75rem;
+  align-items: stretch;
+  width: max-content;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+.copyPicked {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.copyBoard {
+  width: 16rem;
+  max-width: 100%;
+  align-self: start;
+}
+
 .workspace {
   display: grid;
   /* boardSide sizes to content; catalog takes leftover modal width */
@@ -473,6 +564,17 @@ async function onSubmit() {
 
   .boardSide {
     grid-template-columns: 1fr;
+  }
+
+  .copyPreview {
+    grid-template-columns: 1fr;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+
+  .copyBoard {
+    width: min(16rem, 100%);
   }
 }
 </style>

@@ -3,6 +3,14 @@ export type ConfirmOptions = {
   message: string
   confirmLabel?: string
   cancelLabel?: string
+  /** `alert` = single OK button (replaces window.alert). */
+  variant?: 'confirm' | 'alert'
+}
+
+export type AlertOptions = {
+  title?: string
+  message: string
+  confirmLabel?: string
 }
 
 type ConfirmRequest = ConfirmOptions & {
@@ -14,16 +22,32 @@ export function useConfirm() {
 
   function confirm(options: ConfirmOptions): Promise<boolean> {
     return new Promise((resolve) => {
-      request.value = { ...options, resolve }
+      request.value = {
+        variant: 'confirm',
+        ...options,
+        resolve,
+      }
     })
+  }
+
+  /** Custom alert dialog (not window.alert). Always resolves after dismiss. */
+  function alert(options: AlertOptions | string): Promise<void> {
+    const opts = typeof options === 'string' ? { message: options } : options
+    return confirm({
+      variant: 'alert',
+      title: opts.title ?? 'Сообщение',
+      message: opts.message,
+      confirmLabel: opts.confirmLabel ?? 'ОК',
+    }).then(() => undefined)
   }
 
   function settle(value: boolean) {
     const current = request.value
     if (!current) return
     request.value = null
-    current.resolve(value)
+    // Alert always resolves as acknowledged.
+    current.resolve(current.variant === 'alert' ? true : value)
   }
 
-  return { request, confirm, settle }
+  return { request, confirm, alert, settle }
 }

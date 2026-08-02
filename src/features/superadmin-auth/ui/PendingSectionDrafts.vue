@@ -79,9 +79,6 @@
           :item="current"
           :muted-class="$style.muted"
           :text-class="$style.text"
-          :tabs-class="$style.presetTabs"
-          :tab-class="$style.presetTab"
-          :tab-on-class="$style.presetTabOn"
           :buff-list-class="$style.buffList"
           :buff-item-class="$style.buffItem"
           :icon-class="$style.icon"
@@ -128,7 +125,7 @@ import {
 import BorderSparkler from './BorderSparkler.vue'
 import ProposalSectionPreview from './ProposalSectionPreview.vue'
 import ReviewSummaryModal from './ReviewSummaryModal.vue'
-import { formatRuDate } from '@/shared/lib'
+import { formatRuDate, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 const props = defineProps<{
@@ -141,6 +138,7 @@ const emit = defineEmits<{
   'optimistic-restore': [item: PendingProposal]
 }>()
 
+const { alert } = useConfirm()
 const activeIndex = ref(0)
 const acting = ref<string | null>(null)
 const editingId = ref<string | null>(null)
@@ -239,7 +237,10 @@ async function onApprove(item: PendingProposal) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка одобрения')
+    await alert({
+      title: 'Ошибка',
+      message: msg || 'Ошибка одобрения',
+    })
   } finally {
     acting.value = null
   }
@@ -259,7 +260,10 @@ async function onReject(id: string) {
       e && typeof e === 'object' && 'data' in e
         ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
         : ''
-    alert(msg || 'Ошибка отклонения')
+    await alert({
+      title: 'Ошибка',
+      message: msg || 'Ошибка отклонения',
+    })
   } finally {
     acting.value = null
   }
@@ -396,41 +400,6 @@ async function onReject(id: string) {
   font-size: 0.92rem;
   line-height: 1.55;
   white-space: pre-wrap;
-}
-
-.presetTabs {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  box-sizing: border-box;
-  min-height: 2rem;
-  margin-bottom: 0.55rem;
-  border: 1px solid var(--color-border);
-  background: color-mix(in srgb, #000 35%, transparent);
-  padding: 2px;
-}
-
-.presetTab {
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-  line-height: 1;
-  padding: 0 0.75rem;
-}
-
-.presetTab:hover {
-  color: var(--color-gold-soft);
-}
-
-.presetTabOn {
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
 }
 
 .buffList {
