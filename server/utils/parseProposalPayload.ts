@@ -447,15 +447,47 @@ export async function parseAndValidatePayload(
     }
 
     const skillIds = [...new Set(morphs.map((m) => m.skill_id))]
-    const allowedSkills = await idsExist(sql, 'skills', skillIds, { classSlug })
-    if (skillIds.some((id) => !allowedSkills.has(id))) {
+    const skillRows = await sql`
+      select id, supports_addon, addon_effect_keys
+      from skills
+      where class_slug = ${classSlug} and id = any(${skillIds}::uuid[])
+    `
+    const skillById = new Map(
+      skillRows.map((r) => [
+        String(r.id),
+        {
+          supports_addon: Boolean(r.supports_addon),
+          keys: Array.isArray(r.addon_effect_keys)
+            ? (r.addon_effect_keys as string[])
+            : [],
+        },
+      ]),
+    )
+    if (skillIds.some((id) => !skillById.has(id) || !skillById.get(id)!.supports_addon)) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный скилл класса' })
     }
 
     const effectIds = [...new Set(morphs.flatMap((m) => m.effect_ids))]
-    const allowedFx = await idsExist(sql, 'skill_addon_effects', effectIds)
-    if (effectIds.some((id) => !allowedFx.has(id))) {
+    const fxRows = await sql`
+      select id, key from skill_addon_effects where id = any(${effectIds}::uuid[])
+    `
+    const fxKeyById = new Map(fxRows.map((r) => [String(r.id), String(r.key)]))
+    if (effectIds.some((id) => !fxKeyById.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный эффект морфа' })
+    }
+
+    for (const m of morphs) {
+      const skill = skillById.get(m.skill_id)!
+      const allow = new Set(skill.keys)
+      for (const eid of m.effect_ids) {
+        const key = fxKeyById.get(eid)!
+        if (allow.size && !allow.has(key)) {
+          throw createError({
+            statusCode: 400,
+            statusMessage: 'Эффект недоступен для выбранного скилла',
+          })
+        }
+      }
     }
 
     return { payload: { morphs }, verifiedVideos: null }

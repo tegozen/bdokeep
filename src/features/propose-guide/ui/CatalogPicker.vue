@@ -1,5 +1,5 @@
 <template>
-  <div :class="$style.root">
+  <div :class="[$style.root, (fill || tall) && $style.rootGrow]">
     <slot name="tabs" />
 
     <input
@@ -33,7 +33,7 @@
         >
           <img
             v-if="item.icon_url"
-            :src="item.icon_url"
+            :src="codexIconSrc(item.icon_url) || item.icon_url"
             alt=""
             :class="$style.icon"
             loading="lazy"
@@ -49,6 +49,8 @@
 </template>
 
 <script setup lang="ts" generic="T extends { id: string; name_ru: string; icon_url?: string | null }">
+import { codexIconSrc } from '@/shared/lib'
+
 const props = withDefaults(
   defineProps<{
     items: readonly T[]
@@ -59,7 +61,7 @@ const props = withDefaults(
     catalogOff?: boolean
     /** Grow to fill board-side panels instead of fixed 16rem height. */
     fill?: boolean
-    /** Taller catalog for crystal board (min(28rem, 48vh)). */
+    /** Same stretch behavior as fill (legacy alias for crystal board). */
     tall?: boolean
     placeholder?: string
     ariaLabel?: string
@@ -114,10 +116,17 @@ function onQuery(e: Event) {
   overflow: hidden;
 }
 
+.rootGrow {
+  flex: 1 1 0;
+  align-self: stretch;
+  min-height: 0;
+}
+
 .input {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  flex-shrink: 0;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-ink);
@@ -137,18 +146,17 @@ function onQuery(e: Event) {
 }
 
 .catalogFill {
-  flex: 1;
-  height: 22rem;
-  max-height: 22rem;
-  min-height: 10rem;
+  flex: 1 1 0;
+  height: auto;
+  max-height: none;
+  min-height: 0;
 }
 
 .catalogTall {
-  flex: 1;
-  /* Fixed box — filtering must not shrink the panel (avoids board ResizeObserver thrash). */
-  height: min(28rem, 48vh);
-  max-height: min(28rem, 48vh);
-  min-height: 10rem;
+  flex: 1 1 0;
+  height: auto;
+  max-height: none;
+  min-height: 0;
 }
 
 .catalogOff {

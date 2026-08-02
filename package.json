@@ -12,8 +12,8 @@
     "images:portraits:card": "tsx scripts/optimize-class-portraits.ts",
     "images:codex": "tsx --env-file=.env scripts/download-codex-icons.ts",
     "codex:refresh": "tsx scripts/build-codex-seed.ts",
-    "docker:up": "docker compose --env-file .env up -d",
-    "docker:up:dev": "docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up -d",
+    "garmoth:scrape": "tsx scripts/scrape-garmoth-catalog.ts",
+    "docker:up": "docker compose --env-file .env up -d --build",
     "docker:down": "docker compose --env-file .env down"
   },
   "dependencies": {

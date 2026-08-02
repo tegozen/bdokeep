@@ -1,4 +1,5 @@
 import type postgres from 'postgres'
+import { withCodexIconCacheBust } from '@/shared/lib/codexIcon'
 import { UUID_RE } from '../proposals'
 
 type Sql = ReturnType<typeof postgres>
@@ -27,23 +28,25 @@ function uniqUuids(ids: unknown, max = MAX_RESOLVE_IDS): string[] {
 }
 
 export async function listBuffs(sql: Sql) {
-  return sql`
+  const rows = await sql`
     select id, name_ru, icon_url, description
     from buffs
     order by name_ru asc
   `
+  return withCodexIconCacheBust(rows)
 }
 
 export async function listItemsByType(
   sql: Sql,
   itemType: 'crystal' | 'relic' | 'lightstone' | 'essence',
 ) {
-  return sql`
-    select id, name_ru, icon_url, item_type
+  const rows = await sql`
+    select id, name_ru, icon_url, item_type, raw
     from items
     where item_type = ${itemType}
-    order by name_ru asc
+    order by coalesce((raw->>'sorting')::int, 0) desc, name_ru asc
   `
+  return withCodexIconCacheBust(rows)
 }
 
 export async function listSkillAddonEffects(sql: Sql) {
@@ -55,12 +58,13 @@ export async function listSkillAddonEffects(sql: Sql) {
 }
 
 export async function listSkillsForClass(sql: Sql, classSlug: string) {
-  return sql`
-    select id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier
+  const rows = await sql`
+    select id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier, addon_effect_keys
     from skills
     where class_slug = ${classSlug}
     order by name_ru asc
   `
+  return withCodexIconCacheBust(rows)
 }
 
 /** Admin-only batch resolve by id allowlist. */
@@ -73,7 +77,7 @@ export async function resolveCatalog(sql: Sql, body: CatalogResolveBody) {
   const [skills, buffs, items, skill_addon_effects] = await Promise.all([
     skillIds.length
       ? sql`
-          select id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier
+          select id, name_ru, icon_url, class_slug, skill_type, supports_addon, addon_tier, addon_effect_keys
           from skills
           where id = any(${skillIds}::uuid[])
         `
@@ -87,7 +91,7 @@ export async function resolveCatalog(sql: Sql, body: CatalogResolveBody) {
       : Promise.resolve([]),
     itemIds.length
       ? sql`
-          select id, name_ru, icon_url, item_type
+          select id, name_ru, icon_url, item_type, raw
           from items
           where id = any(${itemIds}::uuid[])
         `
@@ -101,7 +105,12 @@ export async function resolveCatalog(sql: Sql, body: CatalogResolveBody) {
       : Promise.resolve([]),
   ])
 
-  return { skills, buffs, items, skill_addon_effects }
+  return {
+    skills: withCodexIconCacheBust(skills),
+    buffs: withCodexIconCacheBust(buffs),
+    items: withCodexIconCacheBust(items),
+    skill_addon_effects,
+  }
 }
 
 export async function idsExist(

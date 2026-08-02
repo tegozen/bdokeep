@@ -48,6 +48,8 @@ export type Skill = {
   skill_type?: string | null
   supports_addon?: boolean | null
   addon_tier?: number | null
+  /** Garmoth-allowed effect keys for this skill (empty = unknown / not morphable). */
+  addon_effect_keys?: string[] | null
 }
 
 export type SkillAddonEffect = {
@@ -71,6 +73,12 @@ export type Item = {
   name_ru: string
   icon_url: string | null
   item_type: string
+  raw?: {
+    group?: string | null
+    rarity?: number | null
+    sorting?: number | null
+    source?: string | null
+  } | null
 }
 
 export type GuideComboStepRow = {

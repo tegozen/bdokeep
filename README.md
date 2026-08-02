@@ -56,7 +56,7 @@
 
 ### Ops / безопасность
 
-- Два сервиса: `web` (сайт + API) и `db` (Postgres)
+- Три сервиса: `web` (сайт + API), `migrate` (авто-SQL), `db` (Postgres)
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
 - Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
 - Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
@@ -67,7 +67,8 @@
 | Сервис | Зачем | Порт |
 |--------|--------|------|
 | `web` | сайт Nuxt + Nitro API | `HOST_PORT` (3000) |
-| `db` | Postgres | нет (внутренняя сеть); для `npm run dev` — `docker:up:dev` → `127.0.0.1:POSTGRES_PORT` |
+| `migrate` | накат `db/migrations` при up | — |
+| `db` | Postgres | нет (внутренняя сеть) |
 
 ## Быстрый старт
 
@@ -77,50 +78,37 @@ cp .env.example .env
 # ADMIN_PASSWORD, ADMIN_SESSION_SECRET (openssl rand -base64 48)
 # ADMIN_PASSWORD в production не может быть changeme / password / admin / 123456
 npm install
-npm run docker:up        # прод-подобно: db без портов на хосте
-# npm run docker:up:dev  # локальная разработка: Postgres на 127.0.0.1
-npm run dev              # нужен docker:up:dev + DATABASE_URL на 127.0.0.1
-# или сайт целиком из compose: http://127.0.0.1:3000
+npm run docker:up        # db + migrate + web
+# или: docker compose --env-file .env up -d --build
 ```
 
 Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля).
 
 SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты на хосте не нужны).
 
-Если БД уже была создана со старым общим паролем, обнови роль и policy вручную:
+Миграции накатываются **сами** сервисом `migrate` при каждом `docker compose up` (таблица `schema_migrations`). Новые файлы в `db/migrations/NNN_*.sql` / `.sh` подхватятся на следующем up — вручную `psql -f` не нужен.
 
-```bash
-docker compose exec db psql -U postgres -d bdokeep -c "alter role bdokeep_app with password 'YOUR_APP_PASSWORD';"
-docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/023_guide_morphs_rls.sql
-```
+Если БД уже была создана со старым общим паролем, достаточно поправить `BDOKEEP_APP_PASSWORD` в `.env` и снова `docker compose up -d` — `migrate` синхронизирует роль `bdokeep_app`.
 
-Для уже существующей БД без колонки тира / section_updates / закалок:
+## Данные и каталоги
 
-```bash
-docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/024_class_tier.sql
-docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/025_section_updates.sql
-docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/026_backfill_section_updates.sql
-docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/027_dual_mode_summary_videos_tier.sql
-docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/028_hardening.sql
-docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/029_seed_hardening.sql
-```
-
-Затем выставь тот же пароль в `BDOKEEP_APP_PASSWORD` / `DATABASE_URL` и перезапусти `web`.
-
-## Данные при старте БД
-
-Миграции `db/migrations/` монтируются в `docker-entrypoint-initdb.d` при первом создании volume:
+Миграции `db/migrations/` применяются сервисом `migrate` (не через `docker-entrypoint-initdb.d`):
 
 - классы + пустые гайды
 - сиды скиллов, бафов, кристаллов, реликвий/лайтстоунов, эффектов аддонов
 - схема proposals, пресеты, морфы, RLS
+- обновления каталогов (030+)
 
 Картинки классов: `public/classes/<slug>/{portrait.png,icon.svg}`.
-Иконки каталога (скиллы/бафы/предметы): `public/codex/…` (зеркало bdocodex). После обновления сидов:
+Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (зеркало bdocodex; в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет.
+
+Каталоги кристаллов / забафа / морфов / скиллов обновляются с [Garmoth](https://garmoth.com) (`region=ru&lang=ru` — официальные RU-строки в поле `lang`; skill-addons даёт карту скилл→доступные морфы):
 
 ```bash
-npm run images:codex   # Playwright → public/codex + rewrite DB/SQL
-docker compose up -d --build web
+npm run garmoth:scrape              # dump API → merge → data/codex + SQL seeds
+# npx tsx scripts/scrape-garmoth-catalog.ts --merge-only
+npm run images:codex                # Playwright → public/codex
+docker compose --env-file .env up -d --build   # migrate подхватит новые NNN_*.sql
 ```
 
 ## Nginx (внешний)

@@ -92,11 +92,39 @@ export const CRYSTAL_TABS: ReadonlyArray<{ id: CrystalTabId; label: string }> = 
   { id: 'special', label: 'Особые' },
 ]
 
-export function crystalCatalogTab(name: string): CrystalTabId {
-  if (/^(Абсолют|Исток|Суть|Мощь|Предел):/i.test(name)) return 'upgraded'
+/** Map Garmoth `group` → catalog tab (fallback to name heuristics). */
+const GARMOTH_GROUP_TAB: Record<string, CrystalTabId> = {
+  kharazad: 'upgraded',
+  'ultimate-gervish': 'upgraded',
+  'ultimate-macalod': 'upgraded',
+  'ultimate-hoom': 'upgraded',
+  'dim-magic': 'basic',
+  unlimited: 'special',
+  'ancient-spirit': 'ancient',
+  resist: 'ancient',
+  'resist-ii': 'ancient',
+  destruction: 'dark',
+  bitterness: 'dark',
+  decimation: 'dark',
+  ahkrad: 'dark',
+  'increased-extra-damage': 'special',
+  'ignore-all-resist': 'special',
+  spirit: 'special',
+  primodial: 'special',
+  aos: 'special',
+  sovereign: 'special',
+  edania: 'special',
+}
+
+export function crystalCatalogTab(
+  name: string,
+  group?: string | null,
+): CrystalTabId {
+  if (group && GARMOTH_GROUP_TAB[group]) return GARMOTH_GROUP_TAB[group]
+  if (/^(Абсолют|Исток|Суть|Мощь|Предел):|речного рассвета/i.test(name)) return 'upgraded'
   if (/Древний магический/i.test(name)) return 'ancient'
   if (/бесконечности/i.test(name)) return 'infinite'
-  if (/тьмы/i.test(name)) return 'dark'
+  if (/тьмы|Тьмы|Void|void|Ah'krad|Ах'?крад/i.test(name)) return 'dark'
   if (/^Магический кристалл/i.test(name)) return 'basic'
   return 'special'
 }

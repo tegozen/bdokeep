@@ -3,7 +3,7 @@
 # No login authenticator / PostgREST — app uses bdokeep_app via DATABASE_URL.
 set -euo pipefail
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+psql -v ON_ERROR_STOP=1 ${PGHOST:+--host="$PGHOST"} --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
   do \$\$
   begin
     if not exists (select from pg_roles where rolname = 'anon') then

@@ -14,6 +14,16 @@
 - Setup for the editor lives in [`src/shared/ui/mdEditorSetup.client.ts`](src/shared/ui/mdEditorSetup.client.ts).
 - Icons/fonts already self-hosted (`@fontsource/*`, `public/`). Keep it that way.
 
+## No CDN for catalog images (hard rule)
+
+**Never hotlink skill/buff/item icons from bdocodex, Garmoth, or other CDNs in the browser.**
+
+- DB `icon_url` and UI `<img src>` must be same-origin: `/codex/…` (catalog) or `/classes/…` (class art).
+- Mirror files into `public/codex/` via `npm run images:codex` (Playwright downloads from bdocodex **once**, offline thereafter).
+- Scrapers (`garmoth:scrape`) must write local `/codex/items/…` paths, never `https://…`.
+- CSP `img-src 'self' data: blob:` blocks accidental remote images. YouTube posters use same-origin `/api/youtube/thumb/…`.
+- Helper: [`codexIconSrc`](src/shared/lib/codexIcon.ts) — rejects remote URLs; cache-busts `/codex/`.
+
 ## Related
 
 - `UiMarkdownEditor` must call `ensureMdEditorConfigured()` before mounting `MdEditor`.

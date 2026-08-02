@@ -241,7 +241,8 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
           'class_slug', s.class_slug,
           'skill_type', s.skill_type,
           'supports_addon', s.supports_addon,
-          'addon_tier', s.addon_tier
+          'addon_tier', s.addon_tier,
+          'addon_effect_keys', s.addon_effect_keys
         ) end as skills,
         case when e1.id is null then null else json_build_object(
           'id', e1.id,

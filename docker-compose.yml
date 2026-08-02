@@ -1,5 +1,5 @@
 # BDO Keep — один compose, минимум сервисов
-# db (Postgres) + web (Nuxt / Nitro API)
+# db (Postgres) + migrate (авто-SQL) + web (Nuxt / Nitro API)
 # Studio/Kong/Auth/Realtime/Storage/PostgREST НЕ нужны
 
 name: bdokeep
@@ -12,46 +12,38 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
-      # App role password (Nitro). Must differ from superuser in production setups.
+      # Used by migrate → 022_bdokeep_app.sh (and available if someone execs into db).
       BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./db/migrations/000_roles.sh:/docker-entrypoint-initdb.d/00-roles.sh:ro
-      - ./db/migrations/001_init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
-      - ./db/migrations/002_seed_skills.sql:/docker-entrypoint-initdb.d/20-skills.sql:ro
-      - ./db/migrations/004_combo_steps.sql:/docker-entrypoint-initdb.d/40-combo-steps.sql:ro
-      - ./db/migrations/005_proposals.sql:/docker-entrypoint-initdb.d/50-proposals.sql:ro
-      - ./db/migrations/006_drop_pvp_role.sql:/docker-entrypoint-initdb.d/60-drop-pvp-role.sql:ro
-      - ./db/migrations/007_buffs_proposals.sql:/docker-entrypoint-initdb.d/70-buffs-proposals.sql:ro
-      - ./db/migrations/008_seed_buffs.sql:/docker-entrypoint-initdb.d/80-seed-buffs.sql:ro
-      - ./db/migrations/009_drop_guide_skills.sql:/docker-entrypoint-initdb.d/90-drop-guide-skills.sql:ro
-      - ./db/migrations/010_seed_crystals.sql:/docker-entrypoint-initdb.d/91-seed-crystals.sql:ro
-      - ./db/migrations/011_crystals_proposals.sql:/docker-entrypoint-initdb.d/92-crystals-proposals.sql:ro
-      - ./db/migrations/012_crystal_presets.sql:/docker-entrypoint-initdb.d/93-crystal-presets.sql:ro
-      - ./db/migrations/013_crystal_preset_sub.sql:/docker-entrypoint-initdb.d/94-crystal-preset-sub.sql:ro
-      - ./db/migrations/014_relic_presets.sql:/docker-entrypoint-initdb.d/95-relic-presets.sql:ro
-      - ./db/migrations/015_seed_relics_lightstones.sql:/docker-entrypoint-initdb.d/96-seed-relics.sql:ro
-      - ./db/migrations/016_buff_presets.sql:/docker-entrypoint-initdb.d/97-buff-presets.sql:ro
-      - ./db/migrations/017_videos_proposals.sql:/docker-entrypoint-initdb.d/98-videos.sql:ro
-      - ./db/migrations/018_morphs.sql:/docker-entrypoint-initdb.d/99-morphs.sql:ro
-      - ./db/migrations/019_seed_skill_addon_effects.sql:/docker-entrypoint-initdb.d/99b-seed-addon-effects.sql:ro
-      - ./db/migrations/020_morph_grants.sql:/docker-entrypoint-initdb.d/99c-morph-grants.sql:ro
-      - ./db/migrations/021_morph_presets_guide.sql:/docker-entrypoint-initdb.d/99d-morph-presets.sql:ro
-      - ./db/migrations/022_bdokeep_app.sh:/docker-entrypoint-initdb.d/99e-bdokeep-app.sh:ro
-      - ./db/migrations/023_guide_morphs_rls.sql:/docker-entrypoint-initdb.d/99f-guide-morphs-rls.sql:ro
-      - ./db/migrations/024_class_tier.sql:/docker-entrypoint-initdb.d/99g-class-tier.sql:ro
-      - ./db/migrations/025_section_updates.sql:/docker-entrypoint-initdb.d/99h-section-updates.sql:ro
-      - ./db/migrations/026_backfill_section_updates.sql:/docker-entrypoint-initdb.d/99i-backfill-section-updates.sql:ro
-      - ./db/migrations/027_dual_mode_summary_videos_tier.sql:/docker-entrypoint-initdb.d/99j-dual-mode-summary-videos-tier.sql:ro
-      - ./db/migrations/028_hardening.sql:/docker-entrypoint-initdb.d/99k-hardening.sql:ro
-      - ./db/migrations/029_seed_hardening.sql:/docker-entrypoint-initdb.d/99l-seed-hardening.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s
       timeout: 5s
       retries: 20
     # Порты не публикуем: Nitro ходит на db:5432 по Docker-сети.
-    # Для npm run dev на хосте — docker compose -f docker-compose.yml -f docker-compose.dev.yml
+
+  migrate:
+    image: postgres:16-alpine
+    restart: 'no'
+    # Share db network so we can use 127.0.0.1 trust (volume password may
+    # differ from current .env POSTGRES_PASSWORD; TCP from other containers uses scram).
+    network_mode: service:db
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: 127.0.0.1
+      POSTGRES_USER: postgres
+      # Unused for local trust; kept for psql scripts that export PGPASSWORD.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
+      BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
+      MIG_DIR: /migrations
+    volumes:
+      - ./db/migrations:/migrations:ro
+      - ./db/migrate.sh:/migrate.sh:ro
+    entrypoint: ['/bin/sh', '/migrate.sh']
 
   web:
     build:
@@ -61,6 +53,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       HOST: 0.0.0.0
       PORT: 3000

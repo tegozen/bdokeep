@@ -21,7 +21,7 @@
       >
         <img
           v-if="item.icon_url"
-          :src="item.icon_url"
+          :src="codexIconSrc(item.icon_url) || item.icon_url"
           alt=""
           :class="$style.tileIcon"
           draggable="false"
@@ -45,6 +45,8 @@
 </template>
 
 <script setup lang="ts">
+import { codexIconSrc } from '@/shared/lib'
+
 withDefaults(
   defineProps<{
     items: ReadonlyArray<{ id: string; name_ru: string; icon_url?: string | null }>

@@ -22,13 +22,6 @@
 
     <p :class="$style.hint">Выберите бафы для забафа класса.</p>
 
-    <UiPresetTabs
-      v-model="buffTab"
-      :tabs="buffTabs"
-      aria-label="Категория бафов"
-      auto-fit
-    />
-
     <CatalogPicker
       v-model:query="query"
       :items="filteredCatalog"
@@ -38,9 +31,7 @@
       pending-text="Загрузка бафов…"
       error-text="Не удалось загрузить бафы."
       :show-empty="!catalogPending && !catalogError && !filteredCatalog.length"
-      :empty-text="
-        query ? 'Нет бафов по поиску.' : 'Нет бафов в этой вкладке.'
-      "
+      :empty-text="query ? 'Нет бафов по поиску.' : 'Нет бафов.'"
       @pick="addItem"
     />
 
@@ -80,15 +71,7 @@ import ProposeModalShell from './ProposeModalShell.vue'
 import ReorderableTiles from './ReorderableTiles.vue'
 
 type PickItem = { id: string; name_ru: string; icon_url: string | null }
-type BuffTabId = 'camp' | 'cron' | 'balm' | 'elixir'
 type BuffPresetBoards = Record<CrystalPresetId, PickItem[]>
-
-const BUFF_TABS: { id: BuffTabId; label: string }[] = [
-  { id: 'camp', label: 'Лагерь' },
-  { id: 'cron', label: 'Блюдо Крон' },
-  { id: 'balm', label: 'Бальзамы' },
-  { id: 'elixir', label: 'Эликсиры' },
-]
 
 const MAX = 20
 
@@ -109,8 +92,6 @@ const props = withDefaults(
 )
 
 const query = ref('')
-const buffTab = ref<BuffTabId>('camp')
-const buffTabs = BUFF_TABS
 const guidePresets = CRYSTAL_PRESETS
 const activeBuffPreset = ref<CrystalPresetId>('t1')
 const buffByPreset = ref<BuffPresetBoards>(emptyBuffPresets())
@@ -194,7 +175,6 @@ const {
   },
   onReset: () => {
     query.value = ''
-    buffTab.value = 'camp'
     activeBuffPreset.value = 't1'
     buffByPreset.value = emptyBuffPresets()
     resetDrag()
@@ -203,11 +183,8 @@ const {
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
-  return buffs.value.filter((b) => {
-    if (b.description !== buffTab.value) return false
-    if (!q) return true
-    return b.name_ru.toLowerCase().includes(q)
-  })
+  if (!q) return buffs.value
+  return buffs.value.filter((b) => b.name_ru.toLowerCase().includes(q))
 })
 
 function addItem(item: PickItem) {

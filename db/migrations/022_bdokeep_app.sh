@@ -4,7 +4,7 @@ set -euo pipefail
 
 : "${BDOKEEP_APP_PASSWORD:?BDOKEEP_APP_PASSWORD must be set for bdokeep_app role}"
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+psql -v ON_ERROR_STOP=1 ${PGHOST:+--host="$PGHOST"} --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
   do \$\$
   begin
     if not exists (select from pg_roles where rolname = 'bdokeep_app') then

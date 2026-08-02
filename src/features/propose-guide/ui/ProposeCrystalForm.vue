@@ -54,17 +54,9 @@
       </div>
 
       <div ref="rightMainEl" :class="$style.rightMain">
-        <UiPresetTabs
-          v-model="crystalTab"
-          :tabs="crystalTabs"
-          aria-label="Категория кристаллов"
-          :disabled="!tabsEnabled"
-          auto-fit
-        />
-
         <CatalogPicker
           v-model:query="query"
-          tall
+          fill
           :items="filteredCatalog"
           :pending="catalogPending"
           :error="catalogError"
@@ -92,15 +84,12 @@ import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
   CRYSTAL_PRESET_IDS,
-  CRYSTAL_TABS,
-  crystalCatalogTab,
   isCenterSlotId,
   isCrystalPresetId,
   isDawnCrystalName,
   isDawnSlotId,
   isSpiritCrystalName,
   type CrystalPresetId,
-  type CrystalTabId,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
@@ -128,8 +117,6 @@ const props = withDefaults(
 )
 
 const query = ref('')
-const crystalTab = ref<CrystalTabId>('basic')
-const crystalTabs = CRYSTAL_TABS
 const crystalPresets = CRYSTAL_PRESETS
 const activePreset = ref<CrystalPresetId>('t1')
 const activeSlot = ref<string | null>(null)
@@ -281,12 +268,6 @@ const pickedList = computed(() => {
   return [...counts.values()]
 })
 
-const tabsEnabled = computed(() => {
-  const slot = activeSlot.value
-  if (!slot) return true
-  return !isDawnSlotId(slot) && !isCenterSlotId(slot)
-})
-
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
   const slot = activeSlot.value
@@ -300,8 +281,6 @@ const filteredCatalog = computed(() => {
     } else if (centerSlot) {
       if (!isSpirit) return false
     } else if (isDawn || isSpirit) {
-      return false
-    } else if (crystalCatalogTab(c.name_ru) !== crystalTab.value) {
       return false
     }
     if (!q) return true
@@ -482,6 +461,7 @@ async function onSubmit() {
   width: 100%;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 

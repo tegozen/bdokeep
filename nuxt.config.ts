@@ -134,7 +134,8 @@ export default defineNuxtConfig({
     },
     '/codex/**': {
       headers: {
-        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+        // Keep modest — long max-age on 404s poisoned browsers when icons were missing.
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
       },
     },
     '/android-chrome-*.png': {
@@ -159,15 +160,14 @@ export default defineNuxtConfig({
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy':
           'camera=(), microphone=(), geolocation=(), compute-pressure=*',
-        // script-src/style-src 'unsafe-inline': required by Nuxt/Vue hydration + Tailwind.
-        // Markdown: server sanitizeMarkdown + client XSSPlugin whitelist (no mermaid/katex/echarts).
-        // img-src https: needed for catalog/class icons (BDO CDN). Markdown XSSPlugin strips remote <img>.
+        // Catalog/class icons are self-hosted under /codex and /classes (never hotlink CDNs).
+        // YouTube thumbs go through same-origin /api/youtube/thumb/*. Markdown strips <img>.
         'Content-Security-Policy': [
           "default-src 'self'",
           "script-src 'self' 'unsafe-inline'",
           "style-src 'self' 'unsafe-inline'",
           "font-src 'self' data:",
-          "img-src 'self' data: blob: https:",
+          "img-src 'self' data: blob:",
           "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
           "connect-src 'self' http://127.0.0.1:* http://localhost:*",
           "worker-src 'self'",

@@ -1,4 +1,10 @@
 export {
+  CODEX_ICON_CACHE_V,
+  codexIconSrc,
+  isLocalAppImageUrl,
+  withCodexIconCacheBust,
+} from './codexIcon'
+export {
   sanitizeYoutubeUrl,
   youtubeEmbedUrl,
   youtubeVideoId,
@@ -96,10 +102,14 @@ export {
   emptyMorphPresetBoards,
   isMorphPresetId,
   isMorphSlotLevel,
+  morphEffectSlotId,
   morphGuidePreset,
   morphPresetFrom,
   morphPresetSkillMode,
+  morphSkillSlotId,
+  parseMorphBoardSlot,
   resolveAddonLabel,
+  type MorphEffectIndex,
   type MorphPresetId,
   type MorphSlotLevel,
 } from './morphPresets'

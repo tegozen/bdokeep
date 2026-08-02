@@ -26,7 +26,7 @@
       <div :class="$style.left">
         <MorphBoard
           :filled="filledMap"
-          :selected-level="activeLevel"
+          :selected-id="activeSlot"
           interactive
           @select="onSelectSlot"
           @clear="clearSlot"
@@ -38,6 +38,7 @@
           v-model="catalogTab"
           :tabs="catalogTabs"
           aria-label="Каталог"
+          size="sm"
         >
           <template #tab="{ tab }">
             <template v-if="tab.id === 'effects'">
@@ -55,11 +56,11 @@
           :items="filteredSkills"
           :pending="catalogPending"
           :error="catalogError"
-          :disabled="!activeLevel"
-          :catalog-off="!activeLevel"
+          :disabled="!activeLevel || activeKind !== 'skill'"
+          :catalog-off="!activeLevel || activeKind !== 'skill'"
           placeholder="Название скилла"
           pending-text="Загрузка…"
-          :show-empty="Boolean(activeLevel) && !catalogPending && !filteredSkills.length"
+          :show-empty="Boolean(activeLevel) && activeKind === 'skill' && !catalogPending && !filteredSkills.length"
           :empty-text="`Ничего не найдено${query ? ' по поиску' : ''}.`"
           @pick="assignSkill"
         />
@@ -75,15 +76,18 @@
           :catalog-off="!activeLevel || !activeSlotSkill"
           placeholder="Эффект"
           pending-text="Загрузка…"
-          :show-empty="Boolean(activeLevel) && !catalogPending && !filteredEffects.length"
+          :show-empty="Boolean(activeLevel) && Boolean(activeSlotSkill) && !catalogPending && !filteredEffects.length"
           :empty-text="`Ничего не найдено${query ? ' по поиску' : ''}.`"
           :is-picked="(fx) => isEffectPicked(fx.id)"
-          :is-disabled="(fx) => isEffectPicked(fx.id) || effectCount >= 2"
+          :is-disabled="(fx) => isEffectDisabled(fx.id)"
           :item-label="effectLabel"
           @pick="assignEffect"
         />
 
-        <p v-if="!activeLevel" :class="$style.muted">Выберите слот слева.</p>
+        <p v-if="!activeSlot" :class="$style.muted">Выберите слот слева.</p>
+        <p v-else-if="activeKind === 'effect' && !activeSlotSkill" :class="$style.muted">
+          Сначала выберите скилл в этом уровне.
+        </p>
       </div>
     </div>
   </ProposeModalShell>
@@ -108,9 +112,11 @@ import {
   isMorphSlotLevel,
   morphGuidePreset,
   morphPresetFrom,
+  parseMorphBoardSlot,
   resolveAddonLabel,
   useGuideSpecMode,
   type CrystalPresetId,
+  type MorphEffectIndex,
   type MorphPresetId,
   type MorphSlotLevel,
 } from '@/shared/lib'
@@ -121,12 +127,22 @@ import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 
+type EffectPair = [string | null, string | null]
+
 type SlotState = {
   skill: Skill | null
-  effectIds: string[]
+  effectIds: EffectPair
 }
 
 type PresetBoards = Record<MorphPresetId, Partial<Record<MorphSlotLevel, SlotState>>>
+
+function emptyEffects(): EffectPair {
+  return [null, null]
+}
+
+function effectCountOf(pair: EffectPair): number {
+  return (pair[0] ? 1 : 0) + (pair[1] ? 1 : 0)
+}
 
 function emptyPresets(): PresetBoards {
   return emptyMorphPresetBoards()
@@ -151,12 +167,20 @@ const catalogTab = ref<'skills' | 'effects'>('skills')
 const guidePresets = CRYSTAL_PRESETS
 const activeGuidePreset = ref<CrystalPresetId>('t1')
 const activePreset = computed(() => morphPresetFrom(specMode.value, activeGuidePreset.value))
-const activeLevel = ref<MorphSlotLevel | null>(null)
+/** Relic-style slot id: `56` / `56_a` / `56_b`. */
+const activeSlot = ref<string | null>(null)
 const presets = ref<PresetBoards>(emptyPresets())
 const skills = ref<Skill[]>([])
 const effects = ref<SkillAddonEffect[]>([])
 const catalogPending = ref(false)
 const catalogError = ref(false)
+
+const activeParsed = computed(() =>
+  activeSlot.value ? parseMorphBoardSlot(activeSlot.value) : null,
+)
+const activeLevel = computed(() => activeParsed.value?.level ?? null)
+const activeKind = computed(() => activeParsed.value?.kind ?? null)
+const activeEffectIndex = computed(() => activeParsed.value?.effectIndex ?? null)
 
 const catalogTabs = computed(() => [
   { id: 'skills' as const, label: 'Скиллы' },
@@ -176,7 +200,13 @@ function serializeState() {
           MORPH_SLOT_LEVELS.map((level) => {
             const slot = presets.value[preset][level]
             if (!slot?.skill) return [level, null]
-            return [level, { skill_id: slot.skill.id, effects: slot.effectIds }]
+            return [
+              level,
+              {
+                skill_id: slot.skill.id,
+                effects: slot.effectIds.filter((id): id is string => Boolean(id)),
+              },
+            ]
           }),
         ),
       ]),
@@ -188,9 +218,6 @@ function hydrateFromInitial() {
   const next = emptyPresets()
   for (const row of props.initialMorphs ?? []) {
     if (!isMorphPresetId(row.preset) || !isMorphSlotLevel(row.slot_level) || !row.skills) continue
-    const effectIds: string[] = []
-    if (row.effect1?.id) effectIds.push(row.effect1.id)
-    if (row.effect2?.id) effectIds.push(row.effect2.id)
     next[row.preset][row.slot_level] = {
       skill: {
         id: row.skills.id,
@@ -200,14 +227,55 @@ function hydrateFromInitial() {
         skill_type: row.skills.skill_type,
         supports_addon: row.skills.supports_addon,
         addon_tier: row.skills.addon_tier,
+        addon_effect_keys: row.skills.addon_effect_keys ?? null,
       },
-      effectIds,
+      effectIds: [row.effect1?.id ?? null, row.effect2?.id ?? null],
     }
   }
   presets.value = next
   activeGuidePreset.value = 't1'
-  activeLevel.value = null
+  activeSlot.value = null
   catalogTab.value = 'skills'
+}
+
+/** Fill missing addon_effect_keys / tier from the live skills catalog. */
+function enrichSlotSkillsFromCatalog() {
+  if (!skills.value.length) return
+  const byId = new Map(skills.value.map((s) => [s.id, s]))
+  let changed = false
+  const nextPresets = { ...presets.value }
+  for (const preset of MORPH_PRESET_IDS) {
+    const board = { ...nextPresets[preset] }
+    let boardChanged = false
+    for (const level of MORPH_SLOT_LEVELS) {
+      const slot = board[level]
+      if (!slot?.skill) continue
+      const cat = byId.get(slot.skill.id)
+      if (!cat) continue
+      if (
+        slot.skill.addon_effect_keys?.length &&
+        slot.skill.addon_tier != null &&
+        slot.skill.supports_addon != null
+      ) {
+        continue
+      }
+      board[level] = {
+        ...slot,
+        skill: {
+          ...slot.skill,
+          supports_addon: cat.supports_addon,
+          addon_tier: cat.addon_tier ?? slot.skill.addon_tier,
+          addon_effect_keys: cat.addon_effect_keys ?? slot.skill.addon_effect_keys,
+        },
+      }
+      boardChanged = true
+    }
+    if (boardChanged) {
+      nextPresets[preset] = board
+      changed = true
+    }
+  }
+  if (changed) presets.value = nextPresets
 }
 
 const {
@@ -225,7 +293,10 @@ const {
   serialize: serializeState,
   onOpen: async () => {
     hydrateFromInitial()
-    if (skills.value.length && effects.value.length) return
+    if (skills.value.length && effects.value.length) {
+      enrichSlotSkillsFromCatalog()
+      return
+    }
     catalogPending.value = true
     catalogError.value = false
     try {
@@ -235,6 +306,7 @@ const {
       ])
       skills.value = s
       effects.value = e
+      enrichSlotSkillsFromCatalog()
     } catch {
       catalogError.value = true
     } finally {
@@ -245,7 +317,7 @@ const {
     query.value = ''
     catalogTab.value = 'skills'
     activeGuidePreset.value = 't1'
-    activeLevel.value = null
+    activeSlot.value = null
     presets.value = emptyPresets()
   },
 })
@@ -259,7 +331,7 @@ const activeSlotSkill = computed(() =>
 )
 
 const effectCount = computed(() =>
-  activeLevel.value ? slotAt(activeLevel.value)?.effectIds.length ?? 0 : 0,
+  activeLevel.value ? effectCountOf(slotAt(activeLevel.value)?.effectIds ?? emptyEffects()) : 0,
 )
 
 const filledMap = computed(() => {
@@ -268,8 +340,8 @@ const filledMap = computed(() => {
     const slot = slotAt(level)
     if (!slot?.skill) continue
     const tier = slot.skill.addon_tier ?? 2
-    const e1 = effects.value.find((e) => e.id === slot.effectIds[0])
-    const e2 = effects.value.find((e) => e.id === slot.effectIds[1])
+    const e1 = slot.effectIds[0] ? effects.value.find((e) => e.id === slot.effectIds[0]) : null
+    const e2 = slot.effectIds[1] ? effects.value.find((e) => e.id === slot.effectIds[1]) : null
     map[level] = {
       skill: slot.skill,
       effect1Label: e1 ? resolveAddonLabel(e1.tier_labels, tier, e1.name_ru) : null,
@@ -281,8 +353,16 @@ const filledMap = computed(() => {
 
 const filteredSkills = computed(() => {
   const q = query.value.trim().toLowerCase()
+  const usedElsewhere = new Set<string>()
+  for (const level of MORPH_SLOT_LEVELS) {
+    if (level === activeLevel.value) continue
+    const id = slotAt(level)?.skill?.id
+    if (id) usedElsewhere.add(id)
+  }
   return skills.value.filter((s) => {
-    if (s.supports_addon === false) return false
+    if (s.supports_addon !== true) return false
+    if (!s.addon_effect_keys?.length) return false
+    if (usedElsewhere.has(s.id)) return false
     if (!q) return true
     return s.name_ru.toLowerCase().includes(q)
   })
@@ -290,7 +370,17 @@ const filteredSkills = computed(() => {
 
 const filteredEffects = computed(() => {
   const q = query.value.trim().toLowerCase()
+  const skill = activeSlotSkill.value
+  if (!skill) return []
+
+  const fromCatalog = skills.value.find((s) => s.id === skill.id)
+  const rawKeys = fromCatalog?.addon_effect_keys ?? skill.addon_effect_keys
+  const keys = Array.isArray(rawKeys) ? rawKeys.filter(Boolean) : []
+  const allowed = new Set(keys)
+
   return effects.value.filter((e) => {
+    // If we know the allowlist — enforce it; otherwise show full catalog (never blank).
+    if (allowed.size && !allowed.has(e.key)) return false
     if (!q) return true
     return effectLabel(e).toLowerCase().includes(q) || e.name_ru.toLowerCase().includes(q)
   })
@@ -303,27 +393,55 @@ function effectLabel(fx: SkillAddonEffect) {
 
 function isEffectPicked(id: string) {
   if (!activeLevel.value) return false
-  return slotAt(activeLevel.value)?.effectIds.includes(id) ?? false
+  const pair = slotAt(activeLevel.value)?.effectIds
+  return pair?.[0] === id || pair?.[1] === id
 }
 
-function onSelectSlot(level: MorphSlotLevel) {
-  activeLevel.value = level
-  catalogTab.value = slotAt(level)?.skill ? 'effects' : 'skills'
+function isEffectDisabled(id: string) {
+  if (!activeLevel.value) return true
+  const cur = slotAt(activeLevel.value)
+  if (!cur?.skill) return true
+  // If skill slot is selected but Effects tab is open, treat as replacing slot a.
+  const idx = activeEffectIndex.value === 'b' ? 1 : 0
+  const other = cur.effectIds[idx === 0 ? 1 : 0]
+  if (other === id) return true
+  return false
+}
+
+function onSelectSlot(id: string) {
+  const parsed = parseMorphBoardSlot(id)
+  if (!parsed) return
+  activeSlot.value = id
+  formError.value = ''
+  catalogTab.value = parsed.kind === 'skill' ? 'skills' : 'effects'
   query.value = ''
 }
 
-function clearSlot(level: MorphSlotLevel) {
+function clearSlot(id: string) {
+  const parsed = parseMorphBoardSlot(id)
+  if (!parsed) return
   const board = { ...presets.value[activePreset.value] }
-  delete board[level]
+  const cur = board[parsed.level]
+  if (!cur?.skill || parsed.kind === 'skill') {
+    delete board[parsed.level]
+    if (activeSlot.value && parseMorphBoardSlot(activeSlot.value)?.level === parsed.level) {
+      catalogTab.value = 'skills'
+      activeSlot.value = String(parsed.level)
+    }
+  } else {
+    const next: EffectPair = [...cur.effectIds]
+    next[parsed.effectIndex === 'a' ? 0 : 1] = null
+    board[parsed.level] = { skill: cur.skill, effectIds: next }
+  }
   presets.value = { ...presets.value, [activePreset.value]: board }
-  if (activeLevel.value === level) catalogTab.value = 'skills'
 }
 
 function assignSkill(skill: Skill) {
-  if (!activeLevel.value) return
+  if (!activeLevel.value || activeKind.value !== 'skill') return
   const board = { ...presets.value[activePreset.value] }
-  board[activeLevel.value] = { skill, effectIds: [] }
+  board[activeLevel.value] = { skill, effectIds: emptyEffects() }
   presets.value = { ...presets.value, [activePreset.value]: board }
+  activeSlot.value = `${activeLevel.value}_a`
   catalogTab.value = 'effects'
   query.value = ''
 }
@@ -331,17 +449,41 @@ function assignSkill(skill: Skill) {
 function assignEffect(fx: SkillAddonEffect) {
   if (!activeLevel.value) return
   const cur = slotAt(activeLevel.value)
-  if (!cur?.skill || cur.effectIds.includes(fx.id) || cur.effectIds.length >= 2) return
+  if (!cur?.skill || isEffectDisabled(fx.id)) return
+
+  // Default to slot a when Effects tab is open but skill cell is still selected.
+  const idx = activeEffectIndex.value === 'b' ? 1 : 0
+  const next: EffectPair = [...cur.effectIds]
+  next[idx] = fx.id
+
   const board = { ...presets.value[activePreset.value] }
-  board[activeLevel.value] = {
-    skill: cur.skill,
-    effectIds: [...cur.effectIds, fx.id],
-  }
+  board[activeLevel.value] = { skill: cur.skill, effectIds: next }
   presets.value = { ...presets.value, [activePreset.value]: board }
+
+  const other: MorphEffectIndex = idx === 0 ? 'b' : 'a'
+  if (!next[idx === 0 ? 1 : 0]) {
+    activeSlot.value = `${activeLevel.value}_${other}`
+  } else {
+    activeSlot.value = `${activeLevel.value}_${idx === 0 ? 'a' : 'b'}`
+  }
+  catalogTab.value = 'effects'
+  query.value = ''
 }
 
+watch(catalogTab, (tab) => {
+  if (!activeLevel.value) return
+  query.value = ''
+  if (tab === 'skills' && activeKind.value !== 'skill') {
+    activeSlot.value = String(activeLevel.value)
+  } else if (tab === 'effects' && activeKind.value !== 'effect') {
+    const pair = slotAt(activeLevel.value)?.effectIds
+    const next = !pair?.[0] ? 'a' : !pair?.[1] ? 'b' : 'a'
+    activeSlot.value = `${activeLevel.value}_${next}`
+  }
+})
+
 watch(activePreset, () => {
-  activeLevel.value = null
+  activeSlot.value = null
   catalogTab.value = 'skills'
   query.value = ''
 })
@@ -360,11 +502,12 @@ async function onSubmit() {
       for (const level of MORPH_SLOT_LEVELS) {
         const slot = presets.value[preset][level]
         if (!slot?.skill) continue
-        if (slot.effectIds.length !== 2) {
+        const [e1, e2] = slot.effectIds
+        if (!e1 || !e2) {
           formError.value = `В пресете «${MORPH_PRESETS.find((p) => p.id === preset)?.label}» слот Ур. ${level}: нужно ровно 2 эффекта`
           activeGuidePreset.value = morphGuidePreset(preset)
           specMode.value = preset.startsWith('succ_') ? 'succession' : 'awakening'
-          activeLevel.value = level
+          activeSlot.value = `${level}_${!e1 ? 'a' : 'b'}`
           catalogTab.value = 'effects'
           return null
         }
@@ -372,7 +515,7 @@ async function onSubmit() {
           preset,
           slot_level: level,
           skill_id: slot.skill.id,
-          effect_ids: [slot.effectIds[0]!, slot.effectIds[1]!],
+          effect_ids: [e1, e2],
         })
       }
     }

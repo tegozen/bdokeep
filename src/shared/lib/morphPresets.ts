@@ -61,5 +61,30 @@ export function resolveAddonLabel(
   return tierLabels?.[t] || tierLabels?.['2'] || fallback
 }
 
+/** Board slot ids — same interaction model as relic / lightstone. */
+export type MorphEffectIndex = 'a' | 'b'
+
+export function morphSkillSlotId(level: MorphSlotLevel): string {
+  return String(level)
+}
+
+export function morphEffectSlotId(level: MorphSlotLevel, index: MorphEffectIndex): string {
+  return `${level}_${index}`
+}
+
+export function parseMorphBoardSlot(
+  id: string,
+): { level: MorphSlotLevel; kind: 'skill' | 'effect'; effectIndex?: MorphEffectIndex } | null {
+  const effect = id.match(/^(\d+)_(a|b)$/)
+  if (effect) {
+    const level = Number(effect[1])
+    if (!isMorphSlotLevel(level)) return null
+    return { level, kind: 'effect', effectIndex: effect[2] as MorphEffectIndex }
+  }
+  const level = Number(id)
+  if (!isMorphSlotLevel(level)) return null
+  return { level, kind: 'skill' }
+}
+
 /** Re-export for callers that only touch morph presets. */
 export { CRYSTAL_PRESET_IDS as MORPH_GUIDE_PRESET_IDS }
