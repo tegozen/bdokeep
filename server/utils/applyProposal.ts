@@ -36,6 +36,8 @@ function replacedForApply(
 ): string[] {
   const result = finalizeReplacedPresets(raw, rowPresets, rowPresets, isValid)
   if (!result.ok) {
+    // Approve no-op: catalog dropped every row and there are no intentional clears.
+    if (result.reason === 'empty' && rowPresets.length === 0) return []
     throw createError({
       statusCode: 400,
       statusMessage:

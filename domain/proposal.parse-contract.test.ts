@@ -58,18 +58,17 @@ describe('parseAndValidatePayload replaced contract', () => {
     }
   })
 
-  it('approve skipUnknown: kept empty and no intentional clears → empty', () => {
-    // Parse throws earlier on !kept.length; finalize alone with only structural ids → empty.
-    const out = parseReplaced(['t1', 't2'], ['t1', 't2'], [])
-    assert.deepEqual(out, { ok: false, reason: 'empty' })
-  })
-
   it('approve skipUnknown: kept empty but intentional empties remain in replaced', () => {
     const out = parseReplaced([...CRYSTAL_PRESET_IDS], ['t1', 't2'], [])
     assert.equal(out.ok, true)
     if (out.ok) {
       assert.deepEqual(out.replaced, ['besp', 'sub'])
     }
+  })
+
+  it('approve skipUnknown: all rows stale and no intentional clears → empty replaced (apply no-op)', () => {
+    const out = parseReplaced(['t1', 't2'], ['t1', 't2'], [])
+    assert.deepEqual(out, { ok: false, reason: 'empty' })
   })
 
   it('morphs: full MORPH_PRESET_IDS with partial kept narrows other-mode wipe after catalog drop', () => {

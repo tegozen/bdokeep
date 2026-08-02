@@ -77,6 +77,16 @@ function replacedPresetsOrThrow(
   return result.replaced
 }
 
+/** Approve path: all catalog rows gone — keep intentional clears only (or []). */
+function replacedAfterCatalogDrop(
+  raw: unknown,
+  structuralPresets: readonly string[],
+  isValid: (id: string) => boolean,
+): string[] {
+  const result = finalizeReplacedPresets(raw, structuralPresets, [], isValid)
+  return result.ok ? result.replaced : []
+}
+
 /**
  * Single validate path for create + approve.
  * Re-runs catalog `idsExist` so approve does not trust stored JSON blindly.
@@ -110,6 +120,10 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: 'Скилл не принадлежит этому классу' })
     }
     if (!skillIds.length) {
+      if (skipUnknown) {
+        // Stale combo — approve as empty replace for this mode.
+        return { payload: { mode, skill_ids: [] }, verifiedVideos: null }
+      }
       throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один скилл' })
     }
     return { payload: { mode, skill_ids: skillIds }, verifiedVideos: null }
@@ -174,6 +188,19 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный баф' })
     }
     if (!kept.length) {
+      if (skipUnknown) {
+        return {
+          payload: {
+            buffs: [],
+            replaced_presets: replacedAfterCatalogDrop(
+              body.replaced_presets,
+              buffsPayload.map((b) => b.preset),
+              isCrystalPresetId,
+            ),
+          },
+          verifiedVideos: null,
+        }
+      }
       throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один баф' })
     }
     const replaced_presets = replacedPresetsOrThrow(
@@ -245,6 +272,19 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный кристалл' })
     }
     if (!kept.length) {
+      if (skipUnknown) {
+        return {
+          payload: {
+            crystals: [],
+            replaced_presets: replacedAfterCatalogDrop(
+              body.replaced_presets,
+              crystals.map((c) => c.preset),
+              isCrystalPresetId,
+            ),
+          },
+          verifiedVideos: null,
+        }
+      }
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
     const replaced_presets = replacedPresetsOrThrow(
@@ -362,6 +402,23 @@ export async function parseAndValidatePayload(
       }
     }
     if (!keptRelics.length && !keptLights.length) {
+      if (skipUnknown) {
+        return {
+          payload: {
+            relics: [],
+            lightstones: [],
+            replaced_presets: replacedAfterCatalogDrop(
+              body.replaced_presets,
+              [
+                ...relics.map((r) => r.preset),
+                ...lightstones.map((r) => r.preset),
+              ],
+              isCrystalPresetId,
+            ),
+          },
+          verifiedVideos: null,
+        }
+      }
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
 
@@ -455,6 +512,19 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный камень закалки' })
     }
     if (!kept.length) {
+      if (skipUnknown) {
+        return {
+          payload: {
+            hardening: [],
+            replaced_presets: replacedAfterCatalogDrop(
+              body.replaced_presets,
+              hardening.map((c) => c.preset),
+              isCrystalPresetId,
+            ),
+          },
+          verifiedVideos: null,
+        }
+      }
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
     const replaced_presets = replacedPresetsOrThrow(
@@ -578,7 +648,9 @@ export async function parseAndValidatePayload(
 
     const kept = morphs.filter((m) => {
       const skill = skillById.get(m.skill_id)
-      if (!skill?.supports_addon) return false
+      if (!skill) return false
+      // Submit: require addon support. Approve skipUnknown: skill still in catalog is enough.
+      if (!skipUnknown && !skill.supports_addon) return false
       const allow = new Set(skill.keys)
       for (const eid of m.effect_ids) {
         const key = fxKeyById.get(eid)
@@ -605,6 +677,19 @@ export async function parseAndValidatePayload(
     }
 
     if (!kept.length) {
+      if (skipUnknown) {
+        return {
+          payload: {
+            morphs: [],
+            replaced_presets: replacedAfterCatalogDrop(
+              body.replaced_presets,
+              morphs.map((m) => m.preset),
+              isMorphPresetId,
+            ),
+          },
+          verifiedVideos: null,
+        }
+      }
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот морфа' })
     }
 
