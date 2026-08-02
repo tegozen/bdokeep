@@ -94,12 +94,15 @@ docker compose exec db psql -U postgres -d bdokeep -c "alter role bdokeep_app wi
 docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/023_guide_morphs_rls.sql
 ```
 
-Для уже существующей БД без колонки тира / section_updates:
+Для уже существующей БД без колонки тира / section_updates / закалок:
 
 ```bash
 docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/024_class_tier.sql
 docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/025_section_updates.sql
 docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/026_backfill_section_updates.sql
+docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/027_dual_mode_summary_videos_tier.sql
+docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/028_hardening.sql
+docker compose exec -T db psql -U postgres -d bdokeep < db/migrations/029_seed_hardening.sql
 ```
 
 Затем выставь тот же пароль в `BDOKEEP_APP_PASSWORD` / `DATABASE_URL` и перезапусти `web`.

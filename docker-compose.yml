@@ -43,6 +43,8 @@ services:
       - ./db/migrations/025_section_updates.sql:/docker-entrypoint-initdb.d/99h-section-updates.sql:ro
       - ./db/migrations/026_backfill_section_updates.sql:/docker-entrypoint-initdb.d/99i-backfill-section-updates.sql:ro
       - ./db/migrations/027_dual_mode_summary_videos_tier.sql:/docker-entrypoint-initdb.d/99j-dual-mode-summary-videos-tier.sql:ro
+      - ./db/migrations/028_hardening.sql:/docker-entrypoint-initdb.d/99k-hardening.sql:ro
+      - ./db/migrations/029_seed_hardening.sql:/docker-entrypoint-initdb.d/99l-seed-hardening.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d $$POSTGRES_DB']
       interval: 5s
