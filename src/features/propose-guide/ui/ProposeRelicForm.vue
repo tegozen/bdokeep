@@ -29,7 +29,7 @@
           @copy="copyFromPreset"
         >
           <template #default="{ preset }">
-            <div :class="presetTools.copyPreview">
+            <div :class="[presetTools.copyPreview, $style.copyPreview]">
               <RelicBoard :filled="filledMapFor(preset)" lightstones-as-set />
             </div>
           </template>
@@ -391,9 +391,8 @@ async function onSubmit() {
 
 <style module>
 .copyPreview {
-  width: 100%;
+  /* Width/overflow from proposePresetTools; constrain relic board preview. */
   max-width: 18rem;
-  height: 100%;
 }
 
 .workspace {

@@ -1,22 +1,30 @@
 <template>
   <div :class="pinTabs ? $style.split : undefined">
     <div v-if="showPresetTabs" :class="pinTabs && $style.tabsPinned">
-      <UiPresetTabs
-        :model-value="activePreset || 't1'"
-        :tabs="presets"
-        aria-label="Пресет"
-        @update:model-value="setPreset"
-      >
-        <template #tab="{ tab }">
-          <span>
-            {{ tab.label }}
-            <span
-              v-if="isGuidePresetCleared(tab.id)"
-              :class="$style.clearHint"
-            > · очистка</span>
-          </span>
-        </template>
-      </UiPresetTabs>
+      <div :class="$style.tabRow">
+        <UiPresetTabs
+          v-if="item.section === 'morphs'"
+          v-model="morphSpecMode"
+          :tabs="morphSpecTabs"
+          aria-label="Пробуждение или наследие"
+        />
+        <UiPresetTabs
+          :model-value="activePreset || 't1'"
+          :tabs="presets"
+          aria-label="Пресет"
+          @update:model-value="setPreset"
+        >
+          <template #tab="{ tab }">
+            <span>
+              {{ tab.label }}
+              <span
+                v-if="isGuidePresetCleared(tab.id)"
+                :class="$style.clearHint"
+              > · очистка</span>
+            </span>
+          </template>
+        </UiPresetTabs>
+      </div>
     </div>
 
     <div :class="pinTabs ? $style.scrollBody : undefined">
@@ -141,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { ClassVideo } from '@/entities/class'
 import {
   useProposalPreviewHydration,
@@ -153,8 +161,8 @@ import {
   CRYSTAL_PRESETS,
   HARDENING_SLOTS,
   morphPresetFrom,
-  useGuideSpecMode,
   type CrystalPresetId,
+  type GuideSpecMode,
 } from '@/shared/lib'
 import { UiMarkdownPreview, UiPresetTabs } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
@@ -186,7 +194,12 @@ const props = withDefaults(
 )
 
 const presets = CRYSTAL_PRESETS
-const specMode = useGuideSpecMode()
+/** Local to this preview — do not depend on class-page header guideSpecMode. */
+const morphSpecMode = ref<GuideSpecMode>('awakening')
+const morphSpecTabs = [
+  { id: 'awakening' as const, label: 'Пробуждение' },
+  { id: 'succession' as const, label: 'Наследие' },
+]
 const items = computed(() => [props.item])
 
 const {
@@ -206,7 +219,7 @@ const {
   relicFilled,
   hardeningFilled,
   morphFilled,
-} = useProposalPreviewHydration(items, { specMode })
+} = useProposalPreviewHydration(items, { specMode: morphSpecMode })
 
 const payload = computed(
   () => (props.item.payload ?? {}) as ProposalPreviewPayload,
@@ -298,7 +311,7 @@ function isGuidePresetCleared(guide: CrystalPresetId): boolean {
     case 'hardening':
       return replaced.has(guide) && !Object.keys(hardeningByPreset[id]?.[guide] || {}).length
     case 'morphs': {
-      const morphId = morphPresetFrom(specMode.value, guide)
+      const morphId = morphPresetFrom(morphSpecMode.value, guide)
       if (!replaced.has(morphId)) return false
       const board = morphByPreset[id]?.[morphId]
       return !board || !Object.keys(board).length
@@ -387,6 +400,14 @@ function hardeningLabel(name: string) {
   width: fit-content;
   max-width: 100%;
   margin-bottom: 0.55rem;
+}
+
+.tabRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.65rem;
+  min-width: 0;
 }
 
 .clearHint {
