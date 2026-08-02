@@ -13,7 +13,7 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <div :class="$style.headerTools">
+      <div :class="presetTools.headerTools">
         <UiPresetTabs
           v-model="activeBuffPreset"
           :tabs="guidePresets"
@@ -27,7 +27,7 @@
           @copy="copyFromPreset"
         >
           <template #default="{ preset }">
-            <div :class="$style.copyPreview">
+            <div :class="presetTools.copyPreview">
               <ul v-if="buffByPreset[preset].length" :class="$style.copyList">
                 <li
                   v-for="(row, i) in buffByPreset[preset]"
@@ -96,13 +96,14 @@ import {
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
-import { cloneItemList } from '../lib/clonePresetData'
+import { cloneItemList, fullReplacedPresets } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import { useReorderableList } from '../lib/useReorderableList'
 import CatalogPicker from './CatalogPicker.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 import ReorderableTiles from './ReorderableTiles.vue'
+import presetTools from './proposePresetTools.module.css'
 
 type PickItem = { id: string; name_ru: string; icon_url: string | null }
 type BuffPresetBoards = Record<CrystalPresetId, PickItem[]>
@@ -273,7 +274,7 @@ async function onSubmit() {
       section: 'buffs',
       payload: {
         buffs: buffsPayload,
-        replaced_presets: [...CRYSTAL_PRESET_IDS],
+        replaced_presets: fullReplacedPresets(CRYSTAL_PRESET_IDS),
       },
       author_label: author.value.trim() || undefined,
       website: honeypot.value,
@@ -283,22 +284,6 @@ async function onSubmit() {
 </script>
 
 <style module>
-.headerTools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  min-width: 0;
-}
-
-.copyPreview {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: auto;
-}
-
 .copyList {
   margin: 0;
   list-style: none;

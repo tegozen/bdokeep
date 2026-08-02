@@ -154,6 +154,47 @@ export function resolveReplacedPresets(
   return [...new Set(fromRows.filter((id) => isValid(id)))]
 }
 
+export function rowsWithinReplaced(
+  replaced: readonly string[],
+  rowPresets: readonly string[],
+): boolean {
+  const set = new Set(replaced)
+  return rowPresets.every((p) => set.has(p))
+}
+
+export type FinalizeReplacedResult =
+  | { ok: true; replaced: string[] }
+  | { ok: false; reason: 'empty' | 'rows_outside_replaced' }
+
+/**
+ * Resolve + enforce rows ⊆ replaced. After catalog drops, drop presets that had
+ * structural rows but no kept rows (avoid wiping live data for vanished catalog ids).
+ * Intentional empties (in replaced, never in structural rows) stay.
+ */
+export function finalizeReplacedPresets(
+  raw: unknown,
+  structuralRowPresets: readonly string[],
+  keptRowPresets: readonly string[],
+  isValid: (id: string) => boolean,
+): FinalizeReplacedResult {
+  const replaced = resolveReplacedPresets(raw, keptRowPresets, isValid)
+  if (!replaced.length) return { ok: false, reason: 'empty' }
+
+  const replacedSet = new Set(replaced)
+  const structural = [...new Set(structuralRowPresets.filter((id) => isValid(id)))]
+  const kept = [...new Set(keptRowPresets.filter((id) => isValid(id)))]
+
+  if (structural.some((p) => !replacedSet.has(p)) || kept.some((p) => !replacedSet.has(p))) {
+    return { ok: false, reason: 'rows_outside_replaced' }
+  }
+
+  const structuralSet = new Set(structural)
+  const keptSet = new Set(kept)
+  const narrowed = replaced.filter((id) => keptSet.has(id) || !structuralSet.has(id))
+  if (!narrowed.length) return { ok: false, reason: 'empty' }
+  return { ok: true, replaced: narrowed }
+}
+
 export function isMorphSlotLevel(v: number): boolean {
   return (MORPH_SLOT_LEVELS as readonly number[]).includes(v)
 }

@@ -14,7 +14,8 @@
     "codex:refresh": "tsx scripts/build-codex-seed.ts",
     "garmoth:scrape": "tsx scripts/scrape-garmoth-catalog.ts",
     "docker:up": "docker compose --env-file .env up -d --build",
-    "docker:down": "docker compose --env-file .env down"
+    "docker:down": "docker compose --env-file .env down",
+    "test": "tsx --test domain/**/*.test.ts"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",

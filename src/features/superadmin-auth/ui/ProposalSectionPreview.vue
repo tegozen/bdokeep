@@ -6,7 +6,17 @@
         :tabs="presets"
         aria-label="Пресет"
         @update:model-value="setPreset"
-      />
+      >
+        <template #tab="{ tab }">
+          <span>
+            {{ tab.label }}
+            <span
+              v-if="isGuidePresetCleared(tab.id)"
+              :class="$style.clearHint"
+            > · очистка</span>
+          </span>
+        </template>
+      </UiPresetTabs>
     </div>
 
     <div :class="pinTabs ? $style.scrollBody : undefined">
@@ -41,14 +51,16 @@
             <span>{{ row.buffs?.name_ru || 'Баф' }}</span>
           </li>
         </ul>
-        <p v-else :class="mutedClass">Пока пусто</p>
+        <p v-else :class="mutedClass">{{ emptyPresetMessage }}</p>
       </template>
 
       <template v-else-if="item.section === 'crystals'">
         <p v-if="crystalByPreset[item.id] === undefined" :class="mutedClass">Загрузка…</p>
         <div v-else :class="$style.crystalLayout">
           <div :class="$style.picked">
-            <p v-if="!crystalPickedList(item.id).length" :class="$style.pickedEmpty">Пока пусто</p>
+            <p v-if="!crystalPickedList(item.id).length" :class="$style.pickedEmpty">
+              {{ emptyPresetMessage }}
+            </p>
             <ul v-else :class="$style.pickedList">
               <li
                 v-for="row in crystalPickedList(item.id)"
@@ -75,9 +87,15 @@
 
       <template v-else-if="item.section === 'relics'">
         <p v-if="relicByPreset[item.id] === undefined" :class="mutedClass">Загрузка…</p>
-        <div v-else :class="$style.relicStage">
-          <RelicBoard :filled="relicFilled(item.id)" />
-        </div>
+        <template v-else>
+          <div
+            v-if="Object.keys(relicFilled(item.id)).length"
+            :class="$style.relicStage"
+          >
+            <RelicBoard :filled="relicFilled(item.id)" />
+          </div>
+          <p v-else :class="mutedClass">{{ emptyPresetMessage }}</p>
+        </template>
       </template>
 
       <template v-else-if="item.section === 'hardening'">
@@ -98,7 +116,7 @@
             <span>{{ hardeningLabel(row.name_ru) }}</span>
           </li>
         </ul>
-        <p v-else :class="mutedClass">Пока пусто</p>
+        <p v-else :class="mutedClass">{{ emptyPresetMessage }}</p>
       </template>
 
       <VideoList
@@ -108,7 +126,13 @@
 
       <template v-else-if="item.section === 'morphs'">
         <p v-if="morphByPreset[item.id] === undefined" :class="mutedClass">Загрузка…</p>
-        <MorphBoard v-else :filled="morphFilled(item.id)" />
+        <template v-else>
+          <MorphBoard
+            v-if="Object.keys(morphFilled(item.id)).length"
+            :filled="morphFilled(item.id)"
+          />
+          <p v-else :class="mutedClass">{{ emptyPresetMessage }}</p>
+        </template>
       </template>
 
       <pre v-else :class="textClass">{{ JSON.stringify(item.payload, null, 2) }}</pre>
@@ -128,6 +152,7 @@ import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
   HARDENING_SLOTS,
+  morphPresetFrom,
   useGuideSpecMode,
   type CrystalPresetId,
 } from '@/shared/lib'
@@ -252,6 +277,42 @@ function setPreset(preset: CrystalPresetId) {
   }
 }
 
+function replacedPresetIds(): Set<string> {
+  const raw = payload.value.replaced_presets
+  if (!Array.isArray(raw)) return new Set()
+  return new Set(raw.map((x) => String(x)))
+}
+
+/** Guide tab (t1/…) marked for clear on approve and currently empty in payload. */
+function isGuidePresetCleared(guide: CrystalPresetId): boolean {
+  const replaced = replacedPresetIds()
+  if (!replaced.size) return false
+  const id = props.item.id
+  switch (props.item.section) {
+    case 'buffs':
+      return replaced.has(guide) && !(buffByPreset[id]?.[guide]?.length)
+    case 'crystals':
+      return replaced.has(guide) && !Object.keys(crystalByPreset[id]?.[guide] || {}).length
+    case 'relics':
+      return replaced.has(guide) && !Object.keys(relicByPreset[id]?.[guide] || {}).length
+    case 'hardening':
+      return replaced.has(guide) && !Object.keys(hardeningByPreset[id]?.[guide] || {}).length
+    case 'morphs': {
+      const morphId = morphPresetFrom(specMode.value, guide)
+      if (!replaced.has(morphId)) return false
+      const board = morphByPreset[id]?.[morphId]
+      return !board || !Object.keys(board).length
+    }
+    default:
+      return false
+  }
+}
+
+const emptyPresetMessage = computed(() => {
+  const guide = activePreset.value || 't1'
+  return isGuidePresetCleared(guide) ? 'Будет очищен' : 'Пока пусто'
+})
+
 const comboLabel = computed(() => {
   if (props.item.section === 'combo_awakening') return 'Комба · пробуждение'
   if (props.item.section === 'combo_succession') return 'Комба · наследие'
@@ -326,6 +387,13 @@ function hardeningLabel(name: string) {
   width: fit-content;
   max-width: 100%;
   margin-bottom: 0.55rem;
+}
+
+.clearHint {
+  font-size: 0.78em;
+  font-weight: 500;
+  color: var(--color-muted);
+  opacity: 0.9;
 }
 
 .scrollBody {

@@ -35,10 +35,6 @@
           <slot :preset="sourcePreset" />
         </div>
 
-        <div :class="$style.emptySlot" aria-live="polite">
-          <p v-if="!canCopy" :class="$style.empty">Этот пресет пуст</p>
-        </div>
-
         <div :class="$style.actions">
           <UiButton variant="secondary" type="button" @click="close">Отмена</UiButton>
           <UiButton type="button" :disabled="!canCopy" @click="onCopy">
@@ -181,19 +177,6 @@ async function onCopy() {
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   padding: 0.65rem;
-}
-
-.emptySlot {
-  flex-shrink: 0;
-  box-sizing: border-box;
-  min-height: 1.25rem;
-}
-
-.empty {
-  margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.25rem;
-  color: var(--color-muted);
 }
 
 .actions {

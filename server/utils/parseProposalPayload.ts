@@ -27,7 +27,7 @@ import {
   isRelicsSection,
   isSummarySection,
   isVideosSection,
-  resolveReplacedPresets,
+  finalizeReplacedPresets,
   type ProposalSection,
 } from '@domain'
 import { idsExist } from './queries/catalog'
@@ -41,7 +41,7 @@ export type ParseProposalContext = {
   rawPayload: Record<string, unknown> | null | undefined
   /**
    * Approve path: drop rows whose catalog ids no longer exist
-   * instead of failing the whole proposal.
+   * instead of failing the whole proposal. Structural errors still 400.
    */
   skipUnknownCatalog?: boolean
 }
@@ -56,6 +56,25 @@ function assertSection(section: string): asserts section is ProposalSection {
   if (!(PROPOSAL_SECTIONS as readonly string[]).includes(section)) {
     throw createError({ statusCode: 400, statusMessage: 'Некорректный раздел' })
   }
+}
+
+function replacedPresetsOrThrow(
+  raw: unknown,
+  structuralPresets: readonly string[],
+  keptPresets: readonly string[],
+  isValid: (id: string) => boolean,
+): string[] {
+  const result = finalizeReplacedPresets(raw, structuralPresets, keptPresets, isValid)
+  if (!result.ok) {
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        result.reason === 'rows_outside_replaced'
+          ? 'Строки вне replaced_presets'
+          : 'Некорректный пресет',
+    })
+  }
+  return result.replaced
 }
 
 /**
@@ -81,10 +100,9 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: `Максимум ${MAX_COMBO_STEPS} шагов` })
     }
     let skillIds = rawIds.map((id) => String(id))
-    if (!skipUnknown && skillIds.some((id) => !UUID_RE.test(id))) {
+    if (skillIds.some((id) => !UUID_RE.test(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Некорректный id скилла' })
     }
-    skillIds = skillIds.filter((id) => UUID_RE.test(id))
     const allowed = await idsExist(sql, 'skills', skillIds, { classSlug })
     if (skipUnknown) {
       skillIds = skillIds.filter((id) => allowed.has(id))
@@ -127,11 +145,9 @@ export async function parseAndValidatePayload(
       const preset = String(entry?.preset || 't1')
       const buffId = String(entry?.buff_id || '')
       if (!isCrystalPresetId(preset)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
       }
       if (!UUID_RE.test(buffId)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id бафа' })
       }
       const count = (perPreset.get(preset) || 0) + 1
@@ -160,8 +176,9 @@ export async function parseAndValidatePayload(
     if (!kept.length) {
       throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один баф' })
     }
-    const replaced_presets = resolveReplacedPresets(
+    const replaced_presets = replacedPresetsOrThrow(
       body.replaced_presets,
+      buffsPayload.map((b) => b.preset),
       kept.map((b) => b.preset),
       isCrystalPresetId,
     )
@@ -198,20 +215,16 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
       }
       if (!isCrystalSlotId(slot)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный слот' })
       }
       const key = `${preset}:${slot}`
       if (usedKeys.has(key)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота в пресете' })
       }
       if (!UUID_RE.test(itemId)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id кристалла' })
       }
       usedKeys.add(key)
@@ -234,8 +247,9 @@ export async function parseAndValidatePayload(
     if (!kept.length) {
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
-    const replaced_presets = resolveReplacedPresets(
+    const replaced_presets = replacedPresetsOrThrow(
       body.replaced_presets,
+      crystals.map((c) => c.preset),
       kept.map((c) => c.preset),
       isCrystalPresetId,
     )
@@ -286,12 +300,10 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset) || !isRelicSlotId(slot) || !UUID_RE.test(itemId)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректная реликвия' })
       }
       const key = `${preset}:${slot}`
       if (usedRelic.has(key)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота реликвии' })
       }
       usedRelic.add(key)
@@ -314,12 +326,10 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset) || !isLightstoneSlotId(slot) || !UUID_RE.test(itemId)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный светящийся камень' })
       }
       const key = `${preset}:${slot}`
       if (usedLight.has(key)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота камня' })
       }
       usedLight.add(key)
@@ -355,9 +365,18 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
 
-    const replaced_presets = resolveReplacedPresets(
+    const structuralPresets = [
+      ...relics.map((r) => r.preset),
+      ...lightstones.map((r) => r.preset),
+    ]
+    const keptPresets = [
+      ...keptRelics.map((r) => r.preset),
+      ...keptLights.map((r) => r.preset),
+    ]
+    const replaced_presets = replacedPresetsOrThrow(
       body.replaced_presets,
-      [...keptRelics.map((r) => r.preset), ...keptLights.map((r) => r.preset)],
+      structuralPresets,
+      keptPresets,
       isCrystalPresetId,
     )
     return {
@@ -398,28 +417,23 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
       }
       if (!isHardeningSlotId(slot)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный слот' })
       }
       const slotKey = `${preset}:${slot}`
       if (usedSlots.has(slotKey)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота в пресете' })
       }
       const itemKey = `${preset}:${itemId}`
       if (usedItems.has(itemKey)) {
-        if (skipUnknown) continue
         throw createError({
           statusCode: 400,
           statusMessage: 'Одинаковые камни закалки в одном пресете нельзя',
         })
       }
       if (!UUID_RE.test(itemId)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id камня закалки' })
       }
       usedSlots.add(slotKey)
@@ -443,8 +457,9 @@ export async function parseAndValidatePayload(
     if (!kept.length) {
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
-    const replaced_presets = resolveReplacedPresets(
+    const replaced_presets = replacedPresetsOrThrow(
       body.replaced_presets,
+      hardening.map((c) => c.preset),
       kept.map((c) => c.preset),
       isCrystalPresetId,
     )
@@ -492,20 +507,16 @@ export async function parseAndValidatePayload(
         ? entry.effect_ids.map((x) => String(x))
         : []
       if (!isMorphPresetId(preset)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет морфов' })
       }
       if (!isMorphSlotLevel(slotLevel)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный слот морфа' })
       }
       const key = `${preset}:${slotLevel}`
       if (used.has(key)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота морфа' })
       }
       if (!UUID_RE.test(skillId)) {
-        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id скилла' })
       }
       if (
@@ -513,7 +524,6 @@ export async function parseAndValidatePayload(
         effectIds[0] === effectIds[1] ||
         !effectIds.every((id) => UUID_RE.test(id))
       ) {
-        if (skipUnknown) continue
         throw createError({
           statusCode: 400,
           statusMessage: 'Нужно ровно 2 разных эффекта на слот',
@@ -598,8 +608,9 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот морфа' })
     }
 
-    const replaced_presets = resolveReplacedPresets(
+    const replaced_presets = replacedPresetsOrThrow(
       body.replaced_presets,
+      morphs.map((m) => m.preset),
       kept.map((m) => m.preset),
       isMorphPresetId,
     )

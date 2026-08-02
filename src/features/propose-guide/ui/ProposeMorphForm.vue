@@ -15,7 +15,7 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <div :class="$style.headerTools">
+      <div :class="presetTools.headerTools">
         <UiPresetTabs
           v-model="activeGuidePreset"
           :tabs="guidePresets"
@@ -29,7 +29,7 @@
           @copy="copyFromPreset"
         >
           <template #default="{ preset }">
-            <div :class="$style.copyPreview">
+            <div :class="presetTools.copyPreview">
               <MorphBoard :filled="filledMapForGuide(preset)" />
             </div>
           </template>
@@ -138,10 +138,12 @@ import {
 import { UiPresetTabs } from '@/shared/ui'
 import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
 import { submitGuideProposal } from '../api/submitProposal'
+import { cloneMorphBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
+import presetTools from './proposePresetTools.module.css'
 
 type EffectPair = [string | null, string | null]
 
@@ -351,21 +353,6 @@ function isGuidePresetEmpty(guide: CrystalPresetId) {
   return !MORPH_SLOT_LEVELS.some((level) => Boolean(board[level]?.skill))
 }
 
-function cloneMorphBoard(
-  board: Partial<Record<MorphSlotLevel, SlotState>>,
-): Partial<Record<MorphSlotLevel, SlotState>> {
-  const next: Partial<Record<MorphSlotLevel, SlotState>> = {}
-  for (const level of MORPH_SLOT_LEVELS) {
-    const slot = board[level]
-    if (!slot?.skill) continue
-    next[level] = {
-      skill: { ...slot.skill },
-      effectIds: [slot.effectIds[0], slot.effectIds[1]],
-    }
-  }
-  return next
-}
-
 function filledMapForGuide(guide: CrystalPresetId): Partial<Record<MorphSlotLevel, MorphSlotFill>> {
   const board = presets.value[morphKey(guide)]
   const map: Partial<Record<MorphSlotLevel, MorphSlotFill>> = {}
@@ -389,7 +376,7 @@ function copyFromPreset(sourceGuide: CrystalPresetId) {
   const to = activePreset.value
   presets.value = {
     ...presets.value,
-    [to]: cloneMorphBoard(presets.value[from]),
+    [to]: cloneMorphBoard(presets.value[from], MORPH_SLOT_LEVELS),
   }
   activeSlot.value = null
   catalogTab.value = 'skills'
@@ -586,7 +573,7 @@ async function onSubmit() {
       section: 'morphs',
       payload: {
         morphs,
-        replaced_presets: [...MORPH_PRESET_IDS],
+        replaced_presets: fullReplacedPresets(MORPH_PRESET_IDS),
       },
       author_label: author.value.trim() || undefined,
       website: honeypot.value,
@@ -596,21 +583,6 @@ async function onSubmit() {
 </script>
 
 <style module>
-.headerTools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  min-width: 0;
-}
-
-.copyPreview {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: auto;
-}
-
 .workspace {
   display: grid;
   grid-template-columns: minmax(18rem, 1.1fr) minmax(16rem, 1fr);

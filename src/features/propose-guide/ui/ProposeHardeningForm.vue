@@ -14,7 +14,7 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <div :class="$style.headerTools">
+      <div :class="presetTools.headerTools">
         <UiPresetTabs
           v-model="activePreset"
           :tabs="guidePresets"
@@ -28,7 +28,7 @@
           @copy="copyFromPreset"
         >
           <template #default="{ preset }">
-            <div :class="$style.copyPreview">
+            <div :class="presetTools.copyPreview">
               <HardeningBoard :filled="filledMapFor(preset)" list-only fill />
             </div>
           </template>
@@ -88,11 +88,12 @@ import {
 import { UiPresetTabs } from '@/shared/ui'
 import { HardeningBoard, type HardeningFill } from '@/widgets/hardening-board'
 import { submitGuideProposal } from '../api/submitProposal'
-import { cloneItemBoard } from '../lib/clonePresetData'
+import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
+import presetTools from './proposePresetTools.module.css'
 
 type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
 
@@ -281,7 +282,7 @@ async function onSubmit() {
       section: 'hardening',
       payload: {
         hardening: hardeningPayload,
-        replaced_presets: [...CRYSTAL_PRESET_IDS],
+        replaced_presets: fullReplacedPresets(CRYSTAL_PRESET_IDS),
       },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
@@ -291,20 +292,6 @@ async function onSubmit() {
 </script>
 
 <style module>
-.headerTools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  min-width: 0;
-}
-
-.copyPreview {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-}
-
 .workspace {
   display: flex;
   flex-direction: column;

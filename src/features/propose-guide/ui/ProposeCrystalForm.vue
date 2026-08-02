@@ -14,7 +14,7 @@
     @submit="onSubmit"
   >
     <template #headerExtra>
-      <div :class="$style.headerTools">
+      <div :class="presetTools.headerTools">
         <UiPresetTabs
           v-model="activePreset"
           :tabs="crystalPresets"
@@ -132,11 +132,12 @@ import {
 import { UiPresetTabs } from '@/shared/ui'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
-import { cloneItemBoard } from '../lib/clonePresetData'
+import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
+import presetTools from './proposePresetTools.module.css'
 
 type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
 
@@ -423,7 +424,7 @@ async function onSubmit() {
       section: 'crystals',
       payload: {
         crystals: crystalsPayload,
-        replaced_presets: [...CRYSTAL_PRESET_IDS],
+        replaced_presets: fullReplacedPresets(CRYSTAL_PRESET_IDS),
       },
       author_label: author.value || undefined,
       website: honeypot.value || undefined,
@@ -433,14 +434,6 @@ async function onSubmit() {
 </script>
 
 <style module>
-.headerTools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  min-width: 0;
-}
-
 .copyPreview {
   display: grid;
   grid-template-columns: 12rem 16rem;

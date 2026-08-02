@@ -29,6 +29,8 @@ export type ProposalPreviewPayload = {
     skill_id: string
     effect_ids: string[]
   }>
+  /** Presets wiped on approve (empty ones included). */
+  replaced_presets?: string[]
 }
 
 export type ProposalPreviewItem = {

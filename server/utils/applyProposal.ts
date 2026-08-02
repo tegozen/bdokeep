@@ -11,7 +11,7 @@ import {
   isRelicsSection,
   isSummarySection,
   isVideosSection,
-  resolveReplacedPresets,
+  finalizeReplacedPresets,
   summaryModeFromSection,
   uiSectionFromProposal,
   videoModeFromSection,
@@ -27,6 +27,24 @@ type ProposalRow = {
   payload: Record<string, unknown> | null
   status: string
   author_label?: string | null
+}
+
+function replacedForApply(
+  raw: unknown,
+  rowPresets: readonly string[],
+  isValid: (id: string) => boolean,
+): string[] {
+  const result = finalizeReplacedPresets(raw, rowPresets, rowPresets, isValid)
+  if (!result.ok) {
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        result.reason === 'rows_outside_replaced'
+          ? 'Строки вне replaced_presets'
+          : 'Некорректный пресет',
+    })
+  }
+  return result.replaced
 }
 
 /** Apply a pending proposal to live guide tables and mark approved (one transaction). */
@@ -138,14 +156,11 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
-        const replaced = resolveReplacedPresets(
+        const replaced = replacedForApply(
           payload.replaced_presets,
           rows.map((r) => r.preset),
           isCrystalPresetId,
         )
-        if (!replaced.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
-        }
 
         await tx`
           delete from guide_buffs
@@ -173,14 +188,11 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
-        const replaced = resolveReplacedPresets(
+        const replaced = replacedForApply(
           payload.replaced_presets,
           rows.map((r) => r.preset),
           isCrystalPresetId,
         )
-        if (!replaced.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
-        }
 
         await tx`
           delete from guide_crystals
@@ -227,14 +239,11 @@ export async function applyProposal(
           }
         })
 
-        const replaced = resolveReplacedPresets(
+        const replaced = replacedForApply(
           payload.replaced_presets,
           [...relicRows.map((r) => r.preset), ...lightRows.map((r) => r.preset)],
           isCrystalPresetId,
         )
-        if (!replaced.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
-        }
 
         await tx`
           delete from guide_relics
@@ -272,14 +281,11 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
-        const replaced = resolveReplacedPresets(
+        const replaced = replacedForApply(
           payload.replaced_presets,
           rows.map((r) => r.preset),
           isCrystalPresetId,
         )
-        if (!replaced.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
-        }
 
         await tx`
           delete from guide_essence
@@ -332,14 +338,11 @@ export async function applyProposal(
             sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
           }
         })
-        const replaced = resolveReplacedPresets(
+        const replaced = replacedForApply(
           payload.replaced_presets,
           rows.map((r) => r.preset),
           isMorphPresetId,
         )
-        if (!replaced.length) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
-        }
 
         await tx`
           delete from guide_morphs
