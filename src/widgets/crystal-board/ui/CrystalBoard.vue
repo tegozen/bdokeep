@@ -128,7 +128,10 @@ const dawnSlots = CRYSTAL_DAWN_SLOTS
 
 const fillStyle = computed(() => {
   if (!props.fill || !props.fillWidth) return undefined
-  return { width: `${props.fillWidth}px` }
+  return {
+    width: `${props.fillWidth}px`,
+    '--crystal-fill-width': `${props.fillWidth}px`,
+  }
 })
 
 function onSlotClick(id: string) {
@@ -144,30 +147,33 @@ function onClear(id: string) {
 
 <style module>
 .wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+  display: block;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.65rem;
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .fill {
-  flex: none;
+  width: var(--crystal-fill-width, 100%);
+  max-width: none;
 }
 
 .canvas {
   position: relative;
   aspect-ratio: 1 / 1;
   width: 100%;
-  flex: 0 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
   border: 1px solid rgba(201, 168, 76, 0.28);
   background:
     radial-gradient(ellipse at 50% 42%, rgba(40, 55, 95, 0.55), transparent 60%),
@@ -214,6 +220,7 @@ function onClear(id: string) {
   gap: 0.45rem;
   box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   padding: 0.55rem;
   border: 1px solid rgba(201, 168, 76, 0.28);
   background:

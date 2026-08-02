@@ -6,10 +6,12 @@ export default defineEventHandler(async (event) => {
   assertSameOrigin(event)
 
   const ip = clientIp(event)
-  if (!checkRateLimit(`login:${ip}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)) {
+  const limit = checkRateLimit(`login:${ip}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)
+  if (!limit.allowed) {
+    const wait = formatRetryAfterRu(limit.retryAfterMs)
     throw createError({
       statusCode: 429,
-      statusMessage: 'Слишком много попыток входа. Подождите.',
+      statusMessage: `Слишком много попыток входа. Подождите ${wait}.`,
     })
   }
 

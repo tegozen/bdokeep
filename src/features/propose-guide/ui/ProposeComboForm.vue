@@ -49,7 +49,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { fetchClassSkills, type Skill } from '@/entities/class'
+import {
+  fetchClassSkills,
+  type GuideComboStepRow,
+  type Skill,
+} from '@/entities/class'
 import { submitGuideProposal } from '../api/submitProposal'
 import { useProposeModal } from '../lib/useProposeModal'
 import { useReorderableList } from '../lib/useReorderableList'
@@ -65,9 +69,11 @@ const props = withDefaults(
   defineProps<{
     classSlug: string
     section: 'combo_awakening' | 'combo_succession'
+    initialSteps?: GuideComboStepRow[]
     triggerLabel?: string
   }>(),
   {
+    initialSteps: () => [],
     triggerLabel: 'Предложить',
   },
 )
@@ -99,6 +105,24 @@ const {
   },
 )
 
+function hydrateFromInitial() {
+  const sorted = [...(props.initialSteps ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order,
+  )
+  const next: PickItem[] = []
+  for (const step of sorted) {
+    if (next.length >= MAX) break
+    const skill = step.skills
+    if (!skill) continue
+    next.push({
+      id: skill.id,
+      name_ru: skill.name_ru,
+      icon_url: skill.icon_url,
+    })
+  }
+  picked.value = next
+}
+
 const {
   open,
   honeypot,
@@ -113,6 +137,7 @@ const {
   classSlug: () => props.classSlug,
   serialize: () => JSON.stringify({ combo: picked.value.map((p) => p.id) }),
   onOpen: async () => {
+    hydrateFromInitial()
     if (skills.value.length) return
     catalogPending.value = true
     catalogError.value = false

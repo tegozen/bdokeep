@@ -2,17 +2,24 @@
   <ClientOnly>
     <VideoListInner :videos="videos" />
     <template #fallback>
-      <div v-if="!videos.length">
+      <div v-if="!slots.length">
         <UiEmptyState title="Данных пока нет" description="Видео для этого класса ещё не добавлены." />
       </div>
       <ul v-else :class="[$style.list]">
-        <li v-for="(video, idx) in preview" :key="video.id" :class="$style.item">
-          <div :class="$style.ph" />
-          <span :class="$style.linkPh">{{
-            !video.title?.trim() || /^Видео\s+\d+$/i.test(video.title.trim())
-              ? `Видео ${idx + 1}`
-              : video.title
-          }}</span>
+        <li
+          v-for="(video, idx) in slots"
+          :key="video?.id ?? `empty-${idx}`"
+          :class="$style.item"
+        >
+          <template v-if="video">
+            <div :class="$style.ph" />
+            <span :class="$style.linkPh">{{
+              !video.title?.trim() || /^Видео\s+\d+$/i.test(video.title.trim())
+                ? `Видео ${idx + 1}`
+                : video.title
+            }}</span>
+          </template>
+          <div v-else :class="$style.ph" aria-hidden="true" />
         </li>
       </ul>
     </template>
@@ -29,9 +36,13 @@ const props = defineProps<{
   videos: ClassVideo[]
 }>()
 
-const preview = computed(() =>
-  [...props.videos].sort((a, b) => a.sort_order - b.sort_order).slice(0, 3),
-)
+const slots = computed((): Array<ClassVideo | null> => {
+  const sorted = [...props.videos]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .slice(0, 3)
+  if (!sorted.length) return []
+  return Array.from({ length: 3 }, (_, i) => sorted[i] ?? null)
+})
 </script>
 
 <style module>

@@ -16,7 +16,10 @@
     </template>
 
     <template v-else-if="!bundle">
-      <ShowEmptyGuide title="Класс не найден" description="Такого класса нет или он скрыт." />
+      <ShowEmptyGuide
+        title="Класс не найден"
+        description="Такого класса нет или он скрыт."
+      />
     </template>
 
     <template v-else>
@@ -29,7 +32,9 @@
             :subtitle="sectionSubtitle('summary')"
           >
             <template v-if="summaryPendingCount" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ summaryPendingCount }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                summaryPendingCount
+              }}</span>
             </template>
             <template v-if="isSuperadmin || activeTier" #beside>
               <ClassTierStars
@@ -65,22 +70,30 @@
             :subtitle="sectionSubtitle('combo')"
           >
             <template v-if="comboPendingCount" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ comboPendingCount }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                comboPendingCount
+              }}</span>
             </template>
             <template #actions>
-              
-                <ProposeComboForm
-                  :key="comboSection"
-                  :class-slug="bundle.class.slug"
-                  :section="comboSection"
-                />
-
+              <ProposeComboForm
+                :key="comboSection"
+                :class-slug="bundle.class.slug"
+                :section="comboSection"
+                :initial-steps="activeComboSteps"
+              />
             </template>
 
-            <div v-if="activeComboSteps.length" :class="[$style.comboBlock, $style.fade]">
+            <div
+              v-if="activeComboSteps.length"
+              :class="[$style.comboBlock, $style.fade]"
+            >
               <ComboChain
                 :steps="activeComboSteps"
-                :label="specMode === 'succession' ? 'Комба наследия' : 'Комба пробуждения'"
+                :label="
+                  specMode === 'succession'
+                    ? 'Комба наследия'
+                    : 'Комба пробуждения'
+                "
               />
             </div>
             <ShowEmptyGuide v-else />
@@ -95,15 +108,15 @@
             :subtitle="sectionSubtitle('morphs')"
           >
             <template v-if="sectionCount('morphs')" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('morphs') }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                sectionCount("morphs")
+              }}</span>
             </template>
             <template #actions>
-              
-                <ProposeMorphForm
-                  :class-slug="bundle.class.slug"
-                  :initial-morphs="bundle.morphs"
-                />
-
+              <ProposeMorphForm
+                :class-slug="bundle.class.slug"
+                :initial-morphs="bundle.morphs"
+              />
             </template>
             <div :class="[$style.morphStage, $style.fade]">
               <MorphBoard :filled="morphFilled" />
@@ -121,24 +134,20 @@
             />
           </div>
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-            
-              <PendingSectionDrafts
-                :proposals="comboPending"
-                @changed="onDraftChanged"
-                @optimistic-remove="onOptimisticRemove"
-                @optimistic-restore="onOptimisticRestore"
-              />
-
+            <PendingSectionDrafts
+              :proposals="comboPending"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
           </div>
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-            
-              <PendingSectionDrafts
-                :proposals="pendingFor('morphs')"
-                @changed="onDraftChanged"
-                @optimistic-remove="onOptimisticRemove"
-                @optimistic-restore="onOptimisticRestore"
-              />
-
+            <PendingSectionDrafts
+              :proposals="pendingFor('morphs')"
+              @changed="onDraftChanged"
+              @optimistic-remove="onOptimisticRemove"
+              @optimistic-restore="onOptimisticRestore"
+            />
           </div>
         </template>
       </div>
@@ -152,30 +161,38 @@
             :subtitle="sectionSubtitle('crystals')"
           >
             <template v-if="sectionCount('crystals')" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('crystals') }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                sectionCount("crystals")
+              }}</span>
             </template>
             <template #actions>
-              
-                <ProposeCrystalForm
-                  :class-slug="bundle.class.slug"
-                  :initial-crystals="bundle.crystals"
-                />
-
+              <ProposeCrystalForm
+                :class-slug="bundle.class.slug"
+                :initial-crystals="bundle.crystals"
+              />
             </template>
             <div :class="[$style.crystalLayout, $style.fade]">
               <div :class="$style.picked">
-                <p v-if="!crystalPickedList.length" :class="$style.pickedEmpty">Пока пусто</p>
+                <p v-if="!crystalPickedList.length" :class="$style.pickedEmpty">
+                  Пока пусто
+                </p>
                 <ul v-else :class="$style.pickedList">
-                  <li v-for="row in crystalPickedList" :key="row.id" :class="$style.pickedItem">
+                  <li
+                    v-for="row in crystalPickedList"
+                    :key="row.id"
+                    :class="$style.pickedItem"
+                  >
                     <img
                       v-if="row.icon_url"
                       :src="row.icon_url"
                       alt=""
                       :class="$style.pickedIcon"
                       loading="lazy"
-                    >
+                    />
                     <span :class="$style.pickedName">{{ row.name_ru }}</span>
-                    <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+                    <span v-if="row.count > 1" :class="$style.pickedCount"
+                      >×{{ row.count }}</span
+                    >
                   </li>
                 </ul>
               </div>
@@ -194,16 +211,16 @@
             :subtitle="sectionSubtitle('relics')"
           >
             <template v-if="sectionCount('relics')" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('relics') }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                sectionCount("relics")
+              }}</span>
             </template>
             <template #actions>
-              
-                <ProposeRelicForm
-                  :class-slug="bundle.class.slug"
-                  :initial-relics="bundle.relics"
-                  :initial-lightstones="bundle.lightstones"
-                />
-
+              <ProposeRelicForm
+                :class-slug="bundle.class.slug"
+                :initial-relics="bundle.relics"
+                :initial-lightstones="bundle.lightstones"
+              />
             </template>
             <div :class="[$style.relicStage, $style.fade]">
               <RelicBoard :filled="relicFilled" />
@@ -219,7 +236,9 @@
             :subtitle="sectionSubtitle('hardening')"
           >
             <template v-if="sectionCount('hardening')" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('hardening') }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                sectionCount("hardening")
+              }}</span>
             </template>
             <template #actions>
               <ProposeHardeningForm
@@ -228,7 +247,7 @@
               />
             </template>
             <div :class="[$style.hardeningStage, $style.fade]">
-              <HardeningBoard :filled="hardeningFilled" />
+              <HardeningBoard list-only :filled="hardeningFilled" />
             </div>
           </GuideSection>
         </div>
@@ -245,7 +264,9 @@
             :subtitle="sectionSubtitle('buffs')"
           >
             <template v-if="sectionCount('buffs')" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ sectionCount('buffs') }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                sectionCount("buffs")
+              }}</span>
             </template>
             <template #actions>
               <ProposeBuffsForm
@@ -254,19 +275,32 @@
               />
             </template>
             <div :class="$style.scrollCard">
-              <ul v-if="activeBuffs.length" :class="[$style.buffList, $style.fade]">
-                <li v-for="row in activeBuffs" :key="row.id" :class="$style.buffItem">
+              <ul
+                v-if="activeBuffs.length"
+                :class="[$style.buffList, $style.fade]"
+              >
+                <li
+                  v-for="row in activeBuffs"
+                  :key="row.id"
+                  :class="$style.buffItem"
+                >
                   <img
                     v-if="row.buffs?.icon_url"
                     :src="row.buffs.icon_url"
                     alt=""
                     :class="$style.buffIcon"
                     loading="lazy"
-                  >
+                  />
                   <div :class="$style.buffBody">
-                    <strong>{{ row.buffs?.name_ru || row.slot || 'Слот' }}</strong>
-                    <span v-if="row.group_name" :class="$style.muted"> · {{ row.group_name }}</span>
-                    <p v-if="row.notes" :class="$style.notes">{{ row.notes }}</p>
+                    <strong>{{
+                      row.buffs?.name_ru || row.slot || "Слот"
+                    }}</strong>
+                    <span v-if="row.group_name" :class="$style.muted">
+                      · {{ row.group_name }}</span
+                    >
+                    <p v-if="row.notes" :class="$style.notes">
+                      {{ row.notes }}
+                    </p>
                   </div>
                 </li>
               </ul>
@@ -324,7 +358,9 @@
             :subtitle="sectionSubtitle('videos')"
           >
             <template v-if="videosPendingCount" #badge>
-              <span :class="$style.pendingBadge" title="На модерации">{{ videosPendingCount }}</span>
+              <span :class="$style.pendingBadge" title="На модерации">{{
+                videosPendingCount
+              }}</span>
             </template>
             <template #actions>
               <ProposeVideosForm
@@ -354,13 +390,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ClassTierStars, updateClassTier, type ClassGuideBundle } from '@/entities/class'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
+import {
+  ClassTierStars,
+  updateClassTier,
+  type ClassGuideBundle,
+} from "@/entities/class";
 import {
   fetchPendingForClass,
   type PendingProposal,
-} from '@/features/superadmin-auth/api/pendingProposals'
-import { ShowEmptyGuide } from '@/features/show-empty-guide'
+} from "@/features/superadmin-auth/api/pendingProposals";
+import { ShowEmptyGuide } from "@/features/show-empty-guide";
 
 import {
   computePresetFill,
@@ -376,319 +424,342 @@ import {
   usePendingSummary,
   useSuperadmin,
   type GuideUiSection,
-} from '@/shared/lib'
-import UiMarkdownPreview from '@/shared/ui/UiMarkdownPreview.vue'
-import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
-import { ComboChain } from '@/widgets/combo-chain'
-import { CrystalBoard } from '@/widgets/crystal-board'
-import { GuideSection } from '@/widgets/guide-section'
-import { HardeningBoard } from '@/widgets/hardening-board'
-import { MorphBoard } from '@/widgets/morph-board'
-import { RelicBoard } from '@/widgets/relic-board'
-import { VideoList } from '@/widgets/video-list'
-import { useGuideBoardFills } from '../lib/useGuideBoardFills'
+} from "@/shared/lib";
+import UiMarkdownPreview from "@/shared/ui/UiMarkdownPreview.vue";
+import UiSkeleton from "@/shared/ui/UiSkeleton.vue";
+import { ComboChain } from "@/widgets/combo-chain";
+import { CrystalBoard } from "@/widgets/crystal-board";
+import { GuideSection } from "@/widgets/guide-section";
+import { HardeningBoard } from "@/widgets/hardening-board";
+import { MorphBoard } from "@/widgets/morph-board";
+import { RelicBoard } from "@/widgets/relic-board";
+import { VideoList } from "@/widgets/video-list";
+import { useGuideBoardFills } from "../lib/useGuideBoardFills";
 
 /** Propose / moderation UI — keep off the initial class-page JS budget. */
 const ProposeBuffsForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeBuffsForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeBuffsForm.vue"),
+);
 const ProposeComboForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeComboForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeComboForm.vue"),
+);
 const ProposeCrystalForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeCrystalForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeCrystalForm.vue"),
+);
 const ProposeMorphForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeMorphForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeMorphForm.vue"),
+);
 const ProposeRelicForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeRelicForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeRelicForm.vue"),
+);
 const ProposeHardeningForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeHardeningForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeHardeningForm.vue"),
+);
 const ProposeSummaryForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeSummaryForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeSummaryForm.vue"),
+);
 const ProposeVideosForm = defineAsyncComponent(
-  () => import('@/features/propose-guide/ui/ProposeVideosForm.vue'),
-)
+  () => import("@/features/propose-guide/ui/ProposeVideosForm.vue"),
+);
 const PendingSectionDrafts = defineAsyncComponent(
-  () => import('@/features/superadmin-auth/ui/PendingSectionDrafts.vue'),
-)
-
+  () => import("@/features/superadmin-auth/ui/PendingSectionDrafts.vue"),
+);
 
 const props = defineProps<{
-  bundle: ClassGuideBundle | null
-  pending: boolean
-  error?: boolean
-}>()
+  bundle: ClassGuideBundle | null;
+  pending: boolean;
+  error?: boolean;
+}>();
 
 const emit = defineEmits<{
-  'tier-change': [mode: 'awakening' | 'succession', tier: number | null]
-}>()
+  "tier-change": [mode: "awakening" | "succession", tier: number | null];
+}>();
 
-const { isSuperadmin } = useSuperadmin()
-const headerClass = useHeaderClass()
-const headerPresetFill = useHeaderPresetFill()
-const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
-const classPending = ref<PendingProposal[]>([])
-const pendingRestoreAt = new Map<string, number>()
-const tierSaving = ref(false)
-const specMode = useGuideSpecMode()
-const guidePreset = useGuidePreset()
+const { isSuperadmin } = useSuperadmin();
+const headerClass = useHeaderClass();
+const headerPresetFill = useHeaderPresetFill();
+const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } =
+  usePendingSummary();
+const classPending = ref<PendingProposal[]>([]);
+const pendingRestoreAt = new Map<string, number>();
+const tierSaving = ref(false);
+const specMode = useGuideSpecMode();
+const guidePreset = useGuidePreset();
 
 const sectionUpdates = computed(() =>
   parseSectionUpdates(props.bundle?.guide?.section_updates),
-)
+);
 
 function sectionSubtitle(key: GuideUiSection) {
-  const metaKey = sectionUpdateKey(key, specMode.value)
-  return formatSectionUpdated(sectionUpdates.value[metaKey])
+  const metaKey = sectionUpdateKey(key, specMode.value);
+  return formatSectionUpdated(sectionUpdates.value[metaKey]);
 }
 
 watch(
   () => props.bundle,
   (b) => {
-    headerPresetFill.value = computePresetFill(b)
+    headerPresetFill.value = computePresetFill(b);
   },
   { immediate: true, deep: true },
-)
+);
 
 const activeTier = computed(() => {
-  const klass = props.bundle?.class
-  if (!klass) return null
-  return specMode.value === 'succession'
+  const klass = props.bundle?.class;
+  if (!klass) return null;
+  return specMode.value === "succession"
     ? (klass.tier_succession ?? null)
-    : (klass.tier_awakening ?? null)
-})
+    : (klass.tier_awakening ?? null);
+});
 
 async function onTierChange(tier: number | null) {
-  const klass = props.bundle?.class
-  if (!klass || !isSuperadmin.value || tierSaving.value) return
+  const klass = props.bundle?.class;
+  if (!klass || !isSuperadmin.value || tierSaving.value) return;
 
-  const mode = specMode.value
+  const mode = specMode.value;
   const prev =
-    mode === 'succession' ? (klass.tier_succession ?? null) : (klass.tier_awakening ?? null)
-  emit('tier-change', mode, tier)
+    mode === "succession"
+      ? (klass.tier_succession ?? null)
+      : (klass.tier_awakening ?? null);
+  emit("tier-change", mode, tier);
   if (headerClass.value?.slug === klass.slug) {
     headerClass.value = {
       ...headerClass.value,
-      ...(mode === 'succession' ? { tier_succession: tier } : { tier_awakening: tier }),
-    }
+      ...(mode === "succession"
+        ? { tier_succession: tier }
+        : { tier_awakening: tier }),
+    };
   }
 
-  tierSaving.value = true
+  tierSaving.value = true;
   try {
-    await updateClassTier(klass.slug, tier, mode)
-    clearNuxtData('classes')
+    await updateClassTier(klass.slug, tier, mode);
+    clearNuxtData("classes");
   } catch {
-    emit('tier-change', mode, prev)
+    emit("tier-change", mode, prev);
     if (headerClass.value?.slug === klass.slug) {
       headerClass.value = {
         ...headerClass.value,
-        ...(mode === 'succession' ? { tier_succession: prev } : { tier_awakening: prev }),
-      }
+        ...(mode === "succession"
+          ? { tier_succession: prev }
+          : { tier_awakening: prev }),
+      };
     }
   } finally {
-    tierSaving.value = false
+    tierSaving.value = false;
   }
 }
 
 async function loadClassPending() {
   if (!isSuperadmin.value || !props.bundle?.class.slug) {
-    classPending.value = []
-    return
+    classPending.value = [];
+    return;
   }
   try {
-    classPending.value = await fetchPendingForClass(props.bundle.class.slug)
+    classPending.value = await fetchPendingForClass(props.bundle.class.slug);
   } catch {
-    classPending.value = []
+    classPending.value = [];
   }
 }
 
 function onOptimisticRemove(item: PendingProposal) {
-  const index = classPending.value.findIndex((p) => p.id === item.id)
-  if (index >= 0) pendingRestoreAt.set(item.id, index)
-  classPending.value = classPending.value.filter((p) => p.id !== item.id)
-  adjustPendingSummary(-1, item.class_slug)
+  const index = classPending.value.findIndex((p) => p.id === item.id);
+  if (index >= 0) pendingRestoreAt.set(item.id, index);
+  classPending.value = classPending.value.filter((p) => p.id !== item.id);
+  adjustPendingSummary(-1, item.class_slug);
 }
 
 function onOptimisticRestore(item: PendingProposal) {
-  if (classPending.value.some((p) => p.id === item.id)) return
-  const index = pendingRestoreAt.get(item.id) ?? classPending.value.length
-  pendingRestoreAt.delete(item.id)
-  const next = [...classPending.value]
-  next.splice(Math.min(index, next.length), 0, item)
-  classPending.value = next
-  adjustPendingSummary(1, item.class_slug)
+  if (classPending.value.some((p) => p.id === item.id)) return;
+  const index = pendingRestoreAt.get(item.id) ?? classPending.value.length;
+  pendingRestoreAt.delete(item.id);
+  const next = [...classPending.value];
+  next.splice(Math.min(index, next.length), 0, item);
+  classPending.value = next;
+  adjustPendingSummary(1, item.class_slug);
 }
 
 function pendingFor(section: string) {
-  return classPending.value.filter((p) => p.section === section)
+  return classPending.value.filter((p) => p.section === section);
 }
 
 function sectionCount(section: string) {
-  return pendingFor(section).length
+  return pendingFor(section).length;
 }
 
 const comboPending = computed(() =>
   classPending.value.filter(
-    (p) => p.section === 'combo_awakening' || p.section === 'combo_succession',
+    (p) => p.section === "combo_awakening" || p.section === "combo_succession",
   ),
-)
-const comboPendingCount = computed(() => comboPending.value.length)
+);
+const comboPendingCount = computed(() => comboPending.value.length);
 
 const summarySection = computed(() =>
-  specMode.value === 'succession'
-    ? ('summary_succession' as const)
-    : ('summary_awakening' as const),
-)
+  specMode.value === "succession"
+    ? ("summary_succession" as const)
+    : ("summary_awakening" as const),
+);
 const videosSection = computed(() =>
-  specMode.value === 'succession'
-    ? ('videos_succession' as const)
-    : ('videos_awakening' as const),
-)
+  specMode.value === "succession"
+    ? ("videos_succession" as const)
+    : ("videos_awakening" as const),
+);
 
-const summaryPending = computed(() => pendingFor(summarySection.value))
-const summaryPendingCount = computed(() => summaryPending.value.length)
-const videosPending = computed(() => pendingFor(videosSection.value))
-const videosPendingCount = computed(() => videosPending.value.length)
+const summaryPending = computed(() => pendingFor(summarySection.value));
+const summaryPendingCount = computed(() => summaryPending.value.length);
+const videosPending = computed(() => pendingFor(videosSection.value));
+const videosPendingCount = computed(() => videosPending.value.length);
 
 const gearDraftsVisible = computed(
   () =>
-    sectionCount('crystals') > 0 ||
-    sectionCount('relics') > 0 ||
-    sectionCount('buffs') > 0 ||
-    sectionCount('hardening') > 0,
-)
+    sectionCount("crystals") > 0 ||
+    sectionCount("relics") > 0 ||
+    sectionCount("buffs") > 0 ||
+    sectionCount("hardening") > 0,
+);
 
 const topDraftsVisible = computed(
   () =>
     summaryPendingCount.value > 0 ||
     comboPendingCount.value > 0 ||
-    sectionCount('morphs') > 0,
-)
+    sectionCount("morphs") > 0,
+);
 
-const videoDraftsVisible = computed(() => videosPendingCount.value > 0)
+const videoDraftsVisible = computed(() => videosPendingCount.value > 0);
 
-async function onDraftChanged(action: 'approve' | 'reject') {
-  if (action === 'approve' && props.bundle?.class.slug) {
-    await refreshNuxtData(`class-${props.bundle.class.slug}`)
+async function onDraftChanged(action: "approve" | "reject") {
+  if (action === "approve" && props.bundle?.class.slug) {
+    await refreshNuxtData(`class-${props.bundle.class.slug}`);
   }
   // Quiet reconcile badge with server (list already updated optimistically)
-  void refreshPendingSummary()
+  void refreshPendingSummary();
 }
 
 watch(
   [isSuperadmin, () => props.bundle?.class.slug],
   () => {
-    void loadClassPending()
+    void loadClassPending();
   },
   { immediate: true },
-)
+);
 
-const activeMorphPreset = computed(() => morphPresetFrom(specMode.value, guidePreset.value))
-const crystalColRef = ref<HTMLElement | null>(null)
-const buffMaxHeight = ref<number | null>(null)
-let crystalObserver: ResizeObserver | null = null
+const activeMorphPreset = computed(() =>
+  morphPresetFrom(specMode.value, guidePreset.value),
+);
+const crystalColRef = ref<HTMLElement | null>(null);
+const buffMaxHeight = ref<number | null>(null);
+let crystalObserver: ResizeObserver | null = null;
 
 const buffColStyle = computed(() =>
-  buffMaxHeight.value != null ? { maxHeight: `${buffMaxHeight.value}px` } : undefined,
-)
+  buffMaxHeight.value != null
+    ? { maxHeight: `${buffMaxHeight.value}px` }
+    : undefined,
+);
 
 function syncBuffMaxHeight() {
-  const el = crystalColRef.value
+  const el = crystalColRef.value;
   if (!el) {
-    buffMaxHeight.value = null
-    return
+    buffMaxHeight.value = null;
+    return;
   }
   // Read layout in rAF to avoid forced reflow during ResizeObserver/style invalidation.
   requestAnimationFrame(() => {
-    const h = el.getBoundingClientRect().height
+    const h = el.getBoundingClientRect().height;
     if (!h || h < 80) {
-      buffMaxHeight.value = null
-      return
+      buffMaxHeight.value = null;
+      return;
     }
-    buffMaxHeight.value = Math.round(h)
-  })
+    buffMaxHeight.value = Math.round(h);
+  });
 }
 
 function bindCrystalObserver() {
-  crystalObserver?.disconnect()
-  crystalObserver = null
-  const el = crystalColRef.value
-  if (!el || typeof ResizeObserver === 'undefined') {
-    syncBuffMaxHeight()
-    return
+  crystalObserver?.disconnect();
+  crystalObserver = null;
+  const el = crystalColRef.value;
+  if (!el || typeof ResizeObserver === "undefined") {
+    syncBuffMaxHeight();
+    return;
   }
-  crystalObserver = new ResizeObserver(() => syncBuffMaxHeight())
-  crystalObserver.observe(el)
-  syncBuffMaxHeight()
+  crystalObserver = new ResizeObserver(() => syncBuffMaxHeight());
+  crystalObserver.observe(el);
+  syncBuffMaxHeight();
 }
 
 watch(
   () => [props.bundle, props.pending, guidePreset.value] as const,
   async () => {
-    if (!import.meta.client) return
+    if (!import.meta.client) return;
     if (props.pending || !props.bundle) {
-      buffMaxHeight.value = null
-      crystalObserver?.disconnect()
-      crystalObserver = null
-      return
+      buffMaxHeight.value = null;
+      crystalObserver?.disconnect();
+      crystalObserver = null;
+      return;
     }
-    await nextTick()
-    bindCrystalObserver()
+    await nextTick();
+    bindCrystalObserver();
   },
-)
+);
 
 onMounted(async () => {
-  if (props.pending || !props.bundle) return
-  await nextTick()
-  bindCrystalObserver()
-})
+  if (props.pending || !props.bundle) return;
+  await nextTick();
+  bindCrystalObserver();
+});
 
 onBeforeUnmount(() => {
-  crystalObserver?.disconnect()
-  crystalObserver = null
-  headerPresetFill.value = emptyPresetFill()
-})
+  crystalObserver?.disconnect();
+  crystalObserver = null;
+  headerPresetFill.value = emptyPresetFill();
+});
 
 const awakeningSteps = computed(
-  () => props.bundle?.comboSteps.filter((s) => s.mode === 'awakening') ?? [],
-)
+  () => props.bundle?.comboSteps.filter((s) => s.mode === "awakening") ?? [],
+);
 const successionSteps = computed(
-  () => props.bundle?.comboSteps.filter((s) => s.mode === 'succession') ?? [],
-)
+  () => props.bundle?.comboSteps.filter((s) => s.mode === "succession") ?? [],
+);
 const activeComboSteps = computed(() =>
-  specMode.value === 'succession' ? successionSteps.value : awakeningSteps.value,
-)
+  specMode.value === "succession"
+    ? successionSteps.value
+    : awakeningSteps.value,
+);
 const comboSection = computed(() =>
-  specMode.value === 'succession' ? ('combo_succession' as const) : ('combo_awakening' as const),
-)
+  specMode.value === "succession"
+    ? ("combo_succession" as const)
+    : ("combo_awakening" as const),
+);
 
 const activeSummary = computed(() => {
-  const guide = props.bundle?.guide
-  if (!guide) return null
+  const guide = props.bundle?.guide;
+  if (!guide) return null;
   const text =
-    specMode.value === 'succession' ? guide.summary_succession : guide.summary_awakening
-  return text?.trim() ? text : null
-})
+    specMode.value === "succession"
+      ? guide.summary_succession
+      : guide.summary_awakening;
+  return text?.trim() ? text : null;
+});
 
 const activeVideos = computed(
   () =>
-    props.bundle?.videos.filter((v) => (v.mode || 'awakening') === specMode.value) ?? [],
-)
+    props.bundle?.videos.filter(
+      (v) => (v.mode || "awakening") === specMode.value,
+    ) ?? [],
+);
 
 const activeBuffs = computed(() =>
   (props.bundle?.buffs ?? []).filter(
-    (row) => (row.preset || 't1') === guidePreset.value,
+    (row) => (row.preset || "t1") === guidePreset.value,
   ),
-)
+);
 
-const bundleRef = computed(() => props.bundle)
-const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFilled } =
-  useGuideBoardFills(bundleRef, guidePreset, activeMorphPreset)
+const bundleRef = computed(() => props.bundle);
+const {
+  crystalFilled,
+  crystalPickedList,
+  relicFilled,
+  morphFilled,
+  hardeningFilled,
+} = useGuideBoardFills(bundleRef, guidePreset, activeMorphPreset);
 </script>
 
 <style module>
@@ -827,7 +898,16 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
 }
 
 .comboMorphDraft {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: visible;
+  padding: 0;
+}
+
+.comboMorphDraft > * {
+  flex: 1;
+  min-height: 0;
 }
 
 .morphStage {
@@ -855,7 +935,16 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
 }
 
 .gearDraft {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: visible;
+  padding: 0;
+}
+
+.gearDraft > * {
+  flex: 1;
+  min-height: 0;
 }
 
 .buffCol {
@@ -880,7 +969,7 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
   gap: 0.85rem;
   align-items: stretch;
   justify-content: start;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
 }
 
@@ -938,9 +1027,10 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
 }
 
 .crystalStage {
-  width: 100%;
-  max-width: 22rem;
+  width: 22rem;
+  max-width: 100%;
   min-width: 0;
+  justify-self: start;
 }
 
 .relicStage {
@@ -948,8 +1038,8 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
 }
 
 .hardeningStage {
-  width: max-content;
-  max-width: 100%;
+  width: 100%;
+  min-width: 0;
 }
 
 .videoBlock {
@@ -969,7 +1059,16 @@ const { crystalFilled, crystalPickedList, relicFilled, morphFilled, hardeningFil
 }
 
 .videoDraft {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow: visible;
+  padding: 0;
+}
+
+.videoDraft > * {
+  flex: 1;
+  min-height: 0;
 }
 
 @media (max-width: 1280px) {

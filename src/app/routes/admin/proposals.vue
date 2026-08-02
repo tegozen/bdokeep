@@ -77,17 +77,19 @@
             <UiButton
               type="button"
               :disabled="acting === item.id"
+              aria-label="Одобрить"
               @click="approve(item)"
             >
-              Одобрить
+              ✓
             </UiButton>
             <UiButton
               variant="danger"
               type="button"
               :disabled="acting === item.id"
+              aria-label="Отклонить"
               @click="reject(item.id)"
             >
-              Отклонить
+              ✕
             </UiButton>
           </div>
           <p v-if="item.review_note" :class="$style.muted">Заметка: {{ item.review_note }}</p>

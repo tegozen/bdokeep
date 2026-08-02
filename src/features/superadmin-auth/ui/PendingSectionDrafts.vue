@@ -32,10 +32,12 @@
 
       <header :class="$style.head">
         <div :class="$style.meta">
-          <span>Черновик</span>
-          <span v-if="current.author_label">{{ current.author_label }}</span>
-          <span>{{ formatDate(current.created_at) }}</span>
-          <span v-if="modeLabel(current.section)">{{ modeLabel(current.section) }}</span>
+          <div :class="$style.metaLine">
+            <span>Черновик</span>
+            <span v-if="current.author_label">{{ current.author_label }}</span>
+            <span v-if="modeLabel(current.section)">{{ modeLabel(current.section) }}</span>
+          </div>
+          <div :class="$style.metaDate">{{ formatDate(current.created_at) }}</div>
         </div>
         <div :class="$style.actions">
           <UiButton
@@ -52,25 +54,28 @@
             size="sm"
             type="button"
             :disabled="acting === current.id"
+            aria-label="Одобрить"
             @click="onApprove(current)"
           >
-            Одобрить
+            ✓
           </UiButton>
           <UiButton
             variant="danger"
             size="sm"
             type="button"
             :disabled="acting === current.id"
+            aria-label="Отклонить"
             @click="onReject(current.id)"
           >
-            Отклонить
+            ✕
           </UiButton>
         </div>
       </header>
 
-      <div :class="$style.scrollCard">
+      <div :class="$style.previewPane">
         <ProposalSectionPreview
           :key="current.id"
+          pin-tabs
           :item="current"
           :muted-class="$style.muted"
           :text-class="$style.text"
@@ -264,22 +269,25 @@ async function onReject(id: string) {
 <style module>
 .list {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   height: 100%;
+  min-height: min(32rem, 70vh);
   border: 1px solid color-mix(in srgb, var(--color-gold) 35%, var(--color-border));
   background: color-mix(in srgb, var(--color-gold) 6%, var(--color-bg-elevated));
   padding: 0.75rem 0.85rem 0.85rem;
   /* Must stay visible so BorderSparkler can bleed past the frame. */
   overflow: visible;
-  min-height: min(32rem, 70vh);
 }
 
 .draft {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 0.55rem;
   min-width: 0;
-  height: 100%;
+  min-height: 0;
   overflow: visible;
 }
 
@@ -300,7 +308,7 @@ async function onReject(id: string) {
 .head {
   display: flex;
   flex-wrap: nowrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
 }
@@ -308,12 +316,38 @@ async function onReject(id: string) {
 .meta {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  justify-content: center;
+  box-sizing: border-box;
+  /* Match UiButton size="sm" min-height. */
+  height: 2rem;
   min-width: 0;
   flex: 1 1 auto;
   font-size: 0.78rem;
-  line-height: 1.35;
+  line-height: 1rem;
   color: var(--color-muted);
+}
+
+.metaLine {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+  height: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaLine > span:not(:last-child)::after {
+  content: '·';
+  margin-left: 0.55rem;
+  margin-right: 0.55rem;
+  opacity: 0.65;
+}
+
+.metaDate {
+  height: 1rem;
+  white-space: nowrap;
 }
 
 .actions {
@@ -324,13 +358,10 @@ async function onReject(id: string) {
   gap: 0.35rem;
 }
 
-.scrollCard {
+.previewPane {
   flex: 1;
-  min-height: min(18rem, 40vh);
-  height: min(22rem, 48vh);
-  max-height: min(22rem, 48vh);
-  overflow: auto;
-  padding-right: 0.15rem;
+  min-width: 0;
+  min-height: 0;
 }
 
 .dots {
@@ -367,26 +398,38 @@ async function onReject(id: string) {
 }
 
 .presetTabs {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  align-items: stretch;
+  box-sizing: border-box;
+  min-height: 2rem;
   margin-bottom: 0.55rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, #000 35%, transparent);
+  padding: 2px;
 }
 
 .presetTab {
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  border: 0;
   background: transparent;
   color: var(--color-muted);
-  font-size: 0.75rem;
-  padding: 0.2rem 0.55rem;
   cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0 0.75rem;
+}
+
+.presetTab:hover {
+  color: var(--color-gold-soft);
 }
 
 .presetTabOn {
-  border-color: color-mix(in srgb, var(--color-gold) 55%, var(--color-border));
-  color: var(--color-ink);
-  background: color-mix(in srgb, var(--color-gold) 12%, transparent);
+  background: var(--color-gold-dim);
+  color: var(--color-gold);
 }
 
 .buffList {

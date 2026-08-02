@@ -1,25 +1,32 @@
 <template>
-  <div v-if="!display.length">
+  <div v-if="!slots.length">
     <UiEmptyState title="Данных пока нет" description="Видео для этого класса ещё не добавлены." />
   </div>
   <ul v-else :class="[$style.list, $style.fade]">
-    <li v-for="(video, idx) in display" :key="video.id" :class="$style.item">
-      <YoutubeEmbed
-        v-if="safeUrl(video.youtube_url)"
-        :url="safeUrl(video.youtube_url)!"
-        :title="labelFor(video, idx)"
-        external
-      />
-      <p v-else :class="$style.bad">Некорректная ссылка</p>
-      <a
-        v-if="safeUrl(video.youtube_url)"
-        :href="safeUrl(video.youtube_url)!"
-        :class="$style.link"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {{ labelFor(video, idx) }}
-      </a>
+    <li
+      v-for="(video, idx) in slots"
+      :key="video?.id ?? `empty-${idx}`"
+      :class="$style.item"
+    >
+      <template v-if="video && safeUrl(video.youtube_url)">
+        <YoutubeEmbed
+          :url="safeUrl(video.youtube_url)!"
+          :title="labelFor(video, idx)"
+          external
+        />
+        <a
+          :href="safeUrl(video.youtube_url)!"
+          :class="$style.link"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ labelFor(video, idx) }}
+        </a>
+      </template>
+      <template v-else-if="video">
+        <p :class="$style.bad">Некорректная ссылка</p>
+      </template>
+      <div v-else :class="$style.empty" aria-hidden="true" />
     </li>
   </ul>
 </template>
@@ -34,9 +41,14 @@ const props = defineProps<{
   videos: ClassVideo[]
 }>()
 
-const display = computed(() =>
-  [...props.videos].sort((a, b) => a.sort_order - b.sort_order).slice(0, 3),
-)
+/** Always fill 3 columns so the gold grid gap bg never shows as an empty cell. */
+const slots = computed((): Array<ClassVideo | null> => {
+  const sorted = [...props.videos]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .slice(0, 3)
+  if (!sorted.length) return []
+  return Array.from({ length: 3 }, (_, i) => sorted[i] ?? null)
+})
 
 function safeUrl(url: string) {
   return sanitizeYoutubeUrl(url)
@@ -73,6 +85,12 @@ function labelFor(video: ClassVideo, idx: number) {
   gap: 0.45rem;
   padding: 0.75rem;
   background: var(--color-bg-panel);
+}
+
+.empty {
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--color-border);
+  background: #111;
 }
 
 .link {

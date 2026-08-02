@@ -3,10 +3,12 @@ const THUMB_MAX_HITS = 60
 
 export default defineEventHandler(async (event) => {
   const ip = clientIp(event)
-  if (!checkRateLimit(`yt-thumb:${ip}`, THUMB_MAX_HITS, THUMB_WINDOW_MS)) {
+  const limit = checkRateLimit(`yt-thumb:${ip}`, THUMB_MAX_HITS, THUMB_WINDOW_MS)
+  if (!limit.allowed) {
+    const wait = formatRetryAfterRu(limit.retryAfterMs)
     throw createError({
       statusCode: 429,
-      statusMessage: 'Слишком много запросов превью. Подождите.',
+      statusMessage: `Слишком много запросов превью. Подождите ${wait}.`,
     })
   }
 

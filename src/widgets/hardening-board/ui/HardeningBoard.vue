@@ -1,6 +1,11 @@
 <template>
-  <div :class="[$style.wrap, interactive && $style.interactive]">
-    <div :class="$style.slots" role="list" aria-label="Активные камни закалки">
+  <div :class="[$style.wrap, interactive && $style.interactive, listOnly && $style.listOnly]">
+    <div
+      v-if="!listOnly"
+      :class="$style.slots"
+      role="list"
+      aria-label="Активные камни закалки"
+    >
       <button
         v-for="slot in slots"
         :key="slot.id"
@@ -36,7 +41,7 @@
       </button>
     </div>
 
-    <div :class="$style.effects">
+    <div :class="[$style.effects, listOnly && $style.effectsGrow]">
       <p :class="$style.effectsTitle">Эффекты оружия</p>
       <ul v-if="effectRows.length" :class="$style.effectsList">
         <li v-for="row in effectRows" :key="row.id" :class="$style.effectItem">
@@ -70,11 +75,14 @@ const props = withDefaults(
     filled?: Record<string, HardeningFill | null | undefined>
     selectedId?: string | null
     interactive?: boolean
+    /** Draft/preview: only the effects list, no slot row / fixed height. */
+    listOnly?: boolean
   }>(),
   {
     filled: () => ({}),
     selectedId: null,
     interactive: false,
+    listOnly: false,
   },
 )
 
@@ -185,6 +193,10 @@ function onClear(id: string) {
   color: var(--color-danger);
 }
 
+.listOnly {
+  width: 100%;
+}
+
 .effects {
   display: flex;
   flex-direction: column;
@@ -194,6 +206,16 @@ function onClear(id: string) {
   background: color-mix(in srgb, var(--color-bg-panel) 88%, #000);
   padding: 0.7rem 0.85rem;
   overflow: hidden;
+}
+
+.effectsGrow {
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+.effectsGrow .effectsList {
+  overflow: visible;
 }
 
 .effectsTitle {

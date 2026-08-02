@@ -5,8 +5,26 @@ const buckets = new Map<string, Bucket>()
 const WINDOW_MS = 10 * 60 * 1000
 const MAX_HITS = 5
 
-/** Simple in-memory IP rate limit. Returns true if allowed. */
-export function checkRateLimit(key: string, maxHits = MAX_HITS, windowMs = WINDOW_MS): boolean {
+export type RateLimitResult = {
+  allowed: boolean
+  /** Ms until the oldest hit leaves the window (0 when allowed). */
+  retryAfterMs: number
+}
+
+/** Format a wait duration for Russian UI copy. */
+export function formatRetryAfterRu(ms: number): string {
+  const sec = Math.max(1, Math.ceil(ms / 1000))
+  if (sec < 60) return `${sec} сек`
+  const min = Math.ceil(sec / 60)
+  return `${min} мин`
+}
+
+/** Simple in-memory IP rate limit. Records a hit when allowed. */
+export function checkRateLimit(
+  key: string,
+  maxHits = MAX_HITS,
+  windowMs = WINDOW_MS,
+): RateLimitResult {
   const now = Date.now()
   let bucket = buckets.get(key)
   if (!bucket) {
@@ -14,9 +32,15 @@ export function checkRateLimit(key: string, maxHits = MAX_HITS, windowMs = WINDO
     buckets.set(key, bucket)
   }
   bucket.hits = bucket.hits.filter((t) => now - t < windowMs)
-  if (bucket.hits.length >= maxHits) return false
+  if (bucket.hits.length >= maxHits) {
+    const oldest = bucket.hits[0] ?? now
+    return {
+      allowed: false,
+      retryAfterMs: Math.max(1, windowMs - (now - oldest)),
+    }
+  }
   bucket.hits.push(now)
-  return true
+  return { allowed: true, retryAfterMs: 0 }
 }
 
 type ReqLike = {

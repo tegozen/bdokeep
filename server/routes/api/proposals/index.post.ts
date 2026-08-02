@@ -24,8 +24,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const ip = clientIp(event)
-  if (!asSuperadmin && !checkRateLimit(`proposal:${ip}`)) {
-    throw createError({ statusCode: 429, statusMessage: 'Слишком много предложений. Подождите.' })
+  if (!asSuperadmin) {
+    const limit = checkRateLimit(`proposal:${ip}`)
+    if (!limit.allowed) {
+      const wait = formatRetryAfterRu(limit.retryAfterMs)
+      throw createError({
+        statusCode: 429,
+        statusMessage: `Слишком много предложений. Подождите ${wait}.`,
+      })
+    }
   }
 
   const slug = String(body.class_slug || '')
