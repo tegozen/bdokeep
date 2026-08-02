@@ -96,6 +96,10 @@ export function useProposeModal(opts: {
     }
   }
 
+  function openModal() {
+    open.value = true
+  }
+
   return {
     open,
     honeypot,
@@ -106,6 +110,7 @@ export function useProposeModal(opts: {
     requestClose,
     isSuperadmin,
     close,
+    openModal,
     runSubmit,
     async captureBaseline() {
       await nextTick()

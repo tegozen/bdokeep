@@ -230,6 +230,7 @@ const {
   obscured,
   requestClose,
   isSuperadmin,
+  openModal,
   runSubmit,
 } = useProposeModal({
   classSlug: () => props.classSlug,
@@ -261,6 +262,8 @@ const {
     rightMainObserver = null
   },
 })
+
+defineExpose({ openModal })
 
 watch([isSuperadmin, catalogPending], async () => {
   if (!open.value) return

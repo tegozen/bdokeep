@@ -36,11 +36,14 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeSummaryForm
+              <ProposeLazy
                 :key="summarySection"
-                :class-slug="bundle.class.slug"
-                :section="summarySection"
-                :initial-text="activeSummary"
+                :loader="() => import('@/features/propose-guide/ui/ProposeSummaryForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  section: summarySection,
+                  initialText: activeSummary,
+                }"
               />
             </template>
             <div v-if="activeSummary" :class="[$style.summary, $style.fade]">
@@ -65,11 +68,14 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeComboForm
+              <ProposeLazy
                 :key="comboSection"
-                :class-slug="bundle.class.slug"
-                :section="comboSection"
-                :initial-steps="activeComboSteps"
+                :loader="() => import('@/features/propose-guide/ui/ProposeComboForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  section: comboSection,
+                  initialSteps: activeComboSteps,
+                }"
               />
             </template>
 
@@ -102,9 +108,12 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeMorphForm
-                :class-slug="bundle.class.slug"
-                :initial-morphs="bundle.morphs"
+              <ProposeLazy
+                :loader="() => import('@/features/propose-guide/ui/ProposeMorphForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  initialMorphs: bundle.morphs,
+                }"
               />
             </template>
             <div :class="[$style.morphStage, $style.fade]">
@@ -154,9 +163,12 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeCrystalForm
-                :class-slug="bundle.class.slug"
-                :initial-crystals="bundle.crystals"
+              <ProposeLazy
+                :loader="() => import('@/features/propose-guide/ui/ProposeCrystalForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  initialCrystals: bundle.crystals,
+                }"
               />
             </template>
             <div :class="[$style.crystalLayout, $style.fade]">
@@ -203,10 +215,13 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeRelicForm
-                :class-slug="bundle.class.slug"
-                :initial-relics="bundle.relics"
-                :initial-lightstones="bundle.lightstones"
+              <ProposeLazy
+                :loader="() => import('@/features/propose-guide/ui/ProposeRelicForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  initialRelics: bundle.relics,
+                  initialLightstones: bundle.lightstones,
+                }"
               />
             </template>
             <div :class="[$style.relicStage, $style.fade]">
@@ -227,9 +242,12 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeHardeningForm
-                :class-slug="bundle.class.slug"
-                :initial-hardening="bundle.hardening"
+              <ProposeLazy
+                :loader="() => import('@/features/propose-guide/ui/ProposeHardeningForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  initialHardening: bundle.hardening,
+                }"
               />
             </template>
             <div :class="[$style.hardeningStage, $style.fade]">
@@ -251,9 +269,12 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeBuffsForm
-                :class-slug="bundle.class.slug"
-                :initial-buffs="bundle.buffs"
+              <ProposeLazy
+                :loader="() => import('@/features/propose-guide/ui/ProposeBuffsForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  initialBuffs: bundle.buffs,
+                }"
               />
             </template>
             <div :class="$style.scrollCard">
@@ -344,11 +365,14 @@
               }}</span>
             </template>
             <template #actions>
-              <ProposeVideosForm
+              <ProposeLazy
                 :key="videosSection"
-                :class-slug="bundle.class.slug"
-                :section="videosSection"
-                :initial-videos="activeVideos"
+                :loader="() => import('@/features/propose-guide/ui/ProposeVideosForm.vue')"
+                :form-props="{
+                  classSlug: bundle.class.slug,
+                  section: videosSection,
+                  initialVideos: activeVideos,
+                }"
               />
             </template>
             <VideoList :videos="activeVideos" />
@@ -373,7 +397,6 @@
 <script setup lang="ts">
 import {
   computed,
-  defineAsyncComponent,
   onBeforeUnmount,
   ref,
   watch,
@@ -381,6 +404,7 @@ import {
 import {
   type ClassGuideBundle,
 } from "@/entities/class";
+import ProposeLazy from "@/features/propose-guide/ui/ProposeLazy.vue";
 import {
   fetchPendingForClass,
   type PendingProposal,
@@ -413,32 +437,6 @@ import { MorphBoard } from "@/widgets/morph-board";
 import { RelicBoard } from "@/widgets/relic-board";
 import { VideoList } from "@/widgets/video-list";
 import { useGuideBoardFills } from "../lib/useGuideBoardFills";
-
-/** Propose / moderation UI — keep off the initial class-page JS budget. */
-const ProposeBuffsForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeBuffsForm.vue"),
-);
-const ProposeComboForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeComboForm.vue"),
-);
-const ProposeCrystalForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeCrystalForm.vue"),
-);
-const ProposeMorphForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeMorphForm.vue"),
-);
-const ProposeRelicForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeRelicForm.vue"),
-);
-const ProposeHardeningForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeHardeningForm.vue"),
-);
-const ProposeSummaryForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeSummaryForm.vue"),
-);
-const ProposeVideosForm = defineAsyncComponent(
-  () => import("@/features/propose-guide/ui/ProposeVideosForm.vue"),
-);
 
 const props = defineProps<{
   bundle: ClassGuideBundle | null;

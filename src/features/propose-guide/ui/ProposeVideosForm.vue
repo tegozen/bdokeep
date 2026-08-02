@@ -82,6 +82,7 @@ const {
   obscured,
   requestClose,
   isSuperadmin,
+  openModal,
   runSubmit,
 } = useProposeModal({
   classSlug: () => props.classSlug,
@@ -95,6 +96,8 @@ const {
     clearAllSlotErrors()
   },
 })
+
+defineExpose({ openModal })
 
 function clearSlotError(i: number) {
   slotErrors[i] = ''

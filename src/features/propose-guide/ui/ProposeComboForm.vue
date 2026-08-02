@@ -132,6 +132,7 @@ const {
   obscured,
   requestClose,
   isSuperadmin,
+  openModal,
   runSubmit,
 } = useProposeModal({
   classSlug: () => props.classSlug,
@@ -155,6 +156,8 @@ const {
     resetDrag()
   },
 })
+
+defineExpose({ openModal })
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()

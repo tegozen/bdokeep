@@ -305,6 +305,7 @@ const {
   obscured,
   requestClose,
   isSuperadmin,
+  openModal,
   runSubmit,
 } = useProposeModal({
   classSlug: () => props.classSlug,
@@ -339,6 +340,8 @@ const {
     presets.value = emptyPresets()
   },
 })
+
+defineExpose({ openModal })
 
 function slotAt(level: MorphSlotLevel): SlotState | undefined {
   return presets.value[activePreset.value][level]

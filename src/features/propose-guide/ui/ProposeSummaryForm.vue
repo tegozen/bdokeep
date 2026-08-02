@@ -61,6 +61,7 @@ const {
   obscured,
   requestClose,
   isSuperadmin,
+  openModal,
   runSubmit,
 } = useProposeModal({
   classSlug: () => props.classSlug,
@@ -72,6 +73,8 @@ const {
     text.value = ''
   },
 })
+
+defineExpose({ openModal })
 
 async function onSubmit() {
   await runSubmit(async () => {
