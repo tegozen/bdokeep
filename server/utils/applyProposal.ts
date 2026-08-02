@@ -64,6 +64,7 @@ export async function applyProposal(
       classSlug,
       section,
       rawPayload: proposal.payload,
+      skipUnknownCatalog: true,
     }),
   )
   const payload = parsed.payload

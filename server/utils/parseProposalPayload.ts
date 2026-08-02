@@ -39,6 +39,11 @@ export type ParseProposalContext = {
   classSlug: string
   section: ProposalSection
   rawPayload: Record<string, unknown> | null | undefined
+  /**
+   * Approve path: drop rows whose catalog ids no longer exist
+   * instead of failing the whole proposal.
+   */
+  skipUnknownCatalog?: boolean
 }
 
 export type ParsedProposalPayload = {
@@ -61,6 +66,7 @@ export async function parseAndValidatePayload(
   ctx: ParseProposalContext,
 ): Promise<ParsedProposalPayload> {
   const { sql, classSlug } = ctx
+  const skipUnknown = Boolean(ctx.skipUnknownCatalog)
   assertSection(ctx.section)
   const section = ctx.section
   const body = ctx.rawPayload || {}
@@ -74,13 +80,19 @@ export async function parseAndValidatePayload(
     if (rawIds.length > MAX_COMBO_STEPS) {
       throw createError({ statusCode: 400, statusMessage: `Максимум ${MAX_COMBO_STEPS} шагов` })
     }
-    const skillIds = rawIds.map((id) => String(id))
-    if (skillIds.some((id) => !UUID_RE.test(id))) {
+    let skillIds = rawIds.map((id) => String(id))
+    if (!skipUnknown && skillIds.some((id) => !UUID_RE.test(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Некорректный id скилла' })
     }
+    skillIds = skillIds.filter((id) => UUID_RE.test(id))
     const allowed = await idsExist(sql, 'skills', skillIds, { classSlug })
-    if (skillIds.some((id) => !allowed.has(id))) {
+    if (skipUnknown) {
+      skillIds = skillIds.filter((id) => allowed.has(id))
+    } else if (skillIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Скилл не принадлежит этому классу' })
+    }
+    if (!skillIds.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один скилл' })
     }
     return { payload: { mode, skill_ids: skillIds }, verifiedVideos: null }
   }
@@ -115,9 +127,11 @@ export async function parseAndValidatePayload(
       const preset = String(entry?.preset || 't1')
       const buffId = String(entry?.buff_id || '')
       if (!isCrystalPresetId(preset)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
       }
       if (!UUID_RE.test(buffId)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id бафа' })
       }
       const count = (perPreset.get(preset) || 0) + 1
@@ -137,15 +151,21 @@ export async function parseAndValidatePayload(
 
     const buffIds = [...new Set(buffsPayload.map((b) => b.buff_id))]
     const allowed = await idsExist(sql, 'buffs', buffIds)
-    if (buffIds.some((id) => !allowed.has(id))) {
+    const kept = skipUnknown
+      ? buffsPayload.filter((b) => allowed.has(b.buff_id))
+      : buffsPayload
+    if (!skipUnknown && buffIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный баф' })
+    }
+    if (!kept.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один баф' })
     }
     const replaced_presets = resolveReplacedPresets(
       body.replaced_presets,
-      buffsPayload.map((b) => b.preset),
+      kept.map((b) => b.preset),
       isCrystalPresetId,
     )
-    return { payload: { buffs: buffsPayload, replaced_presets }, verifiedVideos: null }
+    return { payload: { buffs: kept, replaced_presets }, verifiedVideos: null }
   }
 
   if (isCrystalsSection(section)) {
@@ -178,19 +198,23 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
       }
       if (!isCrystalSlotId(slot)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный слот' })
       }
       const key = `${preset}:${slot}`
       if (usedKeys.has(key)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота в пресете' })
       }
-      usedKeys.add(key)
       if (!UUID_RE.test(itemId)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id кристалла' })
       }
+      usedKeys.add(key)
       crystals.push({
         preset,
         slot,
@@ -201,15 +225,21 @@ export async function parseAndValidatePayload(
 
     const itemIds = crystals.map((c) => c.item_id)
     const allowed = await idsExist(sql, 'items', itemIds, { itemType: 'crystal' })
-    if (itemIds.some((id) => !allowed.has(id))) {
+    const kept = skipUnknown
+      ? crystals.filter((c) => allowed.has(c.item_id))
+      : crystals
+    if (!skipUnknown && itemIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный кристалл' })
+    }
+    if (!kept.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
     const replaced_presets = resolveReplacedPresets(
       body.replaced_presets,
-      crystals.map((c) => c.preset),
+      kept.map((c) => c.preset),
       isCrystalPresetId,
     )
-    return { payload: { crystals, replaced_presets }, verifiedVideos: null }
+    return { payload: { crystals: kept, replaced_presets }, verifiedVideos: null }
   }
 
   if (isRelicsSection(section)) {
@@ -256,10 +286,12 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset) || !isRelicSlotId(slot) || !UUID_RE.test(itemId)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректная реликвия' })
       }
       const key = `${preset}:${slot}`
       if (usedRelic.has(key)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота реликвии' })
       }
       usedRelic.add(key)
@@ -282,10 +314,12 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset) || !isLightstoneSlotId(slot) || !UUID_RE.test(itemId)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный светящийся камень' })
       }
       const key = `${preset}:${slot}`
       if (usedLight.has(key)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота камня' })
       }
       usedLight.add(key)
@@ -297,27 +331,39 @@ export async function parseAndValidatePayload(
       })
     }
 
+    let keptRelics = relics
+    let keptLights = lightstones
     if (relics.length) {
       const ids = relics.map((r) => r.item_id)
       const allowed = await idsExist(sql, 'items', ids, { itemType: 'relic' })
-      if (ids.some((id) => !allowed.has(id))) {
+      if (skipUnknown) {
+        keptRelics = relics.filter((r) => allowed.has(r.item_id))
+      } else if (ids.some((id) => !allowed.has(id))) {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная реликвия' })
       }
     }
     if (lightstones.length) {
       const ids = lightstones.map((r) => r.item_id)
       const allowed = await idsExist(sql, 'items', ids, { itemType: 'lightstone' })
-      if (ids.some((id) => !allowed.has(id))) {
+      if (skipUnknown) {
+        keptLights = lightstones.filter((r) => allowed.has(r.item_id))
+      } else if (ids.some((id) => !allowed.has(id))) {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестный светящийся камень' })
       }
+    }
+    if (!keptRelics.length && !keptLights.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
 
     const replaced_presets = resolveReplacedPresets(
       body.replaced_presets,
-      [...relics.map((r) => r.preset), ...lightstones.map((r) => r.preset)],
+      [...keptRelics.map((r) => r.preset), ...keptLights.map((r) => r.preset)],
       isCrystalPresetId,
     )
-    return { payload: { relics, lightstones, replaced_presets }, verifiedVideos: null }
+    return {
+      payload: { relics: keptRelics, lightstones: keptLights, replaced_presets },
+      verifiedVideos: null,
+    }
   }
 
   if (isHardeningSection(section)) {
@@ -352,27 +398,32 @@ export async function parseAndValidatePayload(
       const slot = String(entry?.slot || '')
       const itemId = String(entry?.item_id || '')
       if (!isCrystalPresetId(preset)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет' })
       }
       if (!isHardeningSlotId(slot)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный слот' })
       }
       const slotKey = `${preset}:${slot}`
       if (usedSlots.has(slotKey)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота в пресете' })
       }
-      usedSlots.add(slotKey)
       const itemKey = `${preset}:${itemId}`
       if (usedItems.has(itemKey)) {
+        if (skipUnknown) continue
         throw createError({
           statusCode: 400,
           statusMessage: 'Одинаковые камни закалки в одном пресете нельзя',
         })
       }
-      usedItems.add(itemKey)
       if (!UUID_RE.test(itemId)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id камня закалки' })
       }
+      usedSlots.add(slotKey)
+      usedItems.add(itemKey)
       hardening.push({
         preset,
         slot,
@@ -383,15 +434,21 @@ export async function parseAndValidatePayload(
 
     const itemIds = hardening.map((c) => c.item_id)
     const allowed = await idsExist(sql, 'items', itemIds, { itemType: 'essence' })
-    if (itemIds.some((id) => !allowed.has(id))) {
+    const kept = skipUnknown
+      ? hardening.filter((c) => allowed.has(c.item_id))
+      : hardening
+    if (!skipUnknown && itemIds.some((id) => !allowed.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный камень закалки' })
+    }
+    if (!kept.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот' })
     }
     const replaced_presets = resolveReplacedPresets(
       body.replaced_presets,
-      hardening.map((c) => c.preset),
+      kept.map((c) => c.preset),
       isCrystalPresetId,
     )
-    return { payload: { hardening, replaced_presets }, verifiedVideos: null }
+    return { payload: { hardening: kept, replaced_presets }, verifiedVideos: null }
   }
 
   if (isVideosSection(section)) {
@@ -435,17 +492,20 @@ export async function parseAndValidatePayload(
         ? entry.effect_ids.map((x) => String(x))
         : []
       if (!isMorphPresetId(preset)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный пресет морфов' })
       }
       if (!isMorphSlotLevel(slotLevel)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный слот морфа' })
       }
       const key = `${preset}:${slotLevel}`
       if (used.has(key)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Дубликат слота морфа' })
       }
-      used.add(key)
       if (!UUID_RE.test(skillId)) {
+        if (skipUnknown) continue
         throw createError({ statusCode: 400, statusMessage: 'Некорректный id скилла' })
       }
       if (
@@ -453,11 +513,13 @@ export async function parseAndValidatePayload(
         effectIds[0] === effectIds[1] ||
         !effectIds.every((id) => UUID_RE.test(id))
       ) {
+        if (skipUnknown) continue
         throw createError({
           statusCode: 400,
           statusMessage: 'Нужно ровно 2 разных эффекта на слот',
         })
       }
+      used.add(key)
       morphs.push({
         preset,
         slot_level: slotLevel,
@@ -468,11 +530,13 @@ export async function parseAndValidatePayload(
     }
 
     const skillIds = [...new Set(morphs.map((m) => m.skill_id))]
-    const skillRows = await sql`
-      select id, supports_addon, addon_effect_keys
-      from skills
-      where class_slug = ${classSlug} and id = any(${skillIds}::uuid[])
-    `
+    const skillRows = skillIds.length
+      ? await sql`
+          select id, supports_addon, addon_effect_keys
+          from skills
+          where class_slug = ${classSlug} and id = any(${skillIds}::uuid[])
+        `
+      : []
     const skillById = new Map(
       skillRows.map((r) => [
         String(r.id),
@@ -484,39 +548,62 @@ export async function parseAndValidatePayload(
         },
       ]),
     )
-    if (skillIds.some((id) => !skillById.has(id) || !skillById.get(id)!.supports_addon)) {
+    if (
+      !skipUnknown &&
+      skillIds.some((id) => !skillById.has(id) || !skillById.get(id)!.supports_addon)
+    ) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный скилл класса' })
     }
 
     const effectIds = [...new Set(morphs.flatMap((m) => m.effect_ids))]
-    const fxRows = await sql`
-      select id, key from skill_addon_effects where id = any(${effectIds}::uuid[])
-    `
+    const fxRows = effectIds.length
+      ? await sql`
+          select id, key from skill_addon_effects where id = any(${effectIds}::uuid[])
+        `
+      : []
     const fxKeyById = new Map(fxRows.map((r) => [String(r.id), String(r.key)]))
-    if (effectIds.some((id) => !fxKeyById.has(id))) {
+    if (!skipUnknown && effectIds.some((id) => !fxKeyById.has(id))) {
       throw createError({ statusCode: 400, statusMessage: 'Неизвестный эффект морфа' })
     }
 
-    for (const m of morphs) {
-      const skill = skillById.get(m.skill_id)!
+    const kept = morphs.filter((m) => {
+      const skill = skillById.get(m.skill_id)
+      if (!skill?.supports_addon) return false
       const allow = new Set(skill.keys)
       for (const eid of m.effect_ids) {
-        const key = fxKeyById.get(eid)!
-        if (allow.size && !allow.has(key)) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: 'Эффект недоступен для выбранного скилла',
-          })
+        const key = fxKeyById.get(eid)
+        if (!key) return false
+        if (allow.size && !allow.has(key)) return false
+      }
+      return true
+    })
+
+    if (!skipUnknown) {
+      for (const m of morphs) {
+        const skill = skillById.get(m.skill_id)!
+        const allow = new Set(skill.keys)
+        for (const eid of m.effect_ids) {
+          const key = fxKeyById.get(eid)!
+          if (allow.size && !allow.has(key)) {
+            throw createError({
+              statusCode: 400,
+              statusMessage: 'Эффект недоступен для выбранного скилла',
+            })
+          }
         }
       }
     }
 
+    if (!kept.length) {
+      throw createError({ statusCode: 400, statusMessage: 'Заполните хотя бы один слот морфа' })
+    }
+
     const replaced_presets = resolveReplacedPresets(
       body.replaced_presets,
-      morphs.map((m) => m.preset),
+      kept.map((m) => m.preset),
       isMorphPresetId,
     )
-    return { payload: { morphs, replaced_presets }, verifiedVideos: null }
+    return { payload: { morphs: kept, replaced_presets }, verifiedVideos: null }
   }
 
   if (isSummarySection(section)) {
