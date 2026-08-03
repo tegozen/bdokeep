@@ -488,18 +488,22 @@ async function onSubmit() {
 .copyPreview {
   display: grid;
   grid-template-columns: 12rem 16rem;
+  grid-template-rows: minmax(0, 1fr);
   gap: 0.75rem;
   align-items: stretch;
+  box-sizing: border-box;
   width: max-content;
   max-width: 100%;
   height: 100%;
-  min-height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .copyPicked {
   min-width: 0;
   min-height: 0;
-  height: 100%;
   overflow: auto;
   border: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
@@ -509,6 +513,7 @@ async function onSubmit() {
   width: 16rem;
   max-width: 100%;
   align-self: start;
+  min-height: 0;
 }
 
 .workspace {
@@ -613,8 +618,10 @@ async function onSubmit() {
   .copyPreview {
     grid-template-columns: 1fr;
     width: 100%;
-    height: auto;
+    height: 100%;
+    max-height: 100%;
     min-height: 0;
+    overflow: auto;
   }
 
   .copyBoard {

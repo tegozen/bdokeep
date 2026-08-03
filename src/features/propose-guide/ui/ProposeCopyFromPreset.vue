@@ -165,15 +165,18 @@ async function onCopy() {
   color: var(--color-muted);
 }
 
-/* Fixed pane so switching empty ↔ filled presets does not resize the modal. */
+/* Fixed pane; children own scroll so crystal list ≠ whole-pane scroll. */
 .preview {
   flex: none;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   width: 100%;
   height: 22rem;
   min-height: 22rem;
   max-height: 22rem;
-  overflow: auto;
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   padding: 0.65rem;

@@ -380,13 +380,16 @@ async function onCopy() {
   color: var(--color-danger, #c44);
 }
 
-/* Fills leftover modal height so footer actions stay visible. */
+/* Fills leftover modal height; children own their scroll (not this pane). */
 .preview {
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   width: 100%;
   min-height: 10rem;
-  overflow: auto;
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   padding: 0.65rem;
