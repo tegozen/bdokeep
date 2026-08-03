@@ -41,6 +41,10 @@ export async function approveProposal(
   })
 }
 
+export async function reapplyProposal(id: string): Promise<void> {
+  await $fetch(`/api/admin/proposals/${id}/reapply`, { method: 'POST' })
+}
+
 export async function rejectProposal(id: string): Promise<void> {
   await $fetch(`/api/admin/proposals/${id}/reject`, { method: 'POST', body: {} })
 }

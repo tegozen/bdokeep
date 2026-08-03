@@ -28,6 +28,8 @@
       </button>
     </div>
 
+    <p v-if="lightstoneSetName" :class="$style.setName">{{ lightstoneSetName }}</p>
+
     <!-- Propose: whole set is one control -->
     <button
       v-if="lightstonesAsSet"
@@ -129,12 +131,15 @@ const props = withDefaults(
     interactive?: boolean
     /** Propose UI: stones are a set — one control for the whole set. */
     lightstonesAsSet?: boolean
+    /** Catalog set name for the filled lightstones (class page). */
+    lightstoneSetName?: string | null
   }>(),
   {
     filled: () => ({}),
     selectedId: null,
     interactive: false,
     lightstonesAsSet: false,
+    lightstoneSetName: null,
   },
 )
 
@@ -281,6 +286,14 @@ function onSelectLight(id: string) {
   padding: 0;
   list-style: none;
   min-width: 0;
+}
+
+.setName {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-gold-soft);
 }
 
 .lightRow {

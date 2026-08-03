@@ -28,8 +28,20 @@ export default defineEventHandler(async (event) => {
     return { total, byClass }
   }
 
+  // Approved/rejected: by review time (approve order). Pending/all: by created_at.
+  const byReview = status === 'approved' || status === 'rejected'
+
   const items = await withDbError(async () => {
     if (status && status !== 'all' && classSlug && /^[a-z0-9-]+$/.test(classSlug)) {
+      if (byReview) {
+        return sql`
+          select *
+          from guide_proposals
+          where status = ${status} and class_slug = ${classSlug}
+          order by reviewed_at desc nulls last, created_at desc
+          limit 100
+        `
+      }
       return sql`
         select *
         from guide_proposals
@@ -39,6 +51,15 @@ export default defineEventHandler(async (event) => {
       `
     }
     if (status && status !== 'all') {
+      if (byReview) {
+        return sql`
+          select *
+          from guide_proposals
+          where status = ${status}
+          order by reviewed_at desc nulls last, created_at desc
+          limit 100
+        `
+      }
       return sql`
         select *
         from guide_proposals
@@ -52,14 +73,14 @@ export default defineEventHandler(async (event) => {
         select *
         from guide_proposals
         where class_slug = ${classSlug}
-        order by created_at desc
+        order by coalesce(reviewed_at, created_at) desc, created_at desc
         limit 100
       `
     }
     return sql`
       select *
       from guide_proposals
-      order by created_at desc
+      order by coalesce(reviewed_at, created_at) desc, created_at desc
       limit 100
     `
   })

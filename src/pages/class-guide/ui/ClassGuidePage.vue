@@ -225,7 +225,10 @@
               />
             </template>
             <div :class="[$style.relicStage, $style.fade]">
-              <RelicBoard :filled="relicFilled" />
+              <RelicBoard
+                :filled="relicFilled"
+                :lightstone-set-name="lightstoneSetLabel"
+              />
             </div>
           </GuideSection>
         </div>
@@ -403,6 +406,7 @@ import {
 } from "vue";
 import {
   type ClassGuideBundle,
+  fetchLightstoneSets,
 } from "@/entities/class";
 import ProposeLazy from "@/features/propose-guide/ui/ProposeLazy.vue";
 import {
@@ -416,7 +420,9 @@ import {
   codexIconSrc,
   computePresetFill,
   emptyPresetFill,
+  formatLightstoneSetLabel,
   formatSectionUpdated,
+  matchLightstoneSet,
   morphPresetFrom,
   parseSectionUpdates,
   sectionUpdateKey,
@@ -624,6 +630,18 @@ const {
   morphFilled,
   hardeningFilled,
 } = useGuideBoardFills(bundleRef, guidePreset, activeMorphPreset);
+
+const { data: lightstoneSets } = useAsyncData(
+  "catalog-lightstone-sets",
+  () => fetchLightstoneSets(),
+  { lazy: true, default: () => [] },
+);
+
+const lightstoneSetLabel = computed(() =>
+  formatLightstoneSetLabel(
+    matchLightstoneSet(relicFilled.value, lightstoneSets.value ?? []),
+  ),
+);
 </script>
 
 <style module>

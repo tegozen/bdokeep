@@ -89,6 +89,11 @@ export {
   type RelicSlotId,
 } from './relicSlots'
 export {
+  formatLightstoneSetLabel,
+  matchLightstoneSet,
+  type MatchedLightstoneSet,
+} from './matchLightstoneSet'
+export {
   HARDENING_SLOT_IDS,
   HARDENING_SLOTS,
   MAX_HARDENING,

@@ -49,12 +49,20 @@ function replacedForApply(
   return result.replaced
 }
 
-/** Apply a pending proposal to live guide tables and mark approved (one transaction). */
+/** Apply a proposal to live guide tables (one transaction). */
 export async function applyProposal(
   proposal: ProposalRow,
-  opts?: { reviewNote?: string | null },
+  opts?: { reviewNote?: string | null; reapply?: boolean },
 ) {
-  if (proposal.status !== 'pending') {
+  const reapply = Boolean(opts?.reapply)
+  if (reapply) {
+    if (proposal.status !== 'approved') {
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Повторно применить можно только одобренное',
+      })
+    }
+  } else if (proposal.status !== 'pending') {
     throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
   }
 
@@ -92,17 +100,38 @@ export async function applyProposal(
 
   await withDbError(async () => {
     await sql.begin(async (tx) => {
-      const claimed = await tx`
-        update guide_proposals
-        set
-          status = 'approved',
-          reviewed_at = now(),
-          review_note = ${opts?.reviewNote ?? null}
-        where id = ${proposal.id} and status = 'pending'
-        returning id
-      `
-      if (!claimed.length) {
-        throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
+      if (reapply) {
+        const claimed = await tx`
+          update guide_proposals
+          set
+            reviewed_at = now(),
+            review_note = coalesce(
+              ${opts?.reviewNote ?? null},
+              nullif(trim(review_note), ''),
+              'повторно применено'
+            )
+          where id = ${proposal.id} and status = 'approved'
+          returning id
+        `
+        if (!claimed.length) {
+          throw createError({
+            statusCode: 409,
+            statusMessage: 'Повторно применить можно только одобренное',
+          })
+        }
+      } else {
+        const claimed = await tx`
+          update guide_proposals
+          set
+            status = 'approved',
+            reviewed_at = now(),
+            review_note = ${opts?.reviewNote ?? null}
+          where id = ${proposal.id} and status = 'pending'
+          returning id
+        `
+        if (!claimed.length) {
+          throw createError({ statusCode: 409, statusMessage: 'Уже рассмотрено' })
+        }
       }
 
       let guideRows = await tx`
@@ -140,9 +169,11 @@ export async function applyProposal(
           skill_id,
           sort_order: i,
         }))
-        await tx`
-          insert into guide_combo_steps ${tx(rows, 'guide_id', 'mode', 'skill_id', 'sort_order')}
-        `
+        if (rows.length) {
+          await tx`
+            insert into guide_combo_steps ${tx(rows, 'guide_id', 'mode', 'skill_id', 'sort_order')}
+          `
+        }
       } else if (isBuffsSection(section)) {
         const rawBuffs = Array.isArray(payload.buffs) ? payload.buffs : []
         const rows = rawBuffs.map((entry, i) => {

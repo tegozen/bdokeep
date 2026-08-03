@@ -45,9 +45,15 @@
           <div :class="$style.cardHead">
             <strong>{{ item.class_slug }}</strong>
             <span :class="$style.badge">{{ sectionLabel(item.section) }}</span>
-            <span :class="$style.muted">{{ formatDate(item.created_at) }}</span>
             <span v-if="item.author_label" :class="$style.muted">· {{ item.author_label }}</span>
             <span :class="$style.status">{{ statusLabel(item.status) }}</span>
+          </div>
+          <div :class="$style.metaDates">
+            <span>предложено {{ formatDate(item.created_at) }}</span>
+            <span v-if="item.reviewed_at">
+              · {{ item.status === 'rejected' ? 'отклонено' : 'одобрено' }}
+              {{ formatDate(item.reviewed_at) }}
+            </span>
           </div>
 
           <div :class="$style.preview">
@@ -87,6 +93,15 @@
               @click="reject(item.id)"
             >
               ✕
+            </UiButton>
+          </div>
+          <div v-else-if="item.status === 'approved'" :class="$style.actions">
+            <UiButton
+              type="button"
+              :disabled="acting === item.id"
+              @click="reapply(item)"
+            >
+              Применить на сайт
             </UiButton>
           </div>
           <p v-if="item.review_note" :class="$style.muted">Заметка: {{ item.review_note }}</p>
@@ -146,7 +161,7 @@ type Proposal = {
 const route = useRoute()
 const router = useRouter()
 const { isSuperadmin } = useSuperadmin()
-const { alert } = useConfirm()
+const { alert, confirm } = useConfirm()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 
 const authed = ref(false)
@@ -334,6 +349,41 @@ async function approve(item: Proposal) {
   }
 }
 
+async function reapply(item: Proposal) {
+  const ok = await confirm({
+    title: 'Применить на сайт?',
+    message: `Версия от ${item.author_label || '—'} (${formatDate(item.created_at)}) станет текущей для этого раздела.`,
+    confirmLabel: 'Применить',
+  })
+  if (!ok) return
+
+  acting.value = item.id
+  try {
+    await $fetch(`/api/admin/proposals/${item.id}/reapply`, { method: 'POST' })
+    item.reviewed_at = new Date().toISOString()
+    item.review_note = 'повторно применено'
+    // Keep approve-order sort: move to top of approved list.
+    if (status.value === 'approved' || status.value === 'rejected' || status.value === 'all') {
+      const idx = items.value.findIndex((i) => i.id === item.id)
+      if (idx > 0) {
+        items.value.splice(idx, 1)
+        items.value.unshift(item)
+      }
+    }
+  } catch (e: unknown) {
+    const msg =
+      e && typeof e === 'object' && 'data' in e
+        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
+        : ''
+    await alert({
+      title: 'Ошибка',
+      message: msg || 'Не удалось применить',
+    })
+  } finally {
+    acting.value = null
+  }
+}
+
 async function reject(id: string) {
   acting.value = id
   const idx = items.value.findIndex((i) => i.id === id)
@@ -461,7 +511,13 @@ onMounted(async () => {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.metaDates {
   margin-bottom: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--color-muted);
 }
 
 .badge {

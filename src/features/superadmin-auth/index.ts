@@ -6,6 +6,7 @@ export {
   approveProposal,
   fetchPendingForClass,
   fetchPendingSummary,
+  reapplyProposal,
   rejectProposal,
   type PendingProposal,
   type PendingSummary,
