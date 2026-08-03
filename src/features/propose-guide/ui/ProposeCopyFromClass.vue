@@ -23,55 +23,61 @@
           Выберите класс и пресет — данные заменят «{{ targetLabel }}».
         </p>
 
-        <label :class="$style.searchLabel">
-          <span :class="$style.srOnly">Поиск класса</span>
-          <input
-            v-model="classQuery"
-            type="search"
-            :class="$style.search"
-            placeholder="Поиск класса…"
-            autocomplete="off"
-          >
-        </label>
+        <div :class="$style.main">
+          <div :class="$style.classCol">
+            <label :class="$style.searchLabel">
+              <span :class="$style.srOnly">Поиск класса</span>
+              <input
+                v-model="classQuery"
+                type="search"
+                :class="$style.search"
+                placeholder="Поиск класса…"
+                autocomplete="off"
+              >
+            </label>
 
-        <div :class="$style.classList" role="listbox" aria-label="Класс-источник">
-          <p v-if="classesPending" :class="$style.status">Загрузка классов…</p>
-          <p v-else-if="classesError" :class="$style.statusError">Не удалось загрузить классы.</p>
-          <p v-else-if="!filteredClasses.length" :class="$style.status">Нет классов.</p>
-          <button
-            v-for="cls in filteredClasses"
-            :key="cls.slug"
-            type="button"
-            role="option"
-            :aria-selected="selectedSlug === cls.slug"
-            :class="[$style.classRow, selectedSlug === cls.slug && $style.classRowActive]"
-            @click="selectClass(cls.slug)"
-          >
-            <ClassIcon :slug="cls.slug" :icon-url="cls.icon_url" :label="cls.name_ru" size="sm" />
-            <span :class="$style.className">{{ cls.name_ru }}</span>
-          </button>
-        </div>
+            <div :class="$style.classList" role="listbox" aria-label="Класс-источник">
+              <p v-if="classesPending" :class="$style.status">Загрузка классов…</p>
+              <p v-else-if="classesError" :class="$style.statusError">Не удалось загрузить классы.</p>
+              <p v-else-if="!filteredClasses.length" :class="$style.status">Нет классов.</p>
+              <button
+                v-for="cls in filteredClasses"
+                :key="cls.slug"
+                type="button"
+                role="option"
+                :aria-selected="selectedSlug === cls.slug"
+                :class="[$style.classRow, selectedSlug === cls.slug && $style.classRowActive]"
+                @click="selectClass(cls.slug)"
+              >
+                <ClassIcon :slug="cls.slug" :icon-url="cls.icon_url" :label="cls.name_ru" size="sm" />
+                <span :class="$style.className">{{ cls.name_ru }}</span>
+              </button>
+            </div>
+          </div>
 
-        <template v-if="selectedSlug">
-          <p v-if="guidePending" :class="$style.status">Загрузка гайда…</p>
-          <p v-else-if="guideError" :class="$style.statusError">Не удалось загрузить гайд.</p>
-          <template v-else-if="sourceBoards">
-            <p v-if="!hasAnySource" :class="$style.status">
-              У этого класса нет данных в этом разделе.
-            </p>
-            <template v-else>
-              <UiPresetTabs
-                v-model="sourcePreset"
-                :tabs="presetTabs"
-                aria-label="Пресет-источник"
-              />
-              <div :class="$style.preview">
-                <slot :preset="sourcePreset" :board="currentBoard" />
-              </div>
+          <div :class="$style.sourceCol">
+            <template v-if="selectedSlug">
+              <p v-if="guidePending" :class="$style.status">Загрузка гайда…</p>
+              <p v-else-if="guideError" :class="$style.statusError">Не удалось загрузить гайд.</p>
+              <template v-else-if="sourceBoards">
+                <p v-if="!hasAnySource" :class="$style.status">
+                  У этого класса нет данных в этом разделе.
+                </p>
+                <template v-else>
+                  <UiPresetTabs
+                    v-model="sourcePreset"
+                    :tabs="presetTabs"
+                    aria-label="Пресет-источник"
+                  />
+                  <div :class="$style.preview">
+                    <slot :preset="sourcePreset" :board="currentBoard" />
+                  </div>
+                </template>
+              </template>
             </template>
-          </template>
-        </template>
-        <p v-else :class="$style.status">Выберите класс выше.</p>
+            <p v-else :class="$style.status">Выберите класс слева.</p>
+          </div>
+        </div>
 
         <div :class="$style.actions">
           <UiButton variant="secondary" type="button" @click="close">Отмена</UiButton>
@@ -298,6 +304,24 @@ async function onCopy() {
   color: var(--color-muted);
 }
 
+.main {
+  display: grid;
+  grid-template-columns: minmax(10.5rem, 13rem) minmax(0, 1fr);
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.classCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .searchLabel {
   display: block;
   flex-shrink: 0;
@@ -321,12 +345,10 @@ async function onCopy() {
 }
 
 .classList {
-  flex: 0 1 8rem;
+  flex: 1 1 auto;
   box-sizing: border-box;
   width: 100%;
-  height: 8rem;
-  max-height: 8rem;
-  min-height: 4.5rem;
+  min-height: 0;
   overflow: auto;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
@@ -367,6 +389,15 @@ async function onCopy() {
   white-space: nowrap;
 }
 
+.sourceCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .status,
 .statusError {
   margin: 0;
@@ -380,14 +411,14 @@ async function onCopy() {
   color: var(--color-danger, #c44);
 }
 
-/* Fills leftover modal height; children own their scroll (not this pane). */
+/* Fills leftover column height; children own their scroll (not this pane). */
 .preview {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   width: 100%;
-  min-height: 10rem;
+  min-height: 0;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -415,5 +446,12 @@ async function onCopy() {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (max-width: 720px) {
+  .main {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(9rem, 30%) minmax(0, 1fr);
+  }
 }
 </style>
