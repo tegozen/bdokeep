@@ -282,9 +282,11 @@ async function onCopy() {
 
 .body {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.75rem;
   min-height: 0;
+  overflow: hidden;
   padding: 1rem;
 }
 
@@ -319,10 +321,12 @@ async function onCopy() {
 }
 
 .classList {
-  flex: none;
+  flex: 0 1 8rem;
   box-sizing: border-box;
   width: 100%;
-  height: 10rem;
+  height: 8rem;
+  max-height: 8rem;
+  min-height: 4.5rem;
   overflow: auto;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
@@ -376,14 +380,12 @@ async function onCopy() {
   color: var(--color-danger, #c44);
 }
 
-/* Fixed pane so switching empty ↔ filled presets does not resize the modal. */
+/* Fills leftover modal height so footer actions stay visible. */
 .preview {
-  flex: none;
+  flex: 1 1 auto;
   box-sizing: border-box;
   width: 100%;
-  height: 22rem;
-  min-height: 22rem;
-  max-height: 22rem;
+  min-height: 10rem;
   overflow: auto;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
@@ -397,7 +399,7 @@ async function onCopy() {
   gap: 0.5rem;
   border-top: 1px solid var(--color-border);
   padding-top: 0.85rem;
-  margin-top: 0.15rem;
+  margin-top: auto;
 }
 
 .srOnly {
