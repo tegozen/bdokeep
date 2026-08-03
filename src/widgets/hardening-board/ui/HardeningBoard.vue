@@ -276,6 +276,7 @@ function onClear(id: string) {
   list-style: none;
   display: grid;
   gap: 0.35rem;
+  align-content: start;
   min-height: 0;
   overflow: auto;
 }
