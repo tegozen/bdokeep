@@ -30,10 +30,24 @@
         >
           <template #default="{ preset }">
             <div :class="[presetTools.copyPreview, $style.copyPreview]">
-              <RelicBoard :filled="filledMapFor(preset)" lightstones-as-set />
+              <RelicBoard :filled="filledMapForBoard(presets[preset])" lightstones-as-set />
             </div>
           </template>
         </ProposeCopyFromPreset>
+        <ProposeCopyFromClass
+          :exclude-class-slug="classSlug"
+          :target-preset="activePreset"
+          :target-has-content="Object.keys(currentSlots()).length > 0"
+          section="relics"
+          size="lg"
+          @copy="copyFromClass"
+        >
+          <template #default="{ board }">
+            <div :class="[presetTools.copyPreview, $style.copyPreview]">
+              <RelicBoard :filled="filledMapForBoard(asItemBoard(board))" lightstones-as-set />
+            </div>
+          </template>
+        </ProposeCopyFromClass>
       </div>
     </template>
 
@@ -120,7 +134,6 @@ import {
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
-  isCrystalPresetId,
   isLightstoneSlotId,
   isRelicSlotId,
   LIGHTSTONE_SLOT_IDS,
@@ -130,15 +143,22 @@ import { UiPresetTabs } from '@/shared/ui'
 import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
+import {
+  emptyItemPresetBoards,
+  extractRelicPresets,
+  type BuffPickItem,
+  type ItemPresetBoards,
+} from '../lib/extractGuideSectionPresets'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
 import LightstoneSetPicker from './LightstoneSetPicker.vue'
+import ProposeCopyFromClass from './ProposeCopyFromClass.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 import presetTools from './proposePresetTools.module.css'
 
 type CatalogTab = 'relics' | 'sets'
-type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
+type PresetBoards = ItemPresetBoards
 
 const catalogTabs = [
   { id: 'relics' as const, label: 'Реликвии' },
@@ -146,7 +166,11 @@ const catalogTabs = [
 ]
 
 function emptyPresets(): PresetBoards {
-  return { t1: {}, t2: {}, besp: {}, sub: {} }
+  return emptyItemPresetBoards()
+}
+
+function asItemBoard(board: Record<string, Item> | BuffPickItem[]): Record<string, Item> {
+  return Array.isArray(board) ? {} : board
 }
 
 function stoneToItem(stone: LightstoneSetStone): Item {
@@ -197,20 +221,7 @@ function serializeState() {
 }
 
 function hydrateFromInitial() {
-  const next = emptyPresets()
-  for (const row of props.initialRelics ?? []) {
-    const presetRaw = String(row.preset || 't1')
-    if (!isCrystalPresetId(presetRaw) || !row.slot || !row.items) continue
-    if (!isRelicSlotId(row.slot)) continue
-    next[presetRaw][row.slot] = row.items
-  }
-  for (const row of props.initialLightstones ?? []) {
-    const presetRaw = String(row.preset || 't1')
-    if (!isCrystalPresetId(presetRaw) || !row.slot || !row.items) continue
-    if (!isLightstoneSlotId(row.slot)) continue
-    next[presetRaw][row.slot] = row.items
-  }
-  presets.value = next
+  presets.value = extractRelicPresets(props.initialRelics ?? [], props.initialLightstones ?? [])
   activePreset.value = 't1'
 }
 
@@ -266,9 +277,9 @@ function isPresetEmpty(preset: CrystalPresetId) {
   return Object.keys(presets.value[preset]).length === 0
 }
 
-function filledMapFor(preset: CrystalPresetId): Record<string, RelicFill> {
+function filledMapForBoard(board: Record<string, Item>): Record<string, RelicFill> {
   const map: Record<string, RelicFill> = {}
-  for (const [id, item] of Object.entries(presets.value[preset])) {
+  for (const [id, item] of Object.entries(board)) {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
@@ -281,7 +292,15 @@ function copyFromPreset(source: CrystalPresetId) {
   formError.value = ''
 }
 
-const filledMap = computed(() => filledMapFor(activePreset.value))
+function copyFromClass(board: Record<string, Item> | BuffPickItem[]) {
+  if (Array.isArray(board)) return
+  setCurrentSlots(cloneItemBoard(board))
+  activeSlot.value = null
+  query.value = ''
+  formError.value = ''
+}
+
+const filledMap = computed(() => filledMapForBoard(presets.value[activePreset.value]))
 
 const relicSlotSelected = computed(
   () => Boolean(activeSlot.value && isRelicSlotId(activeSlot.value)),

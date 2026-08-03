@@ -48,6 +48,36 @@
             </div>
           </template>
         </ProposeCopyFromPreset>
+        <ProposeCopyFromClass
+          :exclude-class-slug="classSlug"
+          :target-preset="activeBuffPreset"
+          :target-has-content="picked.length > 0"
+          section="buffs"
+          size="md"
+          @copy="copyFromClass"
+        >
+          <template #default="{ board }">
+            <div :class="presetTools.copyPreview">
+              <ul v-if="asBuffList(board).length" :class="$style.copyList">
+                <li
+                  v-for="(row, i) in asBuffList(board)"
+                  :key="`${row.id}-${i}`"
+                  :class="$style.copyItem"
+                >
+                  <img
+                    v-if="row.icon_url"
+                    :src="codexIconSrc(row.icon_url) || undefined"
+                    alt=""
+                    :class="$style.copyIcon"
+                    loading="lazy"
+                  >
+                  <span>{{ row.name_ru }}</span>
+                </li>
+              </ul>
+              <p v-else :class="$style.copyEmpty">Пока пусто</p>
+            </div>
+          </template>
+        </ProposeCopyFromClass>
       </div>
     </template>
 
@@ -86,32 +116,41 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { fetchBuffs, type Buff, type GuideBuffRow } from '@/entities/class'
+import { fetchBuffs, type Buff, type GuideBuffRow, type Item } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
   codexIconSrc,
-  isCrystalPresetId,
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemList, fullReplacedPresets } from '../lib/clonePresetData'
+import {
+  emptyBuffPresetBoards,
+  extractBuffPresets,
+  type BuffPickItem,
+  type BuffPresetBoards,
+} from '../lib/extractGuideSectionPresets'
 import { useProposeModal } from '../lib/useProposeModal'
 import { useReorderableList } from '../lib/useReorderableList'
 import CatalogPicker from './CatalogPicker.vue'
+import ProposeCopyFromClass from './ProposeCopyFromClass.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 import ReorderableTiles from './ReorderableTiles.vue'
 import presetTools from './proposePresetTools.module.css'
 
-type PickItem = { id: string; name_ru: string; icon_url: string | null }
-type BuffPresetBoards = Record<CrystalPresetId, PickItem[]>
+type PickItem = BuffPickItem
 
 const MAX = 20
 
 function emptyBuffPresets(): BuffPresetBoards {
-  return { t1: [], t2: [], besp: [], sub: [] }
+  return emptyBuffPresetBoards()
+}
+
+function asBuffList(board: Record<string, Item> | BuffPickItem[]): BuffPickItem[] {
+  return Array.isArray(board) ? board : []
 }
 
 const props = withDefaults(
@@ -163,17 +202,7 @@ const {
 )
 
 function hydrateBuffsFromInitial() {
-  const next = emptyBuffPresets()
-  for (const row of props.initialBuffs ?? []) {
-    const presetRaw = String(row.preset || 't1')
-    if (!isCrystalPresetId(presetRaw) || !row.buffs) continue
-    next[presetRaw].push({
-      id: row.buffs.id,
-      name_ru: row.buffs.name_ru,
-      icon_url: row.buffs.icon_url,
-    })
-  }
-  buffByPreset.value = next
+  buffByPreset.value = extractBuffPresets(props.initialBuffs ?? [])
   activeBuffPreset.value = 't1'
 }
 
@@ -233,6 +262,15 @@ function copyFromPreset(source: CrystalPresetId) {
   buffByPreset.value = {
     ...buffByPreset.value,
     [activeBuffPreset.value]: cloneItemList(buffByPreset.value[source]),
+  }
+  formError.value = ''
+}
+
+function copyFromClass(board: Record<string, Item> | BuffPickItem[]) {
+  if (!Array.isArray(board)) return
+  buffByPreset.value = {
+    ...buffByPreset.value,
+    [activeBuffPreset.value]: cloneItemList(board),
   }
   formError.value = ''
 }

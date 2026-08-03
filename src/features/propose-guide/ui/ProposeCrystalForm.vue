@@ -30,10 +30,10 @@
           <template #default="{ preset }">
             <div :class="$style.copyPreview">
               <div :class="$style.copyPicked">
-                <p v-if="!pickedListFor(preset).length" :class="$style.pickedEmpty">Пока пусто</p>
+                <p v-if="!pickedListForBoard(presets[preset]).length" :class="$style.pickedEmpty">Пока пусто</p>
                 <ul v-else :class="$style.pickedList">
                   <li
-                    v-for="row in pickedListFor(preset)"
+                    v-for="row in pickedListForBoard(presets[preset])"
                     :key="row.id"
                     :class="$style.pickedItem"
                   >
@@ -50,11 +50,47 @@
                 </ul>
               </div>
               <div :class="$style.copyBoard">
-                <CrystalBoard :filled="filledMapFor(preset)" />
+                <CrystalBoard :filled="filledMapForBoard(presets[preset])" />
               </div>
             </div>
           </template>
         </ProposeCopyFromPreset>
+        <ProposeCopyFromClass
+          :exclude-class-slug="classSlug"
+          :target-preset="activePreset"
+          :target-has-content="Object.keys(currentSlots()).length > 0"
+          section="crystals"
+          size="lg"
+          @copy="copyFromClass"
+        >
+          <template #default="{ board }">
+            <div :class="$style.copyPreview">
+              <div :class="$style.copyPicked">
+                <p v-if="!pickedListForBoard(asItemBoard(board)).length" :class="$style.pickedEmpty">Пока пусто</p>
+                <ul v-else :class="$style.pickedList">
+                  <li
+                    v-for="row in pickedListForBoard(asItemBoard(board))"
+                    :key="row.id"
+                    :class="$style.pickedItem"
+                  >
+                    <img
+                      v-if="row.icon_url"
+                      :src="codexIconSrc(row.icon_url) || undefined"
+                      alt=""
+                      :class="$style.pickedIcon"
+                      loading="lazy"
+                    >
+                    <span :class="$style.pickedName">{{ row.name_ru }}</span>
+                    <span v-if="row.count > 1" :class="$style.pickedCount">×{{ row.count }}</span>
+                  </li>
+                </ul>
+              </div>
+              <div :class="$style.copyBoard">
+                <CrystalBoard :filled="filledMapForBoard(asItemBoard(board))" />
+              </div>
+            </div>
+          </template>
+        </ProposeCopyFromClass>
       </div>
     </template>
 
@@ -123,7 +159,6 @@ import {
   CRYSTAL_PRESET_IDS,
   codexIconSrc,
   isCenterSlotId,
-  isCrystalPresetId,
   isDawnCrystalName,
   isDawnSlotId,
   isSpiritCrystalName,
@@ -133,16 +168,27 @@ import { UiPresetTabs } from '@/shared/ui'
 import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
+import {
+  emptyItemPresetBoards,
+  extractCrystalPresets,
+  type BuffPickItem,
+  type ItemPresetBoards,
+} from '../lib/extractGuideSectionPresets'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
+import ProposeCopyFromClass from './ProposeCopyFromClass.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 import presetTools from './proposePresetTools.module.css'
 
-type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
+type PresetBoards = ItemPresetBoards
 
 function emptyPresets(): PresetBoards {
-  return { t1: {}, t2: {}, besp: {}, sub: {} }
+  return emptyItemPresetBoards()
+}
+
+function asItemBoard(board: Record<string, Item> | BuffPickItem[]): Record<string, Item> {
+  return Array.isArray(board) ? {} : board
 }
 
 const props = withDefaults(
@@ -183,13 +229,7 @@ function serializeState() {
 }
 
 function hydrateFromInitial() {
-  const next = emptyPresets()
-  for (const row of props.initialCrystals ?? []) {
-    const presetRaw = String(row.preset || 't1')
-    if (!isCrystalPresetId(presetRaw) || !row.slot || !row.items) continue
-    next[presetRaw][row.slot] = row.items
-  }
-  presets.value = next
+  presets.value = extractCrystalPresets(props.initialCrystals ?? [])
   activePreset.value = 't1'
 }
 
@@ -288,18 +328,18 @@ function isPresetEmpty(preset: CrystalPresetId) {
   return Object.keys(presets.value[preset]).length === 0
 }
 
-function filledMapFor(preset: CrystalPresetId): Record<string, CrystalFill> {
+function filledMapForBoard(board: Record<string, Item>): Record<string, CrystalFill> {
   const map: Record<string, CrystalFill> = {}
-  for (const [id, item] of Object.entries(presets.value[preset])) {
+  for (const [id, item] of Object.entries(board)) {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
 }
 
-function pickedListFor(preset: CrystalPresetId) {
+function pickedListForBoard(board: Record<string, Item>) {
   const counts = new Map<string, { id: string; name_ru: string; icon_url: string | null; count: number }>()
   for (const slot of CRYSTAL_ALL_SLOTS) {
-    const item = presets.value[preset][slot.id]
+    const item = board[slot.id]
     if (!item) continue
     const prev = counts.get(item.id)
     if (prev) {
@@ -323,9 +363,17 @@ function copyFromPreset(source: CrystalPresetId) {
   formError.value = ''
 }
 
-const filledMap = computed(() => filledMapFor(activePreset.value))
+function copyFromClass(board: Record<string, Item> | BuffPickItem[]) {
+  if (Array.isArray(board)) return
+  setCurrentSlots(cloneItemBoard(board))
+  activeSlot.value = null
+  query.value = ''
+  formError.value = ''
+}
 
-const pickedList = computed(() => pickedListFor(activePreset.value))
+const filledMap = computed(() => filledMapForBoard(presets.value[activePreset.value]))
+
+const pickedList = computed(() => pickedListForBoard(presets.value[activePreset.value]))
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()

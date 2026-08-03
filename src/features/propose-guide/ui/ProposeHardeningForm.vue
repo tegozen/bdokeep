@@ -29,10 +29,24 @@
         >
           <template #default="{ preset }">
             <div :class="presetTools.copyPreview">
-              <HardeningBoard :filled="filledMapFor(preset)" list-only fill />
+              <HardeningBoard :filled="filledMapForBoard(presets[preset])" list-only fill />
             </div>
           </template>
         </ProposeCopyFromPreset>
+        <ProposeCopyFromClass
+          :exclude-class-slug="classSlug"
+          :target-preset="activePreset"
+          :target-has-content="Object.keys(currentSlots()).length > 0"
+          section="hardening"
+          size="lg"
+          @copy="copyFromClass"
+        >
+          <template #default="{ board }">
+            <div :class="presetTools.copyPreview">
+              <HardeningBoard :filled="filledMapForBoard(asItemBoard(board))" list-only fill />
+            </div>
+          </template>
+        </ProposeCopyFromClass>
       </div>
     </template>
 
@@ -81,7 +95,6 @@ import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
   HARDENING_SLOT_IDS,
-  isCrystalPresetId,
   isHardeningSlotId,
   type CrystalPresetId,
 } from '@/shared/lib'
@@ -89,16 +102,27 @@ import { UiPresetTabs } from '@/shared/ui'
 import { HardeningBoard, type HardeningFill } from '@/widgets/hardening-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
+import {
+  emptyItemPresetBoards,
+  extractHardeningPresets,
+  type BuffPickItem,
+  type ItemPresetBoards,
+} from '../lib/extractGuideSectionPresets'
 import { useProposeModal } from '../lib/useProposeModal'
 import CatalogPicker from './CatalogPicker.vue'
+import ProposeCopyFromClass from './ProposeCopyFromClass.vue'
 import ProposeCopyFromPreset from './ProposeCopyFromPreset.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
 import presetTools from './proposePresetTools.module.css'
 
-type PresetBoards = Record<CrystalPresetId, Record<string, Item>>
+type PresetBoards = ItemPresetBoards
 
 function emptyPresets(): PresetBoards {
-  return { t1: {}, t2: {}, besp: {}, sub: {} }
+  return emptyItemPresetBoards()
+}
+
+function asItemBoard(board: Record<string, Item> | BuffPickItem[]): Record<string, Item> {
+  return Array.isArray(board) ? {} : board
 }
 
 const props = withDefaults(
@@ -136,14 +160,7 @@ function serializeState() {
 }
 
 function hydrateFromInitial() {
-  const next = emptyPresets()
-  for (const row of props.initialHardening ?? []) {
-    const presetRaw = String(row.preset || 't1')
-    if (!isCrystalPresetId(presetRaw) || !row.slot || !row.items) continue
-    if (!isHardeningSlotId(row.slot)) continue
-    next[presetRaw][row.slot] = row.items
-  }
-  presets.value = next
+  presets.value = extractHardeningPresets(props.initialHardening ?? [])
   activePreset.value = 't1'
 }
 
@@ -196,9 +213,9 @@ function isPresetEmpty(preset: CrystalPresetId) {
   return Object.keys(presets.value[preset]).length === 0
 }
 
-function filledMapFor(preset: CrystalPresetId): Record<string, HardeningFill> {
+function filledMapForBoard(board: Record<string, Item>): Record<string, HardeningFill> {
   const map: Record<string, HardeningFill> = {}
-  for (const [id, item] of Object.entries(presets.value[preset])) {
+  for (const [id, item] of Object.entries(board)) {
     map[id] = { id: item.id, name_ru: item.name_ru, icon_url: item.icon_url }
   }
   return map
@@ -211,7 +228,15 @@ function copyFromPreset(source: CrystalPresetId) {
   formError.value = ''
 }
 
-const filledMap = computed(() => filledMapFor(activePreset.value))
+function copyFromClass(board: Record<string, Item> | BuffPickItem[]) {
+  if (Array.isArray(board)) return
+  setCurrentSlots(cloneItemBoard(board))
+  activeSlot.value = null
+  query.value = ''
+  formError.value = ''
+}
+
+const filledMap = computed(() => filledMapForBoard(presets.value[activePreset.value]))
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
