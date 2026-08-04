@@ -33,7 +33,7 @@ export async function listPublishedClasses(sql: Sql) {
         or exists (select 1 from guide_lightstones x where x.guide_id = g.id)
         or exists (select 1 from guide_crystals x where x.guide_id = g.id)
         or exists (select 1 from guide_essence x where x.guide_id = g.id)
-        or exists (select 1 from guide_combo_steps x where x.guide_id = g.id)
+        or exists (select 1 from guide_combos x where x.guide_id = g.id)
         or exists (select 1 from guide_morphs x where x.guide_id = g.id)
         or exists (select 1 from class_videos v where v.class_id = c.id)
       ) as has_content
@@ -64,7 +64,7 @@ export async function listPublishedClasses(sql: Sql) {
 
 export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
   const empty = {
-    comboSteps: [] as unknown[],
+    combos: [] as unknown[],
     buffs: [] as unknown[],
     relics: [] as unknown[],
     lightstones: [] as unknown[],
@@ -120,23 +120,27 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
 
   const guideId = guide.id
 
-  const [comboSteps, buffs, relics, lightstones, crystals, hardening, morphs] = await Promise.all([
+  const [comboRows, buffs, relics, lightstones, crystals, hardening, morphs] = await Promise.all([
     sql`
       select
-        gcs.id,
-        gcs.mode,
-        gcs.notes,
-        gcs.sort_order,
+        gc.id as combo_id,
+        gc.mode,
+        gc.sort_order as combo_sort_order,
+        gc.title,
+        gc.notes,
+        gcs.id as step_id,
+        gcs.sort_order as step_sort_order,
         case when s.id is null then null else json_build_object(
           'id', s.id,
           'name_ru', s.name_ru,
           'icon_url', s.icon_url,
           'class_slug', s.class_slug
         ) end as skills
-      from guide_combo_steps gcs
+      from guide_combos gc
+      left join guide_combo_steps gcs on gcs.combo_id = gc.id
       left join skills s on s.id = gcs.skill_id
-      where gcs.guide_id = ${guideId}
-      order by gcs.sort_order asc
+      where gc.guide_id = ${guideId}
+      order by gc.sort_order asc, gcs.sort_order asc
     `,
     sql`
       select
@@ -268,11 +272,50 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     `,
   ])
 
+  const combosMap = new Map<
+    string,
+    {
+      id: string
+      mode: string
+      sort_order: number
+      title: string | null
+      notes: string | null
+      steps: Array<{
+        id: string
+        sort_order: number
+        skills: unknown
+      }>
+    }
+  >()
+  for (const row of comboRows) {
+    const comboId = String(row.combo_id)
+    let combo = combosMap.get(comboId)
+    if (!combo) {
+      combo = {
+        id: comboId,
+        mode: String(row.mode),
+        sort_order: Number(row.combo_sort_order) || 0,
+        title: row.title == null ? null : String(row.title),
+        notes: row.notes == null ? null : String(row.notes),
+        steps: [],
+      }
+      combosMap.set(comboId, combo)
+    }
+    if (row.step_id != null) {
+      combo.steps.push({
+        id: String(row.step_id),
+        sort_order: Number(row.step_sort_order) || 0,
+        skills: row.skills,
+      })
+    }
+  }
+  const combos = [...combosMap.values()]
+
   return rewriteIconUrlsDeep({
     class: klass,
     guide,
     videos,
-    comboSteps,
+    combos,
     buffs,
     relics,
     lightstones,

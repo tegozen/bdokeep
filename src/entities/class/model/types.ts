@@ -100,10 +100,17 @@ export type LightstoneSet = {
 
 export type GuideComboStepRow = {
   id: string
+  sort_order: number
+  skills: Skill | null
+}
+
+export type GuideCombo = {
+  id: string
   mode: 'awakening' | 'succession' | string
   sort_order: number
+  title: string | null
   notes: string | null
-  skills: Skill | null
+  steps: GuideComboStepRow[]
 }
 
 export type GuideBuffRow = {
@@ -141,7 +148,7 @@ export type ClassGuideBundle = {
   class: BdoClass
   guide: ClassGuide | null
   videos: ClassVideo[]
-  comboSteps: GuideComboStepRow[]
+  combos: GuideCombo[]
   buffs: GuideBuffRow[]
   relics: GuideItemRow[]
   lightstones: GuideItemRow[]

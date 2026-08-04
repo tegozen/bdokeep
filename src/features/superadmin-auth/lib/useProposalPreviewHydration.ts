@@ -16,6 +16,11 @@ import type { RelicFill } from '@/widgets/relic-board'
 export type ProposalPreviewPayload = {
   text?: string
   skill_ids?: string[]
+  combos?: Array<{
+    title?: string
+    notes?: string
+    skill_ids: string[]
+  }>
   buff_ids?: string[]
   buffs?: Array<{ preset?: string; buff_id: string }>
   crystals?: Array<{ preset?: string; slot: string; item_id: string }>
@@ -48,8 +53,15 @@ export function useProposalPreviewHydration(
   items: Ref<ProposalPreviewItem[]>,
   opts?: { specMode?: Ref<'awakening' | 'succession'> },
 ) {
-  const comboSteps = reactive<
-    Record<string, Array<{ id: string; skills: Skill | null }> | null>
+  const comboGroups = reactive<
+    Record<
+      string,
+      Array<{
+        title: string
+        notes: string
+        steps: Array<{ id: string; skills: Skill | null }>
+      }> | null
+    >
   >({})
   const buffByPreset = reactive<
     Record<
@@ -105,17 +117,33 @@ export function useProposalPreviewHydration(
   }
 
   async function hydrateCombo(item: ProposalPreviewItem) {
-    const ids = payloadOf(item).skill_ids ?? []
-    if (!ids.length) {
-      comboSteps[item.id] = []
+    const p = payloadOf(item)
+    const rawCombos =
+      p.combos?.length
+        ? p.combos
+        : p.skill_ids?.length
+          ? [{ title: '', notes: '', skill_ids: p.skill_ids }]
+          : []
+    if (!rawCombos.length) {
+      comboGroups[item.id] = []
       return
     }
+    const ids = rawCombos.flatMap((c) => c.skill_ids || [])
     try {
       const { skills } = await resolveCatalogIds({ skills: ids })
       const byId = new Map(skills.map((s) => [s.id, s as Skill]))
-      comboSteps[item.id] = ids.map((id) => ({ id, skills: byId.get(id) ?? null }))
+      comboGroups[item.id] = rawCombos
+        .filter((c) => (c.skill_ids || []).length)
+        .map((c) => ({
+          title: (c.title || '').trim(),
+          notes: (c.notes || '').trim(),
+          steps: (c.skill_ids || []).map((id) => ({
+            id,
+            skills: byId.get(id) ?? null,
+          })),
+        }))
     } catch {
-      comboSteps[item.id] = []
+      comboGroups[item.id] = []
     }
   }
 
@@ -298,7 +326,7 @@ export function useProposalPreviewHydration(
   }
 
   async function hydrate() {
-    for (const key of Object.keys(comboSteps)) delete comboSteps[key]
+    for (const key of Object.keys(comboGroups)) delete comboGroups[key]
     for (const key of Object.keys(buffByPreset)) delete buffByPreset[key]
     for (const key of Object.keys(crystalByPreset)) delete crystalByPreset[key]
     for (const key of Object.keys(relicByPreset)) delete relicByPreset[key]
@@ -326,7 +354,7 @@ export function useProposalPreviewHydration(
   )
 
   return {
-    comboSteps,
+    comboGroups,
     buffByPreset,
     buffPreset,
     crystalByPreset,

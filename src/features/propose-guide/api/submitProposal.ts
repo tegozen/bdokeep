@@ -6,6 +6,11 @@ export type SubmitProposalInput = {
   payload: {
     text?: string
     skill_ids?: string[]
+    combos?: Array<{
+      title?: string
+      notes?: string
+      skill_ids: string[]
+    }>
     buff_ids?: string[]
     buffs?: Array<{
       preset: string

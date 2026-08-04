@@ -74,23 +74,31 @@
                 :form-props="{
                   classSlug: bundle.class.slug,
                   section: comboSection,
-                  initialSteps: activeComboSteps,
+                  initialCombos: activeCombos,
                 }"
               />
             </template>
 
             <div
-              v-if="activeComboSteps.length"
+              v-if="activeCombos.length"
               :class="[$style.comboBlock, $style.fade]"
             >
-              <ComboChain
-                :steps="activeComboSteps"
-                :label="
-                  specMode === 'succession'
-                    ? 'Комба наследия'
-                    : 'Комба пробуждения'
-                "
-              />
+              <div
+                v-for="(combo, idx) in activeCombos"
+                :key="combo.id"
+                :class="$style.comboItem"
+              >
+                <p v-if="combo.notes" :class="$style.comboNotes">{{ combo.notes }}</p>
+                <ComboChain
+                  :steps="combo.steps"
+                  :label="
+                    combo.notes ||
+                    (specMode === 'succession'
+                      ? 'Комба наследия'
+                      : 'Комба пробуждения')
+                  "
+                />
+              </div>
             </div>
             <ShowEmptyGuide v-else />
           </GuideSection>
@@ -594,16 +602,24 @@ onBeforeUnmount(() => {
   headerPresetFill.value = emptyPresetFill();
 });
 
-const awakeningSteps = computed(
-  () => props.bundle?.comboSteps.filter((s) => s.mode === "awakening") ?? [],
+const awakeningCombos = computed(
+  () =>
+    props.bundle?.combos
+      .filter((c) => c.mode === "awakening")
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order) ?? [],
 );
-const successionSteps = computed(
-  () => props.bundle?.comboSteps.filter((s) => s.mode === "succession") ?? [],
+const successionCombos = computed(
+  () =>
+    props.bundle?.combos
+      .filter((c) => c.mode === "succession")
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order) ?? [],
 );
-const activeComboSteps = computed(() =>
+const activeCombos = computed(() =>
   specMode.value === "succession"
-    ? successionSteps.value
-    : awakeningSteps.value,
+    ? successionCombos.value
+    : awakeningCombos.value,
 );
 const comboSection = computed(() =>
   specMode.value === "succession"
@@ -772,6 +788,25 @@ const lightstoneSetLabel = computed(() =>
   border: 1px solid var(--color-border);
   background: var(--color-bg-panel);
   padding: 1rem 1.15rem;
+}
+
+.comboItem + .comboItem {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.comboTitle {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.comboNotes {
+  margin: 0 0 0.55rem;
+  font-size: 0.88rem;
+  color: var(--color-muted);
 }
 
 .comboMorphRow {

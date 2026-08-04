@@ -21,6 +21,9 @@ export const UUID_RE =
 
 export const MAX_TEXT_LEN = 16000
 export const MAX_COMBO_STEPS = 30
+export const MAX_COMBOS_PER_MODE = 6
+export const MAX_COMBO_TITLE_LEN = 60
+export const MAX_COMBO_NOTES_LEN = 500
 export const MAX_BUFFS = 20
 export const MAX_BUFFS_ALL_PRESETS = 20 * 4
 export const MAX_CRYSTALS = 23

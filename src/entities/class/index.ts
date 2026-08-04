@@ -3,6 +3,7 @@ export type {
   ClassGuide,
   ClassVideo,
   ClassGuideBundle,
+  GuideCombo,
   GuideComboStepRow,
   GuideBuffRow,
   GuideItemRow,

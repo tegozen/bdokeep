@@ -36,12 +36,20 @@
       />
 
       <template v-else-if="isCombo">
-        <ComboChain
-          v-if="comboSteps[item.id]?.length"
-          :steps="comboSteps[item.id]!"
-          :label="comboLabel || 'Комба'"
-        />
-        <p v-else-if="comboSteps[item.id] === undefined" :class="mutedClass">Загрузка…</p>
+        <template v-if="comboGroups[item.id]?.length">
+          <div
+            v-for="(group, idx) in comboGroups[item.id]"
+            :key="`${item.id}-${idx}`"
+            :class="$style.comboGroup"
+          >
+            <p v-if="group.notes" :class="mutedClass">{{ group.notes }}</p>
+            <ComboChain
+              :steps="group.steps"
+              :label="group.notes || comboLabel || 'Комба'"
+            />
+          </div>
+        </template>
+        <p v-else-if="comboGroups[item.id] === undefined" :class="mutedClass">Загрузка…</p>
         <p v-else :class="mutedClass">Нет скиллов</p>
       </template>
 
@@ -203,7 +211,7 @@ const morphSpecTabs = [
 const items = computed(() => [props.item])
 
 const {
-  comboSteps,
+  comboGroups,
   buffByPreset,
   buffPreset,
   crystalByPreset,
@@ -423,6 +431,18 @@ function hardeningLabel(name: string) {
   overflow: auto;
   padding-right: 0.15rem;
   padding-bottom: 0.35rem;
+}
+
+.comboGroup + .comboGroup {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.comboTitle {
+  margin: 0 0 0.3rem;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
 /* Match ClassGuidePage crystal layout (picked list + board). */
