@@ -11,7 +11,32 @@
       </div>
 
       <template v-else>
+        <button
+          v-if="iconTrigger"
+          type="button"
+          :class="$style.iconTrigger"
+          aria-label="Войти как суперадмин"
+          title="Войти как суперадмин"
+          @click="openLogin = true"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </button>
         <UiButton
+          v-else
           type="button"
           :variant="compact ? 'ghost' : 'secondary'"
           :size="compact ? 'sm' : 'md'"
@@ -62,10 +87,16 @@ import UiButton from '@/shared/ui/UiButton.vue'
 import LoginFields from './LoginFields.vue'
 
 const props = withDefaults(
-  defineProps<{ compact?: boolean; openLoginOnMount?: boolean }>(),
+  defineProps<{
+    compact?: boolean
+    openLoginOnMount?: boolean
+    /** Muted lock icon instead of labeled button (footer entry). */
+    iconTrigger?: boolean
+  }>(),
   {
     compact: false,
     openLoginOnMount: false,
+    iconTrigger: false,
   },
 )
 
@@ -180,6 +211,29 @@ async function onLogout() {
 
 .triggerWide {
   width: 100%;
+}
+
+.iconTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 140ms ease, color 140ms ease;
+}
+
+.iconTrigger:hover,
+.iconTrigger:focus-visible {
+  opacity: 0.85;
+  color: var(--color-gold-soft);
+  outline: none;
 }
 
 .linkish {

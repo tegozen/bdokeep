@@ -82,21 +82,12 @@
             >
               ОС
             </NuxtLink>
-            <!-- Defer auth UI CSS/JS until session or explicit login (keeps home Lighthouse clean). -->
+            <!-- Logged-in chrome stays in the header; login entry lives in the footer. -->
             <component
               :is="SuperadminAuth"
-              v-if="SuperadminAuth && authUiReady"
+              v-if="isSuperadmin && SuperadminAuth && authUiReady"
               compact
-              :open-login-on-mount="authOpenLoginOnMount"
             />
-            <button
-              v-else-if="!authUiReady"
-              type="button"
-              :class="$style.authGate"
-              @click="openAuthLogin"
-            >
-              Войти как суперадмин
-            </button>
           </ClientOnly>
         </div>
       </div>
@@ -119,11 +110,44 @@
     </main>
 
     <footer :class="$style.footer">
-      <div class="mx-auto w-[min(100%-2rem,1920px)]">
+      <div class="mx-auto w-[min(100%-2rem,1920px)]" :class="$style.footerInner">
         <p :class="$style.disclaimer">
           Неофициальный фан-гайд гильдии. Не связан с Pearl Abyss / Black Desert.
           Портреты и иконки классов © Pearl Abyss — используются для гильдейских справочных целей.
         </p>
+        <ClientOnly>
+          <component
+            :is="SuperadminAuth"
+            v-if="!isSuperadmin && SuperadminAuth && authUiReady"
+            compact
+            icon-trigger
+            :open-login-on-mount="authOpenLoginOnMount"
+          />
+          <button
+            v-else-if="!isSuperadmin && !authUiReady"
+            type="button"
+            :class="$style.authGate"
+            aria-label="Войти как суперадмин"
+            title="Войти как суперадмин"
+            @click="openAuthLogin"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </button>
+        </ClientOnly>
       </div>
     </footer>
 
@@ -339,8 +363,7 @@ watch(isSuperadmin, (ok) => {
   border-right: 1px solid var(--color-border);
 }
 
-.mobileToggle,
-.authGate {
+.mobileToggle {
   box-sizing: border-box;
   height: 100%;
   border: 1px solid var(--color-border);
@@ -353,8 +376,7 @@ watch(isSuperadmin, (ok) => {
   padding: 0 0.65rem;
 }
 
-.mobileToggle:hover,
-.authGate:hover {
+.mobileToggle:hover {
   border-color: var(--color-border-strong);
   color: var(--color-gold);
 }
@@ -486,7 +508,40 @@ watch(isSuperadmin, (ok) => {
   color: var(--color-muted);
 }
 
+.footerInner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .disclaimer {
   margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.authGate {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 140ms ease, color 140ms ease;
+}
+
+.authGate:hover,
+.authGate:focus-visible {
+  opacity: 0.85;
+  color: var(--color-gold-soft);
+  outline: none;
 }
 </style>
