@@ -71,6 +71,10 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-0}
     ports:
       - '${HOST_PORT:-3000}:3000'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     # Runtime caps (running container, not the image build).
     mem_limit: ${WEB_MEM_LIMIT:-512m}
     cpus: ${WEB_CPUS:-1.0}
