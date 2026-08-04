@@ -63,6 +63,14 @@
               {{ mobileNavOpen ? 'Скрыть' : 'Режим' }}
             </button>
           </ClientOnly>
+          <button
+            type="button"
+            :class="$style.proposals"
+            title="Как настроить макрос чата"
+            @click="openChatMacroGuide"
+          >
+            Макрос чата
+          </button>
           <!-- Cookie session known only after client refresh — keep out of SSR HTML. -->
           <ClientOnly>
             <NuxtLink
@@ -152,6 +160,12 @@
     </footer>
 
     <component :is="UiConfirm" v-if="UiConfirm" />
+    <component
+      :is="ChatMacroGuideModal"
+      v-if="ChatMacroGuideModal"
+      :open="chatMacroGuideOpen"
+      @close="chatMacroGuideOpen = false"
+    />
   </div>
 </template>
 
@@ -175,6 +189,8 @@ const GuideModePresetTabs = defineAsyncComponent(() => import('./GuideModePreset
 /** Loaded on demand — avoid shipping auth CSS on anonymous home Lighthouse runs. */
 const SuperadminAuth = shallowRef<Component | null>(null)
 const UiConfirm = shallowRef<Component | null>(null)
+const ChatMacroGuideModal = shallowRef<Component | null>(null)
+const chatMacroGuideOpen = ref(false)
 const { request: confirmRequest } = useConfirm()
 
 watch(
@@ -185,6 +201,15 @@ watch(
   },
   { flush: 'sync' },
 )
+
+async function openChatMacroGuide() {
+  if (!ChatMacroGuideModal.value) {
+    ChatMacroGuideModal.value = (
+      await import('@/features/chat-macro-guide/ui/ChatMacroGuideModal.vue')
+    ).default
+  }
+  chatMacroGuideOpen.value = true
+}
 
 const route = useRoute()
 /** @vite-pwa/nuxt injects $pwa at runtime; types may be absent until prepare. */
@@ -426,7 +451,10 @@ watch(isSuperadmin, (ok) => {
   box-sizing: border-box;
   height: 100%;
   border: 1px solid var(--color-border);
+  background: transparent;
   color: var(--color-gold-soft);
+  cursor: pointer;
+  font: inherit;
   font-size: 0.82rem;
   line-height: 1;
   padding: 0 0.65rem;
