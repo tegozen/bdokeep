@@ -2,14 +2,13 @@
   "name": "bdokeep",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "docker:up": "docker compose --env-file .env up -d --build",
-    "docker:down": "docker compose --env-file .env down",
     "test": "tsx --test domain/**/*.test.ts"
   },
   "dependencies": {

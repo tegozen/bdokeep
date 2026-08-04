@@ -17,6 +17,9 @@
     </form>
 
     <template v-else>
+      <p :class="$style.modNote">
+        Отклоняйте заявки с копипастом чужих гайдов целиком без разрешения автора.
+      </p>
       <div :class="$style.filters">
         <button
           v-for="opt in statusOpts"
@@ -493,6 +496,13 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1.25rem;
+}
+
+.modNote {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-muted);
 }
 
 .chip {

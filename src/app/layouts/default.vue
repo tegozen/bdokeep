@@ -119,10 +119,27 @@
 
     <footer :class="$style.footer">
       <div class="mx-auto w-[min(100%-2rem,1920px)]" :class="$style.footerInner">
-        <p :class="$style.disclaimer">
-          Неофициальный фан-гайд гильдии. Не связан с Pearl Abyss / Black Desert.
-          Портреты и иконки классов © Pearl Abyss — используются для гильдейских справочных целей.
-        </p>
+        <div :class="$style.footerCopy">
+          <p :class="$style.disclaimer">
+            Неофициальный фан-гайд гильдии, non-commercial. Не связан с Pearl Abyss / Black Desert.
+            Игровые изображения (классы и каталог) © Pearl Abyss — для гильдейских справочных целей.
+            This is unofficial content which contains copyrighted materials and IP from Pearl Abyss, and is not official/endorsed content.
+          </p>
+          <p :class="$style.repoLinks">
+            Исходники:
+            <a
+              href="https://github.com/tegozen/bdokeep"
+              target="_blank"
+              rel="noopener noreferrer"
+            >GitHub</a>
+            ·
+            <a
+              href="https://gitlab.com/tegozen/bdokeep"
+              target="_blank"
+              rel="noopener noreferrer"
+            >GitLab</a>
+          </p>
+        </div>
         <ClientOnly>
           <component
             :is="SuperadminAuth"
@@ -543,10 +560,33 @@ watch(isSuperadmin, (ok) => {
   gap: 1rem;
 }
 
-.disclaimer {
-  margin: 0;
+.footerCopy {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.disclaimer {
+  margin: 0;
+}
+
+.repoLinks {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.repoLinks a {
+  color: var(--color-gold-soft);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.repoLinks a:hover,
+.repoLinks a:focus-visible {
+  color: var(--color-gold);
+  outline: none;
 }
 
 .authGate {

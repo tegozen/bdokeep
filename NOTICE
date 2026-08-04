@@ -1,0 +1,24 @@
+BDO Keep
+========
+
+Project source code and documentation (excluding the exceptions below) are
+licensed under the MIT License. See LICENSE.
+
+This product is unofficial fan content.
+This is unofficial content which contains copyrighted materials and IP from
+Pearl Abyss, and is not official/endorsed content.
+
+Game assets (class portraits/icons and catalog icons under public/classes/ and
+public/codex/) © Pearl Abyss Corp. They are NOT covered by the MIT License.
+Non-commercial guild / fan reference use only, per Pearl Abyss Fan Content
+Guidelines: https://www.pearlabyss.com/legal/detail?_policyNo=42
+Questions: fancontent@pearlabysscorp.com
+
+Forks and redistributions that keep those assets (or other Pearl Abyss IP)
+must retain this disclaimer and the LICENSE exceptions section.
+
+Source mirrors:
+  https://github.com/tegozen/bdokeep
+  https://gitlab.com/tegozen/bdokeep
+
+Open-source dependencies and fonts: see THIRD_PARTY.md

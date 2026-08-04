@@ -2,7 +2,11 @@
 
 Гильдейские PvP-гайды по классам Black Desert Online (только RU).
 
-Неофициальный фан-ресурс гильдии. Не связан с Pearl Abyss. Портреты и иконки классов © Pearl Abyss.
+Неофициальный фан-ресурс гильдии, **non-commercial**. Не связан с Pearl Abyss / Black Desert.
+Игровые изображения (портреты/иконки классов и каталог `/codex/`) © Pearl Abyss.
+This is unofficial content which contains copyrighted materials and IP from Pearl Abyss, and is not official/endorsed content.
+
+Исходники: [GitHub](https://github.com/tegozen/bdokeep) · [GitLab](https://gitlab.com/tegozen/bdokeep)
 
 Стек: **Nuxt 4.5+** (FSD) + Postgres. API — Nitro. Один `docker-compose.yml`. Node ≥22.
 
@@ -49,6 +53,7 @@
 - Drag-and-drop порядка в комбе и забафе
 - Игровой ник для гостей, honeypot от ботов, rate limit
 - Guard несохранённых правок (confirm + `beforeunload`)
+- Не копируйте чужие гайды целиком без разрешения автора — модерация отклонит
 
 ### Модерация
 
@@ -58,6 +63,7 @@
 - **Суперадмин** (тот же пароль, cookie-сессия): auto-approve при отправке — правка сразу в живой гайд
 - На странице класса: бейджи «на модерации», inline-черновики у секций, счётчики заявок/ОС в хедере
 - Автоснятие «залипших» видео без превью (>48ч) — approved-заявка с автором `cron`
+- Отклонять заявки с копипастом чужих гайдов целиком
 
 ### PWA / оболочка
 
@@ -84,6 +90,7 @@
 | `server/` | Nitro API + utils (db, auth, applyProposal, каталоги) |
 | `db/migrations/` | Схема и сиды (накат сервисом `migrate`) |
 | `public/classes/`, `public/codex/` | Same-origin арт классов и иконки каталога |
+| `LICENSE`, `NOTICE`, `THIRD_PARTY.md` | MIT на код; игровой IP PA исключён; атрибуция deps |
 
 ## Сервисы
 
@@ -100,15 +107,15 @@ cp .env.example .env
 # Заполни POSTGRES_PASSWORD, BDOKEEP_APP_PASSWORD, DATABASE_URL,
 # ADMIN_PASSWORD, ADMIN_SESSION_SECRET (openssl rand -base64 48)
 # ADMIN_PASSWORD в production не может быть changeme / password / admin / 123456
-npm install
-npm run docker:up        # db + migrate + web
-# или: docker compose --env-file .env up -d --build
+docker compose up -d --build
 ```
+
+Остановка: `docker compose down`.
 
 На VPS ~4 CPU / 6G (idle уже ~1 ядро + ~4G) билд Nuxt иначе упирается в потолок. Дефолт: `BUILD_CPU_COUNT=1`, heap `768` МБ; runtime `web`: `WEB_CPUS=1` / `WEB_MEM_LIMIT=512m` (см. `.env.example`).
 
 
-Env только в корне: `.env` / `.env.example`. Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля).
+Env только в корне: `.env` / `.env.example` (Compose сам подхватывает `.env`). Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля).
 
 SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты на хосте не нужны).
 
@@ -127,10 +134,10 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 - схема proposals, пресеты, морфы, RLS
 - обновления каталогов (030+)
 
-Картинки классов: `public/classes/<slug>/{portrait.png,icon.svg}`.
-Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При `up` migrate сам переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`.
+Картинки классов: `public/classes/<slug>/{portrait.png,icon.svg}` — © Pearl Abyss (см. `public/classes/README.md`).
+Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При `up` migrate сам переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
 
-На чистом сервере достаточно `docker compose up`: SQL-сиды и картинки уже в репо.
+На чистом сервере достаточно `docker compose up -d --build`: SQL-сиды и картинки уже в репо.
 
 
 ## Nginx (внешний)
@@ -148,6 +155,12 @@ location / {
 }
 ```
 
-## Дисклеймер
+## Дисклеймер и лицензии
 
-Неофициальный фан-ресурс гильдии. Не связан с Pearl Abyss. Портреты/иконки классов © Pearl Abyss.
+Неофициальный фан-ресурс гильдии, non-commercial. Не связан с Pearl Abyss.
+Игровые изображения (классы и каталог) © Pearl Abyss — используются по [Fan Content Guidelines](https://www.pearlabyss.com/legal/detail?_policyNo=42).
+При сомнениях: `fancontent@pearlabysscorp.com`.
+
+This is unofficial content which contains copyrighted materials and IP from Pearl Abyss, and is not official/endorsed content.
+
+Код проекта — **MIT** (см. [`LICENSE`](LICENSE)); `public/classes/` и `public/codex/` © Pearl Abyss и **не** под MIT — форки с артом обязаны сохранить дисклеймер PA ([`NOTICE`](NOTICE)). Зависимости и шрифты: [`THIRD_PARTY.md`](THIRD_PARTY.md).
