@@ -75,6 +75,13 @@
                 {{ pendingSummary.total }}
               </span>
             </NuxtLink>
+            <NuxtLink
+              v-if="isSuperadmin"
+              to="/admin/feedback"
+              :class="$style.proposals"
+            >
+              ОС
+            </NuxtLink>
             <!-- Defer auth UI CSS/JS until session or explicit login (keeps home Lighthouse clean). -->
             <component
               :is="SuperadminAuth"

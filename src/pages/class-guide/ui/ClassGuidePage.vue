@@ -393,6 +393,13 @@
           </div>
         </template>
       </div>
+
+      <GuideSection
+        title="Обратная связь"
+        subtitle="Анонимное сообщение админу по этому классу. Публично не отображается."
+      >
+        <ClassFeedbackForm :class-slug="bundle.class.slug" />
+      </GuideSection>
     </template>
   </div>
 </template>
@@ -400,6 +407,7 @@
 <script setup lang="ts">
 import {
   computed,
+  defineAsyncComponent,
   onBeforeUnmount,
   ref,
   watch,
@@ -415,6 +423,10 @@ import {
 } from "@/features/superadmin-auth/api/pendingProposals";
 import PendingSectionDrafts from "@/features/superadmin-auth/ui/PendingSectionDrafts.vue";
 import { ShowEmptyGuide } from "@/features/show-empty-guide";
+
+const ClassFeedbackForm = defineAsyncComponent(
+  () => import("@/features/class-feedback/ui/ClassFeedbackForm.vue"),
+);
 
 import {
   codexIconSrc,

@@ -2,6 +2,9 @@
   <div :class="['mx-auto w-[min(100%-2rem,960px)]', $style.page]">
     <header :class="$style.header">
       <h1 :class="$style.h1">Предложения гайдов</h1>
+      <NuxtLink v-if="authed" to="/admin/feedback" :class="$style.link">
+        Обратная связь
+      </NuxtLink>
     </header>
 
     <form v-if="!authed" :class="$style.login" @submit.prevent="login">
@@ -441,6 +444,16 @@ onMounted(async () => {
 .h1 {
   margin: 0;
   font-size: 1.6rem;
+}
+
+.link {
+  color: var(--color-gold);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
 }
 
 .login {
