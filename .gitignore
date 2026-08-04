@@ -25,6 +25,3 @@ logs
 
 # Caches
 .cache
-
-# Playwright persistent profile for Garmoth scrape (Cloudflare cookies)
-data/garmoth/.browser/
