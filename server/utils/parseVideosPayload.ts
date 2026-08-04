@@ -1,5 +1,11 @@
-import { MAX_VIDEOS, sanitizeYoutubeUrl, youtubeVideoId } from '@domain'
+import {
+  MAX_VIDEOS,
+  isPlaceholderVideoTitle,
+  sanitizeYoutubeUrl,
+  youtubeVideoId,
+} from '@domain'
 import { youtubeVideoHasThumb } from './youtubeThumb'
+import { fetchYoutubeTitle } from './youtubeTitle'
 
 export type VideoReadyStatus = 'ready' | 'processing'
 
@@ -53,11 +59,14 @@ export async function parseVideosPayload(
     // Prefer live probe; payload status is ignored so approve re-checks ytimg.
     const status: VideoReadyStatus = hasThumb ? 'ready' : 'processing'
     const titleRaw = String(entry?.title || '').trim()
-    const defaultTitle = `Видео ${slotNo}`
-    const title =
-      !titleRaw || /^Видео\s+\d+$/i.test(titleRaw)
-        ? defaultTitle
-        : titleRaw.slice(0, 120)
+    const fallback = `Видео ${slotNo}`
+    let title = isPlaceholderVideoTitle(titleRaw)
+      ? fallback
+      : titleRaw.slice(0, 120)
+    if (isPlaceholderVideoTitle(title)) {
+      const fetched = await fetchYoutubeTitle(id)
+      if (fetched) title = fetched
+    }
     videos.push({
       title,
       youtube_url: safe,

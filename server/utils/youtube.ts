@@ -6,4 +6,5 @@ export {
   youtubeEmbedUrl,
   youtubeThumbProxyUrl,
   isYoutubeVideoId,
+  isPlaceholderVideoTitle,
 } from '@domain'

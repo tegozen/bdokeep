@@ -5,6 +5,7 @@ import {
   type ProposalSection,
 } from '@domain'
 import { applyProposal } from './applyProposal'
+import { backfillYoutubeVideoTitles } from './backfillYoutubeVideoTitles'
 import { clearYoutubeThumbCache, youtubeVideoHasThumb } from './youtubeThumb'
 
 type VideoRow = {
@@ -27,18 +28,24 @@ export type PollYoutubeVideoStatusResult = {
   markedReady: number
   removedExpired: number
   proposalsCreated: number
+  titlesBackfilled: number
+  proposalTitlesBackfilled: number
 }
 
 /**
  * Mark processing videos ready when ytimg has a thumb;
- * after TTL, remove via approved guide_proposals (author=cron).
+ * after TTL, remove via approved guide_proposals (author=cron);
+ * backfill placeholder «Видео N» titles from YouTube oEmbed.
  */
 export async function pollYoutubeVideoStatus(): Promise<PollYoutubeVideoStatusResult> {
   const sql = useDb()
+  const titles = await backfillYoutubeVideoTitles()
   const result: PollYoutubeVideoStatusResult = {
     markedReady: 0,
     removedExpired: 0,
     proposalsCreated: 0,
+    titlesBackfilled: titles.classVideosUpdated,
+    proposalTitlesBackfilled: titles.proposalsUpdated,
   }
 
   const processing = await withDbError(async () => {

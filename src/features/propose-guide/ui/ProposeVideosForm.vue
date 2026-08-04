@@ -138,7 +138,8 @@ async function onSubmit() {
       }
       const order = videos.length
       videos.push({
-        title: `Видео ${order + 1}`,
+        // Server resolves real YouTube title via oEmbed when empty/placeholder.
+        title: '',
         youtube_url: safe,
         sort_order: order,
       })

@@ -12,6 +12,7 @@ export {
   youtubeEmbedUrl,
   youtubeVideoId,
   youtubeThumbProxyUrl,
+  isPlaceholderVideoTitle,
   YOUTUBE_IFRAME_ALLOW,
 } from './youtube'
 export { useHeaderClass, type HeaderClassInfo } from './useHeaderClass'

@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ClassVideo } from '@/entities/class'
-import { sanitizeYoutubeUrl } from '@/shared/lib'
+import { isPlaceholderVideoTitle, sanitizeYoutubeUrl } from '@/shared/lib'
 import { UiEmptyState, YoutubeEmbed } from '@/shared/ui'
 
 const props = defineProps<{
@@ -59,11 +59,10 @@ function isProcessing(video: ClassVideo) {
   return video.status === 'processing'
 }
 
-/** Default "Видео N" titles follow display order (empty form slots are compacted). */
+/** Fallback «Видео N» only when DB title is still a placeholder. */
 function labelFor(video: ClassVideo, idx: number) {
-  const t = video.title?.trim()
-  if (!t || /^Видео\s+\d+$/i.test(t)) return `Видео ${idx + 1}`
-  return t
+  if (isPlaceholderVideoTitle(video.title)) return `Видео ${idx + 1}`
+  return video.title.trim()
 }
 </script>
 

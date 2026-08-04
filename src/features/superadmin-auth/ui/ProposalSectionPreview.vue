@@ -168,6 +168,7 @@ import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
   HARDENING_SLOTS,
+  isPlaceholderVideoTitle,
   morphPresetFrom,
   type CrystalPresetId,
   type GuideSpecMode,
@@ -346,7 +347,7 @@ const videosFor = computed((): ClassVideo[] => {
   return (payload.value.videos ?? []).map((v, i) => ({
     id: `${props.item.id}-${i}`,
     class_id: '',
-    title: v.title || `Видео ${i + 1}`,
+    title: isPlaceholderVideoTitle(v.title) ? `Видео ${i + 1}` : String(v.title).trim(),
     youtube_url: v.youtube_url,
     sort_order: i,
     mode,

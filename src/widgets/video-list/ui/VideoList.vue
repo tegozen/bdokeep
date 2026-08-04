@@ -14,7 +14,7 @@
           <template v-if="video">
             <div :class="$style.ph" />
             <span :class="$style.linkPh">{{
-              !video.title?.trim() || /^Видео\s+\d+$/i.test(video.title.trim())
+              isPlaceholderVideoTitle(video.title)
                 ? `Видео ${idx + 1}`
                 : video.title
             }}</span>
@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ClassVideo } from '@/entities/class'
+import { isPlaceholderVideoTitle } from '@/shared/lib'
 import { UiEmptyState } from '@/shared/ui'
 import VideoListInner from './VideoListInner.vue'
 

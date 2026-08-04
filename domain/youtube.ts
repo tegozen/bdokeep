@@ -71,3 +71,9 @@ export function youtubeThumbProxyUrl(raw: string): string | null {
 export function isYoutubeVideoId(id: string): boolean {
   return /^[\w-]{6,32}$/.test(id)
 }
+
+/** Synthetic slot labels like «Видео 1» — not real YouTube titles. */
+export function isPlaceholderVideoTitle(title: string | null | undefined): boolean {
+  const t = String(title || '').trim()
+  return !t || /^Видео\s+\d+$/i.test(t)
+}
