@@ -27,8 +27,8 @@ export default defineEventHandler(async (event) => {
   return {
     items: items.map((row) => ({
       id: String(row.id),
-      class_id: String(row.class_id),
-      class_slug: String(row.class_slug),
+      class_id: row.class_id != null ? String(row.class_id) : null,
+      class_slug: row.class_slug != null ? String(row.class_slug) : null,
       body: String(row.body),
       created_at: row.created_at instanceof Date
         ? row.created_at.toISOString()

@@ -43,9 +43,14 @@
       <ul v-else :class="$style.list">
         <li v-for="item in items" :key="item.id" :class="$style.card">
           <div :class="$style.cardHead">
-            <NuxtLink :to="`/class/${item.class_slug}`" :class="$style.classLink">
+            <NuxtLink
+              v-if="item.class_slug"
+              :to="`/class/${item.class_slug}`"
+              :class="$style.classLink"
+            >
               {{ item.class_slug }}
             </NuxtLink>
+            <span v-else :class="$style.siteTag">Сайт</span>
             <span :class="$style.meta">{{ formatDate(item.created_at) }}</span>
           </div>
           <p :class="$style.text">{{ item.body }}</p>
@@ -74,8 +79,8 @@ useHead({ title: 'Админ — обратная связь | BDO Keep' })
 
 type FeedbackItem = {
   id: string
-  class_id: string
-  class_slug: string
+  class_id: string | null
+  class_slug: string | null
   body: string
   created_at: string
 }
@@ -175,9 +180,10 @@ async function load() {
 }
 
 async function remove(item: FeedbackItem) {
+  const scope = item.class_slug ? `по классу ${item.class_slug}` : 'с главной'
   const ok = await confirm({
     title: 'Удалить сообщение?',
-    message: `Сообщение по классу ${item.class_slug} будет удалено.`,
+    message: `Сообщение ${scope} будет удалено.`,
     confirmLabel: 'Удалить',
   })
   if (!ok) return
@@ -292,6 +298,8 @@ onMounted(async () => {
 }
 
 .card {
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   background: var(--color-bg-panel);
   padding: 1rem;
@@ -315,6 +323,11 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
+.siteTag {
+  color: var(--color-gold-soft);
+  font-weight: 600;
+}
+
 .meta {
   font-size: 0.82rem;
   color: var(--color-muted);
@@ -323,6 +336,8 @@ onMounted(async () => {
 .text {
   margin: 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font: inherit;
   color: var(--color-ink);
   line-height: 1.45;

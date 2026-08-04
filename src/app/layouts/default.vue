@@ -66,6 +66,18 @@
           <button
             type="button"
             :class="$style.proposals"
+            :title="
+              headerClass
+                ? 'Анонимное сообщение админу по этому классу'
+                : 'Анонимное сообщение админу'
+            "
+            @click="openClassFeedback"
+          >
+            Обратная связь
+          </button>
+          <button
+            type="button"
+            :class="$style.proposals"
             title="Как настроить макрос чата"
             @click="openChatMacroGuide"
           >
@@ -183,6 +195,13 @@
       :open="chatMacroGuideOpen"
       @close="chatMacroGuideOpen = false"
     />
+    <component
+      :is="ClassFeedbackModal"
+      v-if="ClassFeedbackModal"
+      :open="classFeedbackOpen"
+      :class-slug="headerClass?.slug"
+      @close="classFeedbackOpen = false"
+    />
   </div>
 </template>
 
@@ -208,6 +227,8 @@ const SuperadminAuth = shallowRef<Component | null>(null)
 const UiConfirm = shallowRef<Component | null>(null)
 const ChatMacroGuideModal = shallowRef<Component | null>(null)
 const chatMacroGuideOpen = ref(false)
+const ClassFeedbackModal = shallowRef<Component | null>(null)
+const classFeedbackOpen = ref(false)
 const { request: confirmRequest } = useConfirm()
 
 watch(
@@ -226,6 +247,15 @@ async function openChatMacroGuide() {
     ).default
   }
   chatMacroGuideOpen.value = true
+}
+
+async function openClassFeedback() {
+  if (!ClassFeedbackModal.value) {
+    ClassFeedbackModal.value = (
+      await import('@/features/class-feedback/ui/ClassFeedbackModal.vue')
+    ).default
+  }
+  classFeedbackOpen.value = true
 }
 
 const route = useRoute()

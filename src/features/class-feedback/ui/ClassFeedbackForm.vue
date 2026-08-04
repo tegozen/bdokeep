@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { UiButton } from '@/shared/ui'
-import { submitClassFeedback } from '../api/submitFeedback'
+import { submitFeedback } from '../api/submitFeedback'
 
 const MAX_BODY = 2000
 
 const props = defineProps<{
-  classSlug: string
+  classSlug?: string
 }>()
 
 const body = ref('')
@@ -16,6 +16,12 @@ const formError = ref('')
 const sent = ref(false)
 
 const remaining = computed(() => MAX_BODY - body.value.length)
+
+const placeholder = computed(() =>
+  props.classSlug
+    ? 'Ошибка в гайде, идея, вопрос…'
+    : 'Идея по сайту, ошибка, вопрос…',
+)
 
 async function onSubmit() {
   formError.value = ''
@@ -31,8 +37,8 @@ async function onSubmit() {
 
   submitting.value = true
   try {
-    await submitClassFeedback({
-      classSlug: props.classSlug,
+    await submitFeedback({
+      classSlug: props.classSlug || undefined,
       body: text,
       website: honeypot.value || undefined,
     })
@@ -83,9 +89,9 @@ function writeAgain() {
         <textarea
           v-model="body"
           :class="$style.textarea"
-          rows="4"
+          rows="8"
           :maxlength="MAX_BODY"
-          placeholder="Ошибка в гайде, идея, вопрос…"
+          :placeholder="placeholder"
           required
         />
       </label>
@@ -104,13 +110,13 @@ function writeAgain() {
 
 <style module>
 .root {
-  max-width: 36rem;
+  width: 100%;
 }
 
 .form {
   position: relative;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .honey {
@@ -123,7 +129,7 @@ function writeAgain() {
 
 .label {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.45rem;
   font-size: 0.88rem;
   color: var(--color-muted);
 }
@@ -131,14 +137,15 @@ function writeAgain() {
 .textarea {
   box-sizing: border-box;
   width: 100%;
-  min-height: 6rem;
-  resize: vertical;
+  min-height: 14rem;
+  height: 14rem;
+  resize: none;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-ink);
   font: inherit;
   line-height: 1.45;
-  padding: 0.65rem 0.75rem;
+  padding: 0.75rem 0.85rem;
 }
 
 .textarea:focus {

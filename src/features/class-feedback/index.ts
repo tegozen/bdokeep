@@ -1,2 +1,3 @@
 export { default as ClassFeedbackForm } from './ui/ClassFeedbackForm.vue'
-export { submitClassFeedback } from './api/submitFeedback'
+export { default as ClassFeedbackModal } from './ui/ClassFeedbackModal.vue'
+export { submitFeedback, submitClassFeedback } from './api/submitFeedback'
