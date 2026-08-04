@@ -1,5 +1,19 @@
 <template>
   <div v-if="!watchUrl" :class="$style.bad">Некорректная ссылка</div>
+  <div v-else-if="processing" :class="$style.frame">
+    <div :class="$style.pending" role="status">
+      <p :class="$style.pendingTitle">Видео обрабатывается</p>
+      <p :class="$style.pendingHint">Появится после обработки на YouTube</p>
+      <a
+        :href="watchUrl"
+        :class="$style.pendingLink"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Открыть на YouTube
+      </a>
+    </div>
+  </div>
   <div v-else :class="$style.frame">
     <iframe
       v-if="playSrc"
@@ -64,22 +78,27 @@ const props = withDefaults(
     eager?: boolean
     /** Open YouTube in a new tab instead of embedding (class page). */
     external?: boolean
+    /** Awaiting YouTube processing / thumbnail. */
+    processing?: boolean
   }>(),
   {
     title: 'YouTube',
     eager: false,
     external: false,
+    processing: false,
   },
 )
 
-const playing = ref(props.eager && !props.external)
+const playing = ref(props.eager && !props.external && !props.processing)
 
 const watchUrl = computed(() => sanitizeYoutubeUrl(props.url))
-const embed = computed(() => youtubeEmbedUrl(props.url))
-const thumb = computed(() => youtubeThumbProxyUrl(props.url))
+const embed = computed(() => (props.processing ? null : youtubeEmbedUrl(props.url)))
+const thumb = computed(() =>
+  props.processing ? null : youtubeThumbProxyUrl(props.url),
+)
 
 const playSrc = computed(() => {
-  if (props.external) return null
+  if (props.external || props.processing) return null
   const base = embed.value
   if (!base || !playing.value) return null
   if (props.eager) return base
@@ -93,9 +112,9 @@ function play() {
 }
 
 watch(
-  () => [props.url, props.eager, props.external] as const,
-  ([, eager, external]) => {
-    playing.value = Boolean(eager) && !external
+  () => [props.url, props.eager, props.external, props.processing] as const,
+  ([, eager, external, processing]) => {
+    playing.value = Boolean(eager) && !external && !processing
   },
 )
 </script>
@@ -165,6 +184,42 @@ watch(
 .facade:hover .play,
 .facade:focus-visible .play {
   background: #f00;
+}
+
+.pending {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 40%, #1a1a22 0%, #0a0a0a 70%);
+}
+
+.pendingTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-text, #e8e8ec);
+}
+
+.pendingHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-muted, #9a9aa3);
+}
+
+.pendingLink {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--color-gold);
+  text-decoration: none;
+}
+
+.pendingLink:hover {
+  text-decoration: underline;
 }
 
 .bad {

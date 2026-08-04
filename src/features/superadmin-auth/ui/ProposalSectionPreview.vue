@@ -350,6 +350,7 @@ const videosFor = computed((): ClassVideo[] => {
     youtube_url: v.youtube_url,
     sort_order: i,
     mode,
+    status: v.status === 'processing' ? 'processing' : 'ready',
   }))
 })
 

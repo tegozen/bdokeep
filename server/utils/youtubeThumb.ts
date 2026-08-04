@@ -44,6 +44,10 @@ export async function resolveYoutubeThumb(id: string): Promise<{
 const thumbCache = new Map<string, { body: Buffer; contentType: string } | null>()
 const THUMB_CACHE_MAX = 500
 
+export function clearYoutubeThumbCache(id: string): void {
+  thumbCache.delete(id)
+}
+
 async function fetchFirstYoutubeThumb(
   id: string,
 ): Promise<{ body: Buffer; contentType: string } | null> {

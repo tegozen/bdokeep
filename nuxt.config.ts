@@ -67,6 +67,12 @@ export default defineNuxtConfig({
     alias: {
       '@domain': `${rootDir}/domain`,
     },
+    experimental: {
+      tasks: true,
+    },
+    scheduledTasks: {
+      '0 * * * *': ['youtube:poll-ready'],
+    },
   },
 
   pwa: {

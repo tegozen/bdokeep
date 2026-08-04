@@ -36,6 +36,11 @@ export const MAX_VIDEOS = 3
 export const MAX_MORPHS_ALL_PRESETS = 6 * 8
 export const MAX_AUTHOR_LEN = 80
 
+/** System author for automated video TTL cleanup proposals. */
+export const CRON_AUTHOR_LABEL = 'cron'
+
+export const VIDEO_PROCESSING_TTL_MS = 48 * 60 * 60 * 1000
+
 export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub'] as const
 export type CrystalPresetId = (typeof CRYSTAL_PRESET_IDS)[number]
 

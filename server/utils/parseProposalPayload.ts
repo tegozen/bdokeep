@@ -47,6 +47,8 @@ export type ParseProposalContext = {
    * instead of failing the whole proposal. Structural errors still 400.
    */
   skipUnknownCatalog?: boolean
+  /** Cron video TTL cleanup may clear all slots for a mode. */
+  allowEmptyVideos?: boolean
 }
 
 export type ParsedProposalPayload = {
@@ -598,7 +600,9 @@ export async function parseAndValidatePayload(
   }
 
   if (isVideosSection(section)) {
-    const verifiedVideos = await parseVideosPayload(body.videos)
+    const verifiedVideos = await parseVideosPayload(body.videos, {
+      allowEmpty: Boolean(ctx.allowEmptyVideos),
+    })
     return { payload: { videos: verifiedVideos }, verifiedVideos }
   }
 

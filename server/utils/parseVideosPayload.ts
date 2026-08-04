@@ -1,15 +1,30 @@
 import { MAX_VIDEOS, sanitizeYoutubeUrl, youtubeVideoId } from '@domain'
 import { youtubeVideoHasThumb } from './youtubeThumb'
 
+export type VideoReadyStatus = 'ready' | 'processing'
+
 export type ParsedGuideVideo = {
   title: string
   youtube_url: string
   sort_order: number
+  status: VideoReadyStatus
 }
 
-/** Validate shape + that each video has a real YouTube thumbnail (exists). */
-export async function parseVideosPayload(raw: unknown): Promise<ParsedGuideVideo[]> {
-  if (!Array.isArray(raw) || raw.length === 0) {
+export type ParseVideosOptions = {
+  /** Cron cleanup may clear all slots for a mode. Public POST must not. */
+  allowEmpty?: boolean
+}
+
+/** Validate shape; missing YouTube thumb → status processing (not an error). */
+export async function parseVideosPayload(
+  raw: unknown,
+  opts?: ParseVideosOptions,
+): Promise<ParsedGuideVideo[]> {
+  if (!Array.isArray(raw)) {
+    throw createError({ statusCode: 400, statusMessage: 'Добавьте хотя бы одно видео' })
+  }
+  if (raw.length === 0) {
+    if (opts?.allowEmpty) return []
     throw createError({ statusCode: 400, statusMessage: 'Добавьте хотя бы одно видео' })
   }
   if (raw.length > MAX_VIDEOS) {
@@ -22,6 +37,7 @@ export async function parseVideosPayload(raw: unknown): Promise<ParsedGuideVideo
       title?: unknown
       youtube_url?: unknown
       sort_order?: unknown
+      status?: unknown
     }
     const urlRaw = String(entry?.youtube_url || '').trim()
     const safe = sanitizeYoutubeUrl(urlRaw)
@@ -33,12 +49,9 @@ export async function parseVideosPayload(raw: unknown): Promise<ParsedGuideVideo
         statusMessage: `Видео ${slotNo}: некорректная ссылка на YouTube`,
       })
     }
-    if (!(await youtubeVideoHasThumb(id))) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Видео ${slotNo}: недоступно или не существует на YouTube`,
-      })
-    }
+    const hasThumb = await youtubeVideoHasThumb(id)
+    // Prefer live probe; payload status is ignored so approve re-checks ytimg.
+    const status: VideoReadyStatus = hasThumb ? 'ready' : 'processing'
     const titleRaw = String(entry?.title || '').trim()
     const defaultTitle = `Видео ${slotNo}`
     const title =
@@ -49,6 +62,7 @@ export async function parseVideosPayload(raw: unknown): Promise<ParsedGuideVideo
       title,
       youtube_url: safe,
       sort_order: i,
+      status,
     })
   }
 

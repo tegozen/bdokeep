@@ -12,6 +12,7 @@
         <YoutubeEmbed
           :url="safeUrl(video.youtube_url)!"
           :title="labelFor(video, idx)"
+          :processing="isProcessing(video)"
           external
         />
         <a
@@ -52,6 +53,10 @@ const slots = computed((): Array<ClassVideo | null> => {
 
 function safeUrl(url: string) {
   return sanitizeYoutubeUrl(url)
+}
+
+function isProcessing(video: ClassVideo) {
+  return video.status === 'processing'
 }
 
 /** Default "Видео N" titles follow display order (empty form slots are compacted). */

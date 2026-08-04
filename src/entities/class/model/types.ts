@@ -38,6 +38,8 @@ export type ClassVideo = {
   youtube_url: string
   sort_order: number
   mode: 'awakening' | 'succession' | string
+  /** Missing / ready → playable; processing → awaiting YouTube thumb. */
+  status?: 'ready' | 'processing' | string | null
 }
 
 export type Skill = {

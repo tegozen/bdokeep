@@ -27,7 +27,7 @@ export type ProposalPreviewPayload = {
   relics?: Array<{ preset?: string; slot: string; item_id: string }>
   lightstones?: Array<{ preset?: string; slot: string; item_id: string }>
   hardening?: Array<{ preset?: string; slot: string; item_id: string }>
-  videos?: Array<{ title?: string; youtube_url: string }>
+  videos?: Array<{ title?: string; youtube_url: string; status?: string }>
   morphs?: Array<{
     preset?: string
     slot_level: number
