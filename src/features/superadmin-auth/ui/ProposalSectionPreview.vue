@@ -457,9 +457,9 @@ function hardeningLabel(name: string) {
 }
 
 .picked {
-  height: 0;
-  min-height: 100%;
   min-width: 0;
+  min-height: 0;
+  max-height: 22rem;
   overflow: auto;
   border: 1px solid var(--color-border);
   background: var(--color-bg-panel);

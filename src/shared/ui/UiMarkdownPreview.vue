@@ -74,10 +74,14 @@ const html = computed(() => {
 
 <style module>
 .preview {
+  min-width: 0;
+  max-width: 100%;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.65;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .preview :global(a) {

@@ -686,7 +686,14 @@ const lightstoneSetLabel = computed(() =>
 }
 
 .summary {
+  min-width: 0;
+  max-width: 100%;
   min-height: 1.5rem;
+  /* Cap so long siege-role markdown scrolls inside the cell, not the page. */
+  max-height: min(28rem, 60vh);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .fade {

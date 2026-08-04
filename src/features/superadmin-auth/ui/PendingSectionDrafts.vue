@@ -397,9 +397,13 @@ async function onReject(id: string) {
 }
 
 .text {
+  max-width: 100%;
+  min-width: 0;
   font-size: 0.92rem;
   line-height: 1.55;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .buffList {

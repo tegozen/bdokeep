@@ -519,6 +519,8 @@ onMounted(async () => {
 }
 
 .card {
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   background: var(--color-bg-panel);
   padding: 1rem;
@@ -555,13 +557,23 @@ onMounted(async () => {
 
 .text {
   margin: 0;
+  max-width: 100%;
+  min-width: 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font: inherit;
   color: var(--color-ink);
 }
 
 .preview {
   margin-bottom: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  max-height: min(28rem, 60vh);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .buffList {
