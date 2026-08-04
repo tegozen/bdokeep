@@ -26,7 +26,7 @@
       :rows="12"
       :placeholder="placeholder"
       required
-      maxlength="8000"
+      :maxlength="MAX_TEXT_LEN"
     />
     <template #fallback>
       <textarea
@@ -35,7 +35,7 @@
         :rows="12"
         :placeholder="placeholder"
         required
-        maxlength="8000"
+        :maxlength="MAX_TEXT_LEN"
       />
     </template>
   </ClientOnly>
@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import { onMounted, shallowRef, type Component } from 'vue'
 import type { Footers, ToolbarNames } from 'md-editor-v3'
+import { MAX_TEXT_LEN } from '@domain'
 
 const text = defineModel<string>({ default: '' })
 
