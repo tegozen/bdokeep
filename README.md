@@ -71,6 +71,7 @@
 - Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
 - Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
 - CSP без CDN для JS/CSS и иконок каталога (см. `AGENTS.md`)
+- `.npmrc`: `min-release-age=7` — не ставить версии пакетов моложе 7 дней (npm ≥ 11.10)
 - За reverse proxy — `TRUST_PROXY=1` для корректного rate limit по `X-Forwarded-For`
 
 ## Структура (кратко)
