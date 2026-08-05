@@ -135,7 +135,7 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 - схема proposals, пресеты, морфы, RLS
 - обновления каталогов (030+)
 
-Картинки классов: `public/classes/<slug>/{portrait.png,icon.svg}` — © Pearl Abyss (см. `public/classes/README.md`).
+Картинки классов: `public/classes/<slug>/{portrait-card-360.webp,icon.svg}` — © Pearl Abyss (см. `public/classes/README.md`).
 Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При `up` migrate сам переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
 
 На чистом сервере достаточно `docker compose up -d --build`: SQL-сиды и картинки уже в репо.

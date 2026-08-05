@@ -28,7 +28,7 @@
         <div :class="$style.media">
           <img
             v-if="klass.portrait_url"
-            :src="cardPortraitUrl(klass.portrait_url)"
+            :src="klass.portrait_url"
             :alt="klass.name_ru"
             width="360"
             height="480"
@@ -74,7 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import { cardPortraitUrl } from '@/entities/class/lib/cardPortrait'
 import type { BdoClass } from '@/entities/class/model/types'
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'

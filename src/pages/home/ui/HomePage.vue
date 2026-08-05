@@ -13,7 +13,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { fetchPublishedClasses } from '@/entities/class/api/classApi'
-import { cardPortraitUrl } from '@/entities/class/lib/cardPortrait'
 import type { BdoClass } from '@/entities/class/model/types'
 import { useHomeClassFilters, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { ClassGrid } from '@/widgets/class-grid'
@@ -72,7 +71,7 @@ useHead(() => {
         key: 'lcp-portrait',
         rel: 'preload',
         as: 'image',
-        href: cardPortraitUrl(portrait),
+        href: portrait,
         type: 'image/webp',
         tagPriority: -200,
         fetchpriority: 'high',
