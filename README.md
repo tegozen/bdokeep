@@ -8,7 +8,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 Исходники: [GitHub](https://github.com/tegozen/bdokeep) · [GitLab](https://gitlab.com/tegozen/bdokeep)
 
-Стек: **Nuxt 4.5+** (FSD) + Postgres. API — Nitro. Один `docker-compose.yml`. Node ≥22.
+Стек: **Nuxt 4.5+** (FSD, host-shell) + domain microservices + Module Federation remotes + Postgres. Один `docker-compose.yml`, наружу один `HOST_PORT`. Node ≥22.
 
 ## Фишки
 
@@ -70,11 +70,19 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Установка как приложение (`@vite-pwa/nuxt`); баннер при новой версии SW
 - Шрифты self-hosted (`@fontsource/cinzel`, `@fontsource/source-sans-3`)
 
+### Архитектура (MFE + микросервисы)
+
+- **Host-shell** — страницы `/`, `/class/[slug]`, `/admin/proposals`, `/admin/feedback` и layout
+- **Микрофронты** (`apps/mf-*`) — исходники домена + сборка `remoteEntry.js` (`Live` + `Draft` + `Propose`); shell грузит UI только через `/mf/<name>/assets/remoteEntry.js`
+- **Микросервисы** (`svc-*`) — своя зона данных/API на домен; `guide_proposals` — оркестратор
+- **Internal nginx (`gateway`)** — единственный publish `HOST_PORT`; внешний reverse proxy не меняется
+- Workspace: `@bdokeep/mf-*`, `@bdokeep/mf-shared` (domain + board helpers)
+
 ### Ops / безопасность
 
-- Три сервиса: `web` (сайт + API), `migrate` (авто-SQL), `db` (Postgres)
+- Gateway + host-shell + domain services + migrate + db (см. таблицу «Сервисы»)
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
-- Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
+- Postgres без publish портов (только Docker-сеть `db:5432`); наружу — `HOST_PORT` через gateway
 - Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
 - CSRF: same-origin на `POST /api/proposals` и `POST /api/feedback` (гости и админ)
 - CSP без CDN для JS/CSS и иконок каталога (см. `AGENTS.md`)
@@ -86,20 +94,29 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 | Путь | Назначение |
 |------|------------|
-| `src/` | FSD: `app` → `pages` → `widgets` → `features` → `entities` → `shared` |
-| `domain/` | Общие лимиты/типы proposals, YouTube, комбо (клиент + сервер) |
-| `server/` | Nitro API + utils (db, auth, applyProposal, каталоги) |
-| `db/migrations/` | Схема и сиды (накат сервисом `migrate`) |
-| `public/classes/`, `public/codex/` | Same-origin арт классов и иконки каталога |
-| `LICENSE`, `NOTICE`, `THIRD_PARTY.md` | MIT на код; игровой IP PA исключён; атрибуция deps |
+| `src/` | Host-shell: pages, layouts, shared chrome, propose kit |
+| `apps/mf-shared` | MF tooling + domain contract + board helpers (не UI) |
+| `apps/mf-*` | Доменный MFE: исходники + Module Federation remote (`Live`/`Draft`) |
+| `apps/svc-*` | Domain microservices |
+| `server/modules/` | Apply/read boundaries по секциям |
+| `server/` | Host Nitro API (strangler) |
+| `nginx/` | Internal gateway |
+| `db/migrations/` | Схема и сиды |
+| `public/classes/`, `public/codex/` | Same-origin арт |
 
 ## Сервисы
 
 | Сервис | Зачем | Порт |
 |--------|--------|------|
-| `web` | сайт Nuxt + Nitro API | `HOST_PORT` (3000) |
-| `migrate` | накат `db/migrations` при up | — |
-| `db` | Postgres | нет (внутренняя сеть) |
+| `gateway` | internal nginx, единственный publish | `HOST_PORT` (3000) |
+| `web` | host-shell Nuxt | внутренний 3000 |
+| `svc-youtube` | thumb proxy | 3011 |
+| `svc-feedback` | ОС API | 3012 |
+| `svc-classes` / `svc-proposals` / `svc-auth` | platform | 3013–3015 |
+| `svc-crystals`…`svc-summary` | section reads | 3020–3027 |
+| `mf-*` | federation remotes | 80 внутри |
+| `migrate` | авто-SQL | — |
+| `db` | Postgres (schema-per-service) | нет |
 
 ## Быстрый старт
 
@@ -108,6 +125,7 @@ cp .env.example .env
 # Заполни POSTGRES_PASSWORD, BDOKEEP_APP_PASSWORD, DATABASE_URL,
 # ADMIN_PASSWORD, ADMIN_SESSION_SECRET (openssl rand -base64 48)
 # ADMIN_PASSWORD в production не может быть changeme / password / admin / 123456
+npm run build:mf
 docker compose up -d --build
 ```
 
@@ -138,12 +156,12 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 Картинки классов: `public/classes/<slug>/{portrait-card-360.webp,icon.svg}` — © Pearl Abyss (см. `public/classes/README.md`).
 Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При `up` migrate сам переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
 
-На чистом сервере достаточно `docker compose up -d --build`: SQL-сиды и картинки уже в репо.
+На чистом сервере: `npm ci && npm run build:mf && docker compose up -d --build` (SQL-сиды и картинки уже в репо; remotes собираются на хосте).
 
 
 ## Nginx (внешний)
 
-Проксируй только сайт (`HOST_PORT`). Postgres наружу не публикуй.
+Проксируй только **`HOST_PORT`** (internal `gateway`). Postgres и остальные сервисы наружу не публикуй. Конфиг внешнего nginx **не меняется** после выноса MFE/микросервисов.
 
 За reverse proxy выставь `TRUST_PROXY=1` в `.env`, иначе rate limit смотрит на TCP peer, а не на `X-Forwarded-For`.
 

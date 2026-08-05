@@ -4,7 +4,7 @@ import {
   isPlaceholderVideoTitle,
   sanitizeYoutubeUrl,
   youtubeVideoId,
-} from '@domain'
+} from '@bdokeep/domain'
 import { youtubeVideoHasThumb } from './youtubeThumb'
 import { fetchYoutubeTitle } from './youtubeTitle'
 

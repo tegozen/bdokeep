@@ -1,6 +1,6 @@
 import type { ClassGuideBundle } from '@/entities/class'
-import { CRYSTAL_PRESET_IDS, type CrystalPresetId } from './crystalPresets'
-import { isMorphPresetId, morphGuidePreset } from './morphPresets'
+import { GUIDE_PRESET_IDS, type CrystalPresetId } from './guidePresets'
+import { isMorphPresetId, morphGuidePreset } from '@bdokeep/mf-shared/boards/morphs'
 
 export type PresetFillMap = Record<CrystalPresetId, boolean>
 
@@ -13,7 +13,7 @@ export function computePresetFill(bundle: ClassGuideBundle | null | undefined): 
   const out = emptyPresetFill()
   if (!bundle) return out
 
-  for (const id of CRYSTAL_PRESET_IDS) {
+  for (const id of GUIDE_PRESET_IDS) {
     const hasCrystal = bundle.crystals.some(
       (row) => (row.preset || 't1') === id && Boolean(row.items),
     )

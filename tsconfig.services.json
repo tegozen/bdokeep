@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@domain": [
+        "./apps/mf-shared/domain/index.ts"
+      ],
+      "@bdokeep/domain": [
+        "./apps/mf-shared/domain/index.ts"
+      ],
+      "@bdokeep/mf-shared/*": [
+        "./apps/mf-shared/*"
+      ]
+    },
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": [
+    "apps/**/*",
+    "server/**/*",
+    "src/**/*"
+  ]
+}

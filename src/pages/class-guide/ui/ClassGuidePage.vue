@@ -38,7 +38,7 @@
             <template #actions>
               <ProposeLazy
                 :key="summarySection"
-                :loader="() => import('@/features/propose-guide/ui/ProposeSummaryForm.vue')"
+                :loader="loadProposeSummary"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   section: summarySection,
@@ -47,10 +47,9 @@
               />
             </template>
             <div v-if="activeSummary" :class="[$style.summary, $style.fade]">
-              <UiMarkdownPreview
-                id="class-summary-preview"
-                :model-value="activeSummary"
-              />
+              <ClientOnly>
+                <SummaryLive :text="activeSummary" />
+              </ClientOnly>
             </div>
             <ShowEmptyGuide v-else />
           </GuideSection>
@@ -70,7 +69,7 @@
             <template #actions>
               <ProposeLazy
                 :key="comboSection"
-                :loader="() => import('@/features/propose-guide/ui/ProposeComboForm.vue')"
+                :loader="loadProposeCombo"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   section: comboSection,
@@ -83,22 +82,24 @@
               v-if="activeCombos.length"
               :class="[$style.comboBlock, $style.fade]"
             >
-              <div
-                v-for="(combo, idx) in activeCombos"
-                :key="combo.id"
-                :class="$style.comboItem"
-              >
-                <p v-if="combo.notes" :class="$style.comboNotes">{{ combo.notes }}</p>
-                <ComboChain
-                  :steps="combo.steps"
-                  :label="
-                    combo.notes ||
-                    (specMode === 'succession'
-                      ? 'Комба наследия'
-                      : 'Комба пробуждения')
-                  "
-                />
-              </div>
+              <ClientOnly>
+                <div
+                  v-for="(combo, idx) in activeCombos"
+                  :key="combo.id"
+                  :class="$style.comboItem"
+                >
+                  <p v-if="combo.notes" :class="$style.comboNotes">{{ combo.notes }}</p>
+                  <ComboChain
+                    :steps="combo.steps"
+                    :label="
+                      combo.notes ||
+                      (specMode === 'succession'
+                        ? 'Комба наследия'
+                        : 'Комба пробуждения')
+                    "
+                  />
+                </div>
+              </ClientOnly>
             </div>
             <ShowEmptyGuide v-else />
           </GuideSection>
@@ -117,7 +118,7 @@
             </template>
             <template #actions>
               <ProposeLazy
-                :loader="() => import('@/features/propose-guide/ui/ProposeMorphForm.vue')"
+                :loader="loadProposeMorph"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   initialMorphs: bundle.morphs,
@@ -125,7 +126,9 @@
               />
             </template>
             <div :class="[$style.morphStage, $style.fade]">
-              <MorphBoard :filled="morphFilled" />
+              <ClientOnly>
+                <MorphBoard :filled="morphFilled" />
+              </ClientOnly>
             </div>
           </GuideSection>
         </div>
@@ -172,7 +175,7 @@
             </template>
             <template #actions>
               <ProposeLazy
-                :loader="() => import('@/features/propose-guide/ui/ProposeCrystalForm.vue')"
+                :loader="loadProposeCrystal"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   initialCrystals: bundle.crystals,
@@ -205,7 +208,9 @@
                 </ul>
               </div>
               <div :class="$style.crystalStage">
-                <CrystalBoard :filled="crystalFilled" />
+                <ClientOnly>
+                  <CrystalBoard :filled="crystalFilled" />
+                </ClientOnly>
               </div>
             </div>
           </GuideSection>
@@ -224,7 +229,7 @@
             </template>
             <template #actions>
               <ProposeLazy
-                :loader="() => import('@/features/propose-guide/ui/ProposeRelicForm.vue')"
+                :loader="loadProposeRelic"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   initialRelics: bundle.relics,
@@ -233,10 +238,12 @@
               />
             </template>
             <div :class="[$style.relicStage, $style.fade]">
-              <RelicBoard
-                :filled="relicFilled"
-                :lightstone-set-name="lightstoneSetLabel"
-              />
+              <ClientOnly>
+                <RelicBoard
+                  :filled="relicFilled"
+                  :lightstone-set-name="lightstoneSetLabel"
+                />
+              </ClientOnly>
             </div>
           </GuideSection>
         </div>
@@ -254,7 +261,7 @@
             </template>
             <template #actions>
               <ProposeLazy
-                :loader="() => import('@/features/propose-guide/ui/ProposeHardeningForm.vue')"
+                :loader="loadProposeHardening"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   initialHardening: bundle.hardening,
@@ -262,7 +269,9 @@
               />
             </template>
             <div :class="[$style.hardeningStage, $style.fade]">
-              <HardeningBoard list-only :filled="hardeningFilled" />
+              <ClientOnly>
+                <HardeningBoard list-only :filled="hardeningFilled" />
+              </ClientOnly>
             </div>
           </GuideSection>
         </div>
@@ -281,7 +290,7 @@
             </template>
             <template #actions>
               <ProposeLazy
-                :loader="() => import('@/features/propose-guide/ui/ProposeBuffsForm.vue')"
+                :loader="loadProposeBuffs"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   initialBuffs: bundle.buffs,
@@ -289,36 +298,14 @@
               />
             </template>
             <div :class="$style.scrollCard">
-              <ul
-                v-if="activeBuffs.length"
-                :class="[$style.buffList, $style.fade]"
-              >
-                <li
-                  v-for="row in activeBuffs"
-                  :key="row.id"
-                  :class="$style.buffItem"
-                >
-                  <img
-                    v-if="row.buffs?.icon_url"
-                    :src="codexIconSrc(row.buffs.icon_url) || undefined"
-                    alt=""
-                    :class="$style.buffIcon"
-                    loading="lazy"
-                  />
-                  <div :class="$style.buffBody">
-                    <strong>{{
-                      row.buffs?.name_ru || row.slot || "Слот"
-                    }}</strong>
-                    <span v-if="row.group_name" :class="$style.muted">
-                      · {{ row.group_name }}</span
-                    >
-                    <p v-if="row.notes" :class="$style.notes">
-                      {{ row.notes }}
-                    </p>
-                  </div>
-                </li>
-              </ul>
-              <p v-else :class="[$style.buffEmpty, $style.fade]">Пока пусто</p>
+              <ClientOnly>
+                <BuffsLive
+                  v-if="activeBuffs.length"
+                  :buffs="activeBuffs"
+                  :class="[$style.buffList, $style.fade]"
+                />
+                <p v-else :class="[$style.buffEmpty, $style.fade]">Пока пусто</p>
+              </ClientOnly>
             </div>
           </GuideSection>
         </div>
@@ -378,7 +365,7 @@
             <template #actions>
               <ProposeLazy
                 :key="videosSection"
-                :loader="() => import('@/features/propose-guide/ui/ProposeVideosForm.vue')"
+                :loader="loadProposeVideos"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   section: videosSection,
@@ -386,7 +373,9 @@
                 }"
               />
             </template>
-            <VideoList :videos="activeVideos" />
+            <ClientOnly>
+              <VideoList :videos="activeVideos" />
+            </ClientOnly>
           </GuideSection>
         </div>
 
@@ -423,6 +412,7 @@ import {
 } from "@/features/superadmin-auth/api/pendingProposals";
 import PendingSectionDrafts from "@/features/superadmin-auth/ui/PendingSectionDrafts.vue";
 import { ShowEmptyGuide } from "@/features/show-empty-guide";
+import { GuideSection } from "@/widgets/guide-section";
 
 import {
   codexIconSrc,
@@ -441,16 +431,27 @@ import {
   useSuperadmin,
   type GuideUiSection,
 } from "@/shared/lib";
-import UiMarkdownPreview from "@/shared/ui/UiMarkdownPreview.vue";
 import UiSkeleton from "@/shared/ui/UiSkeleton.vue";
-import { ComboChain } from "@/widgets/combo-chain";
-import { CrystalBoard } from "@/widgets/crystal-board";
-import { GuideSection } from "@/widgets/guide-section";
-import { HardeningBoard } from "@/widgets/hardening-board";
-import { MorphBoard } from "@/widgets/morph-board";
-import { RelicBoard } from "@/widgets/relic-board";
-import { VideoList } from "@/widgets/video-list";
+import { mfAsyncComponent, mfProposeLoader } from "@/shared/lib/loadMfRemote";
 import { useGuideBoardFills } from "../lib/useGuideBoardFills";
+
+const SummaryLive = mfAsyncComponent("summary", "./Live");
+const ComboChain = mfAsyncComponent("combo", "./Live");
+const MorphBoard = mfAsyncComponent("morphs", "./Live");
+const CrystalBoard = mfAsyncComponent("crystals", "./Live");
+const RelicBoard = mfAsyncComponent("relics", "./Live");
+const HardeningBoard = mfAsyncComponent("hardening", "./Live");
+const BuffsLive = mfAsyncComponent("buffs", "./Live");
+const VideoList = mfAsyncComponent("videos", "./Live");
+
+const loadProposeSummary = mfProposeLoader("summary");
+const loadProposeCombo = mfProposeLoader("combo");
+const loadProposeMorph = mfProposeLoader("morphs");
+const loadProposeCrystal = mfProposeLoader("crystals");
+const loadProposeRelic = mfProposeLoader("relics");
+const loadProposeHardening = mfProposeLoader("hardening");
+const loadProposeBuffs = mfProposeLoader("buffs");
+const loadProposeVideos = mfProposeLoader("videos");
 
 const props = defineProps<{
   bundle: ClassGuideBundle | null;

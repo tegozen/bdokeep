@@ -41,14 +41,22 @@ export default defineNuxtConfig({
 
   alias: {
     '@': `${import.meta.dirname}/src`,
-    '@domain': `${rootDir}/domain`,
+    '@domain': `${rootDir}/apps/mf-shared/domain`,
+    '@bdokeep/domain': `${rootDir}/apps/mf-shared/domain`,
+    '@bdokeep/mf-shared': `${rootDir}/apps/mf-shared`,
   },
-
 
   css: ['@/app/styles/main.css'],
 
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: [],
+    },
+  },
+
+  build: {
+    transpile: ['@bdokeep/mf-shared'],
   },
 
   runtimeConfig: {
@@ -65,7 +73,8 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'node-server',
     alias: {
-      '@domain': `${rootDir}/domain`,
+      '@domain': `${rootDir}/apps/mf-shared/domain`,
+      '@bdokeep/domain': `${rootDir}/apps/mf-shared/domain`,
     },
     experimental: {
       tasks: true,

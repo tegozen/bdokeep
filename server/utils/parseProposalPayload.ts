@@ -33,7 +33,7 @@ import {
   isVideosSection,
   finalizeReplacedPresets,
   type ProposalSection,
-} from '@domain'
+} from '@bdokeep/domain'
 import type { ParsedGuideVideo, ParseVideosOptions } from './parseVideosPayload'
 import { sanitizeMarkdown } from './sanitizeMarkdown'
 

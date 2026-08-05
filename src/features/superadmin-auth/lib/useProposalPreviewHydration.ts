@@ -8,10 +8,12 @@ import {
   type MorphPresetId,
   type MorphSlotLevel,
 } from '@/shared/lib'
-import type { CrystalFill } from '@/widgets/crystal-board'
-import type { HardeningFill } from '@/widgets/hardening-board'
-import type { MorphSlotFill } from '@/widgets/morph-board'
-import type { RelicFill } from '@/widgets/relic-board'
+import type {
+  CrystalFill,
+  HardeningFill,
+  MorphSlotFill,
+  RelicFill,
+} from '@bdokeep/mf-shared/boards/fills'
 
 export type ProposalPreviewPayload = {
   text?: string

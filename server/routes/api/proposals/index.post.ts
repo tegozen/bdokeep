@@ -2,7 +2,7 @@ import {
   MAX_AUTHOR_LEN,
   PROPOSAL_SECTIONS,
   type ProposalSection,
-} from '@domain'
+} from '@bdokeep/domain'
 
 type Body = {
   class_slug?: string

@@ -159,4 +159,4 @@ export type ClassGuideBundle = {
   morphs: GuideMorphRow[]
 }
 
-export type { ProposalSection } from '@domain'
+export type { ProposalSection } from '@bdokeep/domain'

@@ -1,0 +1,10 @@
+{
+  "name": "@bdokeep/svc-feedback",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts",
+    "dev": "tsx watch server.ts"
+  }
+}

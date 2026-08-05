@@ -6,4 +6,4 @@ export {
   youtubeThumbProxyUrl,
   isYoutubeVideoId,
   isPlaceholderVideoTitle,
-} from '@domain'
+} from '@bdokeep/domain'

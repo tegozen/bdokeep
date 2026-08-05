@@ -173,12 +173,14 @@ import {
   type CrystalPresetId,
   type GuideSpecMode,
 } from '@/shared/lib'
+import { mfAsyncComponent } from '@/shared/lib/loadMfRemote'
 import { UiMarkdownPreview, UiPresetTabs } from '@/shared/ui'
-import { ComboChain } from '@/widgets/combo-chain'
-import { CrystalBoard } from '@/widgets/crystal-board'
-import { MorphBoard } from '@/widgets/morph-board'
-import { RelicBoard } from '@/widgets/relic-board'
-import { VideoList } from '@/widgets/video-list'
+
+const CrystalBoard = mfAsyncComponent('crystals', './Live')
+const MorphBoard = mfAsyncComponent('morphs', './Live')
+const RelicBoard = mfAsyncComponent('relics', './Live')
+const ComboChain = mfAsyncComponent('combo', './Live')
+const VideoList = mfAsyncComponent('videos', './Live')
 
 const props = withDefaults(
   defineProps<{

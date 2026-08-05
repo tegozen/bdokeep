@@ -61,21 +61,20 @@ export {
   type CrystalSlotDef,
   type CrystalSlotKind,
   type CrystalTabId,
-} from './crystalSlots'
+} from '@bdokeep/mf-shared/boards/crystals'
 export {
-  CRYSTAL_PRESETS,
-  CRYSTAL_PRESET_IDS,
-  MAX_CRYSTALS_ALL_PRESETS,
+  GUIDE_PRESETS,
+  GUIDE_PRESET_IDS,
   isCrystalPresetId,
   type CrystalPresetId,
-} from './crystalPresets'
-/** Shared guide presets (crystals + relics). */
+} from './guidePresets'
 export {
-  CRYSTAL_PRESETS as GUIDE_PRESETS,
-  CRYSTAL_PRESET_IDS as GUIDE_PRESET_IDS,
+  GUIDE_PRESETS as CRYSTAL_PRESETS,
+  GUIDE_PRESET_IDS as CRYSTAL_PRESET_IDS,
   isCrystalPresetId as isGuidePresetId,
   type CrystalPresetId as GuidePresetId,
-} from './crystalPresets'
+} from './guidePresets'
+export { MAX_CRYSTALS_ALL_PRESETS } from '@bdokeep/domain'
 export {
   LIGHTSTONE_SLOT_IDS,
   RELIC_BOARD_PANELS,
@@ -88,12 +87,12 @@ export {
   type RelicBoardSlotDef,
   type RelicBoardSlotKind,
   type RelicSlotId,
-} from './relicSlots'
+} from '@bdokeep/mf-shared/boards/relics'
 export {
   formatLightstoneSetLabel,
   matchLightstoneSet,
   type MatchedLightstoneSet,
-} from './matchLightstoneSet'
+} from '@bdokeep/mf-shared/boards/relics'
 export {
   HARDENING_SLOT_IDS,
   HARDENING_SLOTS,
@@ -102,7 +101,7 @@ export {
   isHardeningSlotId,
   type HardeningSlotDef,
   type HardeningSlotId,
-} from './hardeningSlots'
+} from '@bdokeep/mf-shared/boards/hardening'
 export {
   MAX_MORPHS_ALL_PRESETS,
   MORPH_PRESETS,
@@ -121,4 +120,10 @@ export {
   type MorphEffectIndex,
   type MorphPresetId,
   type MorphSlotLevel,
-} from './morphPresets'
+} from '@bdokeep/mf-shared/boards/morphs'
+export type {
+  CrystalFill,
+  HardeningFill,
+  MorphSlotFill,
+  RelicFill,
+} from '@bdokeep/mf-shared/boards/fills'

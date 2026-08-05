@@ -47,4 +47,4 @@ export {
   type ProposalSection,
   type CrystalPresetId,
   type MorphPresetId,
-} from '@domain'
+} from '@bdokeep/domain'

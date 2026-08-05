@@ -127,7 +127,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { sectionLabel as domainSectionLabel } from '@domain'
+import { sectionLabel as domainSectionLabel } from '@bdokeep/domain'
 import { ProposalSectionPreview, ReviewSummaryModal } from '@/features/superadmin-auth'
 import { useConfirm, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'

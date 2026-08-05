@@ -1,4 +1,4 @@
-import { MAX_TEXT_LEN, UUID_RE, isSummarySection, type ProposalSection } from '@domain'
+import { MAX_TEXT_LEN, UUID_RE, isSummarySection, type ProposalSection } from '@bdokeep/domain'
 
 export default defineEventHandler(async (event) => {
   requireAdmin(event)

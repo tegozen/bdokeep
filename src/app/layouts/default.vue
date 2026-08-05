@@ -242,18 +242,16 @@ watch(
 
 async function openChatMacroGuide() {
   if (!ChatMacroGuideModal.value) {
-    ChatMacroGuideModal.value = (
-      await import('@/features/chat-macro-guide/ui/ChatMacroGuideModal.vue')
-    ).default
+    const { loadMfModule } = await import('@/shared/lib/loadMfRemote')
+    ChatMacroGuideModal.value = await loadMfModule('chat-macro', './Live')
   }
   chatMacroGuideOpen.value = true
 }
 
 async function openClassFeedback() {
   if (!ClassFeedbackModal.value) {
-    ClassFeedbackModal.value = (
-      await import('@/features/class-feedback/ui/ClassFeedbackModal.vue')
-    ).default
+    const { loadMfModule } = await import('@/shared/lib/loadMfRemote')
+    ClassFeedbackModal.value = await loadMfModule('feedback', './Draft')
   }
   classFeedbackOpen.value = true
 }

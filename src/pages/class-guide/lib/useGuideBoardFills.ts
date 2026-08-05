@@ -6,10 +6,12 @@ import {
   type CrystalPresetId,
   type MorphPresetId,
 } from '@/shared/lib'
-import type { CrystalFill } from '@/widgets/crystal-board'
-import type { MorphSlotFill } from '@/widgets/morph-board'
-import type { HardeningFill } from '@/widgets/hardening-board'
-import type { RelicFill } from '@/widgets/relic-board'
+import type {
+  CrystalFill,
+  HardeningFill,
+  MorphSlotFill,
+  RelicFill,
+} from '@bdokeep/mf-shared/boards/fills'
 
 /** Map live guide bundle rows → board `filled` props for the active preset/mode. */
 export function useGuideBoardFills(

@@ -1,24 +1,27 @@
 import { createError } from 'h3'
 import {
   PROPOSAL_SECTIONS,
-  comboModeFromSection,
   isBuffsSection,
   isComboSection,
-  isCrystalPresetId,
   isCrystalsSection,
   isHardeningSection,
-  isMorphPresetId,
   isMorphsSection,
   isRelicsSection,
   isSummarySection,
   isVideosSection,
   finalizeReplacedPresets,
-  summaryModeFromSection,
   uiSectionFromProposal,
-  videoModeFromSection,
   type ProposalSection,
-} from '@domain'
+} from '@bdokeep/domain'
 import type { ParsedGuideVideo } from './parseVideosPayload'
+import { applyBuffsSection } from '../modules/buffs'
+import { applyComboSection } from '../modules/combo'
+import { applyCrystalsSection } from '../modules/crystals'
+import { applyHardeningSection } from '../modules/hardening'
+import { applyMorphsSection } from '../modules/morphs'
+import { applyRelicsSection } from '../modules/relics'
+import { applySummarySection } from '../modules/summary'
+import { applyVideosSection } from '../modules/videos'
 
 type ProposalRow = {
   id: string
@@ -162,322 +165,33 @@ export async function applyProposal(
         )
       `
 
+      const applyCtx = {
+        guideId: guide.id as string,
+        classId: proposal.class_id,
+        payload,
+        replacedForApply,
+      }
+
       if (isComboSection(section)) {
-        const mode = comboModeFromSection(section)
-        type ComboEntry = { title?: unknown; notes?: unknown; skill_ids?: unknown }
-        let rawCombos: ComboEntry[] = []
-        if (Array.isArray(payload.combos)) {
-          rawCombos = payload.combos as ComboEntry[]
-        } else if (Array.isArray(payload.skill_ids)) {
-          rawCombos = [{ skill_ids: payload.skill_ids }]
-        }
-
-        await tx`
-          delete from guide_combos
-          where guide_id = ${guide.id} and mode = ${mode}
-        `
-
-        for (let ci = 0; ci < rawCombos.length; ci++) {
-          const entry = rawCombos[ci]!
-          const skillIds = Array.isArray(entry.skill_ids)
-            ? entry.skill_ids.map((x) => String(x))
-            : []
-          if (!skillIds.length) continue
-          const title = String(entry.title ?? '').trim() || null
-          const notes = String(entry.notes ?? '').trim() || null
-          const inserted = await tx`
-            insert into guide_combos (guide_id, mode, sort_order, title, notes)
-            values (${guide.id}, ${mode}, ${ci}, ${title}, ${notes})
-            returning id
-          `
-          const comboId = inserted[0]?.id
-          if (!comboId) continue
-          const rows = skillIds.map((skill_id, i) => ({
-            guide_id: guide.id,
-            combo_id: comboId,
-            skill_id,
-            sort_order: i,
-          }))
-          await tx`
-            insert into guide_combo_steps ${tx(rows, 'guide_id', 'combo_id', 'skill_id', 'sort_order')}
-          `
-        }
+        await applyComboSection(tx, { ...applyCtx, section })
       } else if (isBuffsSection(section)) {
-        const rawBuffs = Array.isArray(payload.buffs) ? payload.buffs : []
-        const rows = rawBuffs.map((entry, i) => {
-          const e = entry as {
-            preset?: unknown
-            buff_id?: unknown
-            sort_order?: unknown
-          }
-          return {
-            guide_id: guide.id,
-            buff_id: String(e.buff_id || ''),
-            preset: String(e.preset || 't1'),
-            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
-          }
-        })
-        const replaced = replacedForApply(
-          payload.replaced_presets,
-          rows.map((r) => r.preset),
-          isCrystalPresetId,
-        )
-
-        await tx`
-          delete from guide_buffs
-          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
-        `
-        if (rows.length) {
-          await tx`
-            insert into guide_buffs ${tx(rows, 'guide_id', 'buff_id', 'preset', 'sort_order')}
-          `
-        }
+        await applyBuffsSection(tx, applyCtx)
       } else if (isCrystalsSection(section)) {
-        const raw = Array.isArray(payload.crystals) ? payload.crystals : []
-        const rows = raw.map((entry, i) => {
-          const e = entry as {
-            preset?: unknown
-            slot?: unknown
-            item_id?: unknown
-            sort_order?: unknown
-          }
-          return {
-            guide_id: guide.id,
-            item_id: String(e.item_id || ''),
-            slot: String(e.slot || ''),
-            preset: String(e.preset || ''),
-            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
-          }
-        })
-        const replaced = replacedForApply(
-          payload.replaced_presets,
-          rows.map((r) => r.preset),
-          isCrystalPresetId,
-        )
-
-        await tx`
-          delete from guide_crystals
-          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
-        `
-        if (rows.length) {
-          await tx`
-            insert into guide_crystals ${tx(rows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
-          `
-        }
+        await applyCrystalsSection(tx, applyCtx)
       } else if (isRelicsSection(section)) {
-        const rawRelics = Array.isArray(payload.relics) ? payload.relics : []
-        const rawLights = Array.isArray(payload.lightstones) ? payload.lightstones : []
-
-        const relicRows = rawRelics.map((entry, i) => {
-          const e = entry as {
-            preset?: unknown
-            slot?: unknown
-            item_id?: unknown
-            sort_order?: unknown
-          }
-          return {
-            guide_id: guide.id,
-            item_id: String(e.item_id || ''),
-            slot: String(e.slot || ''),
-            preset: String(e.preset || ''),
-            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
-          }
-        })
-
-        const lightRows = rawLights.map((entry, i) => {
-          const e = entry as {
-            preset?: unknown
-            slot?: unknown
-            item_id?: unknown
-            sort_order?: unknown
-          }
-          return {
-            guide_id: guide.id,
-            item_id: String(e.item_id || ''),
-            slot: String(e.slot || ''),
-            preset: String(e.preset || ''),
-            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
-          }
-        })
-
-        const replaced = replacedForApply(
-          payload.replaced_presets,
-          [...relicRows.map((r) => r.preset), ...lightRows.map((r) => r.preset)],
-          isCrystalPresetId,
-        )
-
-        await tx`
-          delete from guide_relics
-          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
-        `
-        await tx`
-          delete from guide_lightstones
-          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
-        `
-
-        if (relicRows.length) {
-          await tx`
-            insert into guide_relics ${tx(relicRows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
-          `
-        }
-        if (lightRows.length) {
-          await tx`
-            insert into guide_lightstones ${tx(lightRows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
-          `
-        }
+        await applyRelicsSection(tx, applyCtx)
       } else if (isHardeningSection(section)) {
-        const raw = Array.isArray(payload.hardening) ? payload.hardening : []
-        const rows = raw.map((entry, i) => {
-          const e = entry as {
-            preset?: unknown
-            slot?: unknown
-            item_id?: unknown
-            sort_order?: unknown
-          }
-          return {
-            guide_id: guide.id,
-            item_id: String(e.item_id || ''),
-            slot: String(e.slot || ''),
-            preset: String(e.preset || ''),
-            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
-          }
-        })
-        const replaced = replacedForApply(
-          payload.replaced_presets,
-          rows.map((r) => r.preset),
-          isCrystalPresetId,
-        )
-
-        await tx`
-          delete from guide_essence
-          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
-        `
-        if (rows.length) {
-          await tx`
-            insert into guide_essence ${tx(rows, 'guide_id', 'item_id', 'slot', 'preset', 'sort_order')}
-          `
-        }
+        await applyHardeningSection(tx, applyCtx)
       } else if (isVideosSection(section)) {
-        if (!verifiedVideos) {
-          throw createError({ statusCode: 400, statusMessage: 'Некорректные данные видео' })
-        }
-
-        const mode = videoModeFromSection(section)
-        const prevRows = await tx`
-          select youtube_url, status, status_since
-          from class_videos
-          where class_id = ${proposal.class_id} and mode = ${mode}
-        `
-        const prevByUrl = new Map(
-          prevRows.map((r) => [
-            String(r.youtube_url),
-            {
-              status: String(r.status || 'ready'),
-              status_since: r.status_since as Date | string,
-            },
-          ]),
-        )
-
-        const rows = verifiedVideos.map((v) => {
-          const prev = prevByUrl.get(v.youtube_url)
-          const status = v.status
-          let statusSince: Date | string = new Date()
-          if (
-            status === 'processing' &&
-            prev?.status === 'processing' &&
-            prev.status_since
-          ) {
-            statusSince = prev.status_since
-          }
-          return {
-            class_id: proposal.class_id,
-            title: v.title,
-            youtube_url: v.youtube_url,
-            sort_order: v.sort_order,
-            mode,
-            status,
-            status_since: statusSince,
-          }
+        await applyVideosSection(tx, {
+          ...applyCtx,
+          section,
+          verifiedVideos,
         })
-
-        await tx`
-          delete from class_videos
-          where class_id = ${proposal.class_id} and mode = ${mode}
-        `
-        if (rows.length) {
-          await tx`
-            insert into class_videos ${tx(
-              rows,
-              'class_id',
-              'title',
-              'youtube_url',
-              'sort_order',
-              'mode',
-              'status',
-              'status_since',
-            )}
-          `
-        }
       } else if (isMorphsSection(section)) {
-        const raw = Array.isArray(payload.morphs) ? payload.morphs : []
-        const rows = raw.map((entry, i) => {
-          const e = entry as {
-            preset?: unknown
-            slot_level?: unknown
-            skill_id?: unknown
-            effect_ids?: unknown
-            sort_order?: unknown
-          }
-          const effectIds = Array.isArray(e.effect_ids) ? e.effect_ids.map((x) => String(x)) : []
-          return {
-            guide_id: guide.id,
-            preset: String(e.preset || ''),
-            slot_level: Number(e.slot_level),
-            skill_id: String(e.skill_id || ''),
-            effect_id_1: effectIds[0]!,
-            effect_id_2: effectIds[1]!,
-            sort_order: typeof e.sort_order === 'number' ? e.sort_order : i,
-          }
-        })
-        const replaced = replacedForApply(
-          payload.replaced_presets,
-          rows.map((r) => r.preset),
-          isMorphPresetId,
-        )
-
-        await tx`
-          delete from guide_morphs
-          where guide_id = ${guide.id} and preset = any(${replaced}::text[])
-        `
-        if (rows.length) {
-          await tx`
-            insert into guide_morphs ${tx(
-              rows,
-              'guide_id',
-              'preset',
-              'slot_level',
-              'skill_id',
-              'effect_id_1',
-              'effect_id_2',
-              'sort_order',
-            )}
-          `
-        }
+        await applyMorphsSection(tx, applyCtx)
       } else if (isSummarySection(section)) {
-        const text = String(payload.text || '').trim()
-        if (summaryModeFromSection(section) === 'succession') {
-          await tx`
-            update class_guides
-            set summary_succession = ${text}
-            where id = ${guide.id}
-          `
-        } else {
-          await tx`
-            update class_guides
-            set summary_awakening = ${text}
-            where id = ${guide.id}
-          `
-        }
+        await applySummarySection(tx, { ...applyCtx, section })
       } else {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
       }

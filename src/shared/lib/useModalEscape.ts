@@ -1,4 +1,11 @@
-import type { Ref } from 'vue'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  watch,
+  type Ref,
+} from 'vue'
+import { useState } from './nuxtRuntime'
 
 const stack = () => useState<symbol[]>('modalEscapeStack', () => [])
 

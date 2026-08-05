@@ -1,8 +1,39 @@
-# BDO Keep — один compose, минимум сервисов
-# db (Postgres) + migrate (авто-SQL) + web (Nuxt / Nitro API)
-# Studio/Kong/Auth/Realtime/Storage/PostgREST НЕ нужны
+# BDO Keep — host-shell + domain microservices + MFE remotes
+# External reverse proxy still points at HOST_PORT only (unchanged).
 
 name: bdokeep
+
+x-db-url: &db-url
+  DATABASE_URL: postgres://bdokeep_app:${BDOKEEP_APP_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
+
+x-svc: &svc
+  build:
+    context: .
+    dockerfile: Dockerfile.service
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
+  environment:
+    <<: *db-url
+    TRUST_PROXY: ${TRUST_PROXY:-0}
+    ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+    ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?Set ADMIN_SESSION_SECRET in .env}
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+x-mf: &mf
+  restart: unless-stopped
+  mem_limit: 64m
+  cpus: 0.1
+
+x-mf-build: &mf-build
+  context: .
+  dockerfile: Dockerfile.mf
 
 services:
   db:
@@ -12,7 +43,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
-      # Used by migrate → 022_bdokeep_app.sh (and available if someone execs into db).
       BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -21,13 +51,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-    # Порты не публикуем: Nitro ходит на db:5432 по Docker-сети.
 
   migrate:
     image: postgres:16-alpine
     restart: 'no'
-    # Share db network so we can use 127.0.0.1 trust (volume password may
-    # differ from current .env POSTGRES_PASSWORD; TCP from other containers uses scram).
     network_mode: service:db
     depends_on:
       db:
@@ -35,7 +62,6 @@ services:
     environment:
       PGHOST: 127.0.0.1
       POSTGRES_USER: postgres
-      # Unused for local trust; kept for psql scripts that export PGPASSWORD.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
       BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
@@ -45,13 +71,12 @@ services:
       - ./db/migrate.sh:/migrate.sh:ro
     entrypoint: ['/bin/sh', '/migrate.sh']
 
+  # Host shell — pages only ownership; APIs still served for strangler leftovers
   web:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        # Soft caps inside Node/esbuild (always applied on compose build).
-        # Defaults for ~4CPU/6G VPS with ~1 core + ~4G already used idle.
         BUILD_CPU_COUNT: ${BUILD_CPU_COUNT:-1}
         BUILD_NODE_MAX_OLD_SPACE: ${BUILD_NODE_MAX_OLD_SPACE:-768}
     restart: unless-stopped
@@ -64,20 +89,187 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       DATABASE_URL: postgres://bdokeep_app:${BDOKEEP_APP_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
-      # Required — no default. Refuse weak values in production (see adminAuth).
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?Set ADMIN_SESSION_SECRET in .env}
-      # Set to 1 only behind a reverse proxy that controls X-Forwarded-For
       TRUST_PROXY: ${TRUST_PROXY:-0}
-    ports:
-      - '${HOST_PORT:-3000}:3000'
+    # ports published only via gateway nginx
+    expose:
+      - '3000'
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # Runtime caps (running container, not the image build).
     mem_limit: ${WEB_MEM_LIMIT:-512m}
     cpus: ${WEB_CPUS:-1.0}
+
+  gateway:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+      - svc-youtube
+      - svc-feedback
+      - svc-crystals
+      - mf-feedback
+    ports:
+      - '${HOST_PORT:-3000}:3000'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    mem_limit: 64m
+    cpus: 0.1
+
+  svc-youtube:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3011'
+      SERVICE_ENTRY: apps/svc-youtube/server.ts
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+
+  svc-feedback:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3012'
+      SERVICE_ENTRY: apps/svc-feedback/server.ts
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?Set ADMIN_SESSION_SECRET in .env}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+
+  svc-classes:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3013'
+      SERVICE_ENTRY: apps/svc-classes/server.ts
+
+  svc-proposals:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3014'
+      SERVICE_ENTRY: apps/svc-proposals/server.ts
+
+  svc-auth:
+    <<: *svc
+    environment:
+      PORT: '3015'
+      SERVICE_ENTRY: apps/svc-auth/server.ts
+
+  svc-crystals:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3020'
+      SECTION_DOMAIN: crystals
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  svc-relics:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3021'
+      SECTION_DOMAIN: relics
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  svc-hardening:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3022'
+      SECTION_DOMAIN: hardening
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  svc-morphs:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3023'
+      SECTION_DOMAIN: morphs
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  svc-combo:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3024'
+      SECTION_DOMAIN: combo
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  svc-buffs:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3025'
+      SECTION_DOMAIN: buffs
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  svc-videos:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3026'
+      SECTION_DOMAIN: videos
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  svc-summary:
+    <<: *svc
+    environment:
+      <<: *db-url
+      PORT: '3027'
+      SECTION_DOMAIN: summary
+      SERVICE_ENTRY: apps/svc-section/server.ts
+
+  mf-feedback:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: feedback }
+  mf-chat-macro:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: chat-macro }
+  mf-crystals:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: crystals }
+  mf-relics:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: relics }
+  mf-hardening:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: hardening }
+  mf-morphs:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: morphs }
+  mf-combo:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: combo }
+  mf-buffs:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: buffs }
+  mf-videos:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: videos }
+  mf-summary:
+    <<: *mf
+    build:
+      <<: *mf-build
+      args: { MF_NAME: summary }
 
 volumes:
   db_data:

@@ -1,0 +1,14 @@
+FROM node:22-alpine
+WORKDIR /app
+COPY package.json package-lock.json .npmrc ./
+COPY apps ./apps
+COPY server ./server
+COPY src ./src
+COPY scripts ./scripts
+COPY tsconfig.json tsconfig.services.json ./
+RUN npm ci --engine-strict=false
+ENV HOST=0.0.0.0
+ENV SERVICE_ENTRY=apps/svc-youtube/server.ts
+# Root tsconfig.json is Nuxt project-references only (no paths). Services need
+# explicit `@/*` → `src/*` for tsx outside Nitro.
+CMD ["sh", "-c", "npx tsx --tsconfig tsconfig.services.json \"$SERVICE_ENTRY\""]

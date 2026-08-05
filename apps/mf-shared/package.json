@@ -1,0 +1,19 @@
+{
+  "name": "@bdokeep/mf-shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    "./createMfViteConfig": "./createMfViteConfig.ts",
+    "./domain": "./domain/index.ts",
+    "./domain/*": "./domain/*",
+    "./boards/fills": "./boards/fills.ts",
+    "./boards/crystals": "./boards/crystals/index.ts",
+    "./boards/crystals/*": "./boards/crystals/*",
+    "./boards/relics": "./boards/relics/index.ts",
+    "./boards/relics/*": "./boards/relics/*",
+    "./boards/hardening": "./boards/hardening/index.ts",
+    "./boards/morphs": "./boards/morphs/index.ts"
+  }
+}

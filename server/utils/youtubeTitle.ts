@@ -1,4 +1,4 @@
-import { isYoutubeVideoId } from '@domain'
+import { isYoutubeVideoId } from '@bdokeep/domain'
 
 const TITLE_MAX = 120
 const titleCache = new Map<string, string | null>()

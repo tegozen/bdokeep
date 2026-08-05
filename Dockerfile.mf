@@ -1,0 +1,10 @@
+# Serve a pre-built Module Federation remote (vite dist).
+# Build remotes on the host first: `npm run build:mf`
+# Build arg MF_NAME selects apps/mf-<name>/dist.
+
+ARG MF_NAME=buffs
+
+FROM nginx:1.27-alpine
+ARG MF_NAME
+COPY nginx/mf-default.conf /etc/nginx/conf.d/default.conf
+COPY apps/mf-${MF_NAME}/dist/ /usr/share/nginx/html/

@@ -1,7 +1,8 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
-RUN npm ci
+COPY apps ./apps
+RUN npm ci --engine-strict=false
 
 FROM node:22-alpine AS build
 WORKDIR /app

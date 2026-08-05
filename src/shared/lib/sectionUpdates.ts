@@ -1,4 +1,4 @@
-import { uiSectionFromProposal as mapProposalSection } from '@domain'
+import { uiSectionFromProposal as mapProposalSection } from '@bdokeep/domain'
 
 export type SectionUpdateMeta = {
   updated_at: string

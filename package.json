@@ -3,20 +3,25 @@
   "type": "module",
   "private": true,
   "license": "MIT",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "build": "nuxt build",
+    "build:mf": "npm run build -w @bdokeep/mf-buffs -w @bdokeep/mf-chat-macro -w @bdokeep/mf-combo -w @bdokeep/mf-crystals -w @bdokeep/mf-feedback -w @bdokeep/mf-hardening -w @bdokeep/mf-morphs -w @bdokeep/mf-relics -w @bdokeep/mf-summary -w @bdokeep/mf-videos",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "tsx --import ./scripts/register-test-aliases.mjs --test domain/**/*.test.ts server/utils/**/*.test.ts"
+    "test": "tsx --import ./scripts/register-test-aliases.mjs --test apps/mf-shared/domain/**/*.test.ts server/utils/**/*.test.ts server/modules/**/*.test.ts"
   },
   "dependencies": {
+    "@bdokeep/mf-shared": "*",
     "@fontsource/cinzel": "^5.3.0",
     "@fontsource/source-sans-3": "^5.3.0",
     "@vite-pwa/nuxt": "^1.1.1",
-    "highlight.js": "^11.11.1",
     "h3": "^1.15.4",
+    "highlight.js": "^11.11.1",
     "markdown-it": "^15.0.0",
     "md-editor-v3": "^6.5.5",
     "nuxt": "^4.5.1",
@@ -32,7 +37,8 @@
     "@types/node": "^26.1.2",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.1",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "unplugin-auto-import": "^21.1.0"
   },
   "engines": {
     "node": ">=22"

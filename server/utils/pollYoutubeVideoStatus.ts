@@ -3,7 +3,7 @@ import {
   VIDEO_PROCESSING_TTL_MS,
   youtubeVideoId,
   type ProposalSection,
-} from '@domain'
+} from '@bdokeep/domain'
 import { applyPendingOrReject } from './applyPendingOrReject'
 import { backfillYoutubeVideoTitles } from './backfillYoutubeVideoTitles'
 import { clearYoutubeThumbCache, youtubeVideoHasThumb } from './youtubeThumb'

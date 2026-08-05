@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { createError } from 'h3'
-import { CRYSTAL_PRESET_IDS, MAX_COMBOS_PER_MODE } from '../../domain/index.ts'
+import { CRYSTAL_PRESET_IDS, MAX_COMBOS_PER_MODE } from '../../apps/mf-shared/domain/index.ts'
 import type { Sql } from './db.ts'
 import {
   parseAndValidatePayload,

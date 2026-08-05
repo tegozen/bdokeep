@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
-import { toValue } from 'vue'
+import { onBeforeUnmount, onMounted, toValue } from 'vue'
 import { useConfirm } from './useConfirm'
 import { useModalEscape } from './useModalEscape'
 

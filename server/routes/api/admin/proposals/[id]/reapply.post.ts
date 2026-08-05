@@ -1,4 +1,4 @@
-import { UUID_RE, type ProposalSection } from '@domain'
+import { UUID_RE, type ProposalSection } from '@bdokeep/domain'
 
 export default defineEventHandler(async (event) => {
   requireAdmin(event)

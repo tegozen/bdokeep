@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { onMounted, shallowRef, type Component } from 'vue'
 import type { Footers, ToolbarNames } from 'md-editor-v3'
-import { MAX_TEXT_LEN } from '@domain'
+import { MAX_TEXT_LEN } from '@bdokeep/domain'
 
 const text = defineModel<string>({ default: '' })
 

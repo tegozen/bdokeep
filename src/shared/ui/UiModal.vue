@@ -51,6 +51,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 export type UiModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'fluid'
 
 withDefaults(

@@ -1,4 +1,4 @@
-import { UUID_RE } from '@domain'
+import { UUID_RE } from '@bdokeep/domain'
 
 export default defineEventHandler(async (event) => {
   requireAdmin(event)

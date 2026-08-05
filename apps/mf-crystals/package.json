@@ -1,0 +1,25 @@
+{
+  "name": "@bdokeep/mf-crystals",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./Live": "./src/Live.vue",
+    "./Draft": "./src/Draft.vue"
+  },
+  "scripts": {
+    "build": "MF_NAME=crystals vite build",
+    "preview": "MF_NAME=crystals vite preview --host 0.0.0.0",
+    "dev": "MF_NAME=crystals vite --host 0.0.0.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@originjs/vite-plugin-federation": "^1.4.1",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "vite": "^7.0.0"
+  }
+}

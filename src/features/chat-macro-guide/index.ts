@@ -1,1 +1,2 @@
-export { default as ChatMacroGuideModal } from './ui/ChatMacroGuideModal.vue'
+/** Chat-macro modal lives in mf-chat-macro remote (`./Live`). */
+export {}

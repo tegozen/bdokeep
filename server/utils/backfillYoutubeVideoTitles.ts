@@ -1,4 +1,4 @@
-import { isPlaceholderVideoTitle, youtubeVideoId } from '@domain'
+import { isPlaceholderVideoTitle, youtubeVideoId } from '@bdokeep/domain'
 import { fetchYoutubeTitle } from './youtubeTitle'
 
 export type BackfillYoutubeTitlesResult = {

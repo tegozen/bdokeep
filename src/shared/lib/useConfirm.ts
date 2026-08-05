@@ -1,3 +1,5 @@
+import { useState } from './nuxtRuntime'
+
 export type ConfirmOptions = {
   title?: string
   message: string
