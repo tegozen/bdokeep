@@ -4,7 +4,7 @@ import {
   youtubeVideoId,
   type ProposalSection,
 } from '@domain'
-import { applyProposal } from './applyProposal'
+import { applyPendingOrReject } from './applyPendingOrReject'
 import { backfillYoutubeVideoTitles } from './backfillYoutubeVideoTitles'
 import { clearYoutubeThumbCache, youtubeVideoHasThumb } from './youtubeThumb'
 
@@ -171,7 +171,7 @@ export async function pollYoutubeVideoStatus(): Promise<PollYoutubeVideoStatusRe
 
     if (!inserted) continue
 
-    await applyProposal(
+    await applyPendingOrReject(
       {
         id: String(inserted.id),
         class_id: String(inserted.class_id),

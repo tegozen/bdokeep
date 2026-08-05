@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import postgres from 'postgres'
 
 export type Sql = ReturnType<typeof postgres>

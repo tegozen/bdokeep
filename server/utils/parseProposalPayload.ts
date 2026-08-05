@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import type { Sql } from './db'
 import {
   MAX_BUFFS,
@@ -33,9 +34,20 @@ import {
   finalizeReplacedPresets,
   type ProposalSection,
 } from '@domain'
-import { idsExist } from './queries/catalog'
-import { parseVideosPayload, type ParsedGuideVideo } from './parseVideosPayload'
+import type { ParsedGuideVideo, ParseVideosOptions } from './parseVideosPayload'
 import { sanitizeMarkdown } from './sanitizeMarkdown'
+
+export type CatalogIdsExist = (
+  sql: Sql,
+  table: 'skills' | 'buffs' | 'items' | 'skill_addon_effects',
+  ids: string[],
+  extra?: { classSlug?: string; itemType?: string },
+) => Promise<Set<string>>
+
+export type ParseVideosFn = (
+  raw: unknown,
+  opts?: ParseVideosOptions,
+) => Promise<ParsedGuideVideo[]>
 
 export type ParseProposalContext = {
   sql: Sql
@@ -49,6 +61,10 @@ export type ParseProposalContext = {
   skipUnknownCatalog?: boolean
   /** Cron video TTL cleanup may clear all slots for a mode. */
   allowEmptyVideos?: boolean
+  /** Tests / overrides: default loads `idsExist` from catalog queries. */
+  catalogIdsExist?: CatalogIdsExist
+  /** Tests / overrides: default loads `parseVideosPayload` (ytimg probe). */
+  parseVideos?: ParseVideosFn
 }
 
 export type ParsedProposalPayload = {
@@ -101,6 +117,16 @@ export async function parseAndValidatePayload(
 ): Promise<ParsedProposalPayload> {
   const { sql, classSlug } = ctx
   const skipUnknown = Boolean(ctx.skipUnknownCatalog)
+
+  const catalogIdsExist: CatalogIdsExist = async (...args) => {
+    const fn = ctx.catalogIdsExist ?? (await import('./queries/catalog')).idsExist
+    return fn(...args)
+  }
+  const parseVideos: ParseVideosFn = async (...args) => {
+    const fn = ctx.parseVideos ?? (await import('./parseVideosPayload')).parseVideosPayload
+    return fn(...args)
+  }
+
   assertSection(ctx.section)
   const section = ctx.section
   const body = ctx.rawPayload || {}
@@ -165,7 +191,7 @@ export async function parseAndValidatePayload(
       throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один скилл' })
     }
 
-    const allowed = await idsExist(sql, 'skills', allIds, { classSlug })
+    const allowed = await catalogIdsExist(sql, 'skills', allIds, { classSlug })
     const combos: Array<{ title: string; notes: string; skill_ids: string[] }> = []
     for (const entry of staged) {
       let skillIds = entry.skill_ids
@@ -243,7 +269,7 @@ export async function parseAndValidatePayload(
     }
 
     const buffIds = [...new Set(buffsPayload.map((b) => b.buff_id))]
-    const allowed = await idsExist(sql, 'buffs', buffIds)
+    const allowed = await catalogIdsExist(sql, 'buffs', buffIds)
     const kept = skipUnknown
       ? buffsPayload.filter((b) => allowed.has(b.buff_id))
       : buffsPayload
@@ -327,7 +353,7 @@ export async function parseAndValidatePayload(
     }
 
     const itemIds = crystals.map((c) => c.item_id)
-    const allowed = await idsExist(sql, 'items', itemIds, { itemType: 'crystal' })
+    const allowed = await catalogIdsExist(sql, 'items', itemIds, { itemType: 'crystal' })
     const kept = skipUnknown
       ? crystals.filter((c) => allowed.has(c.item_id))
       : crystals
@@ -448,7 +474,7 @@ export async function parseAndValidatePayload(
     let keptLights = lightstones
     if (relics.length) {
       const ids = relics.map((r) => r.item_id)
-      const allowed = await idsExist(sql, 'items', ids, { itemType: 'relic' })
+      const allowed = await catalogIdsExist(sql, 'items', ids, { itemType: 'relic' })
       if (skipUnknown) {
         keptRelics = relics.filter((r) => allowed.has(r.item_id))
       } else if (ids.some((id) => !allowed.has(id))) {
@@ -457,7 +483,7 @@ export async function parseAndValidatePayload(
     }
     if (lightstones.length) {
       const ids = lightstones.map((r) => r.item_id)
-      const allowed = await idsExist(sql, 'items', ids, { itemType: 'lightstone' })
+      const allowed = await catalogIdsExist(sql, 'items', ids, { itemType: 'lightstone' })
       if (skipUnknown) {
         keptLights = lightstones.filter((r) => allowed.has(r.item_id))
       } else if (ids.some((id) => !allowed.has(id))) {
@@ -567,7 +593,7 @@ export async function parseAndValidatePayload(
     }
 
     const itemIds = hardening.map((c) => c.item_id)
-    const allowed = await idsExist(sql, 'items', itemIds, { itemType: 'essence' })
+    const allowed = await catalogIdsExist(sql, 'items', itemIds, { itemType: 'essence' })
     const kept = skipUnknown
       ? hardening.filter((c) => allowed.has(c.item_id))
       : hardening
@@ -600,7 +626,7 @@ export async function parseAndValidatePayload(
   }
 
   if (isVideosSection(section)) {
-    const verifiedVideos = await parseVideosPayload(body.videos, {
+    const verifiedVideos = await parseVideos(body.videos, {
       allowEmpty: Boolean(ctx.allowEmptyVideos),
     })
     return { payload: { videos: verifiedVideos }, verifiedVideos }

@@ -13,11 +13,10 @@ type Body = {
 }
 
 export default defineEventHandler(async (event) => {
+  assertSameOrigin(event)
+
   const body = (await readBody(event)) as Body
   const asSuperadmin = isAdminSession(event)
-  if (asSuperadmin) {
-    assertSameOrigin(event)
-  }
 
   if (body.website) {
     return { ok: true }
@@ -99,7 +98,7 @@ export default defineEventHandler(async (event) => {
   })
 
   if (asSuperadmin) {
-    await applyProposal(
+    await applyPendingOrReject(
       {
         id: String(inserted.id),
         class_id: String(inserted.class_id),

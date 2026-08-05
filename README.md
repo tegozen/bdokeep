@@ -76,6 +76,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
 - Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
 - Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
+- CSRF: same-origin на `POST /api/proposals` и `POST /api/feedback` (гости и админ)
 - CSP без CDN для JS/CSS и иконок каталога (см. `AGENTS.md`)
 - `.npmrc`: `min-release-age=7` + `engine-strict` — не ставить пакеты моложе 7 дней; Node должен совпадать с `engines` (npm ≥ 11.10)
 - `web`: `no-new-privileges` + `cap_drop: ALL`

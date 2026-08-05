@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import {
   PROPOSAL_SECTIONS,
   comboModeFromSection,
@@ -152,6 +153,14 @@ export async function applyProposal(
       if (!guide) {
         throw createError({ statusCode: 502, statusMessage: 'Ошибка базы данных' })
       }
+
+      // Serialize concurrent applies for the same class + section (last-write races).
+      await tx`
+        select pg_advisory_xact_lock(
+          hashtext(${proposal.class_id}::text),
+          hashtext(${section})
+        )
+      `
 
       if (isComboSection(section)) {
         const mode = comboModeFromSection(section)

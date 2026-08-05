@@ -97,4 +97,11 @@ describe('applyProposal replaced contract', () => {
     const smuggled = applyReplaced(parsed.replaced, ['t1', 't2'])
     assert.deepEqual(smuggled, { ok: false, reason: 'rows_outside_replaced' })
   })
+
+  it('empty replaced + no row presets → apply no-op (catalog wipe, no intentional clears)', () => {
+    // After parse skipUnknown emptied replaced_presets, apply sees [] rows + [] replaced.
+    const out = applyReplaced([], [])
+    assert.deepEqual(out, { ok: false, reason: 'empty' })
+    // applyProposal.replacedForApply maps this to [] (no delete), not 400
+  })
 })
