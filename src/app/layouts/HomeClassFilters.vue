@@ -19,7 +19,7 @@
     <UiSwitch
       v-model="hideEmpty"
       size="sm"
-      label-placement="top"
+      label-placement="start"
       label="Скрыть пустые"
     />
   </div>
@@ -37,8 +37,9 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.55rem 0.75rem;
+  gap: 0.45rem 0.85rem;
   min-width: 0;
+  width: 100%;
 }
 
 .chips {
