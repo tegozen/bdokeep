@@ -1,44 +1,32 @@
 <template>
-  <ClientOnly>
-    <component
-      :is="Editor"
-      v-if="Editor"
-      :id="id"
-      v-model="text"
-      theme="dark"
-      language="ru"
-      preview-theme="github"
-      code-theme="github"
-      :toolbars="toolbars"
-      :footers="footers"
-      :no-upload-img="true"
-      no-katex
-      no-mermaid
-      no-echarts
-      :placeholder="placeholder"
-      :style="{ height }"
-      :class="$style.editor"
-    />
-    <textarea
-      v-else
-      v-model="text"
-      :class="$style.fallback"
-      :rows="12"
-      :placeholder="placeholder"
-      required
-      :maxlength="MAX_TEXT_LEN"
-    />
-    <template #fallback>
-      <textarea
-        v-model="text"
-        :class="$style.fallback"
-        :rows="12"
-        :placeholder="placeholder"
-        required
-        :maxlength="MAX_TEXT_LEN"
-      />
-    </template>
-  </ClientOnly>
+  <component
+    :is="Editor"
+    v-if="Editor"
+    :id="id"
+    v-model="text"
+    theme="dark"
+    language="ru"
+    preview-theme="github"
+    code-theme="github"
+    :toolbars="toolbars"
+    :footers="footers"
+    :no-upload-img="true"
+    no-katex
+    no-mermaid
+    no-echarts
+    :placeholder="placeholder"
+    :style="{ height }"
+    :class="$style.editor"
+  />
+  <textarea
+    v-else
+    v-model="text"
+    :class="$style.fallback"
+    :rows="12"
+    :placeholder="placeholder"
+    required
+    :maxlength="MAX_TEXT_LEN"
+  />
 </template>
 
 <script setup lang="ts">

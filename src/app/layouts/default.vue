@@ -1,17 +1,15 @@
 <template>
   <div :class="$style.root">
-    <ClientOnly>
-      <div v-if="pwa?.needRefresh" :class="$style.updateBanner" role="status">
-        <span>Доступно обновление приложения</span>
-        <button
-          type="button"
-          :class="$style.updateBtn"
-          @click="pwa?.updateServiceWorker(true)"
-        >
-          Обновить
-        </button>
-      </div>
-    </ClientOnly>
+    <div v-if="pwa?.needRefresh" :class="$style.updateBanner" role="status">
+      <span>Доступно обновление приложения</span>
+      <button
+        type="button"
+        :class="$style.updateBtn"
+        @click="pwa?.updateServiceWorker(true)"
+      >
+        Обновить
+      </button>
+    </div>
 
     <header :class="$style.header">
       <div :class="['mx-auto flex w-[min(100%-2rem,1920px)] flex-wrap items-center gap-x-4 gap-y-2 py-4', $style.headerInner]">
@@ -21,48 +19,40 @@
             <span :class="$style.brandName">Keep</span>
           </NuxtLink>
           <HomeClassFilters v-if="showHomeFilters" />
-          <!--
-            headerClass is set from the page child after layout render starts on SSR,
-            so keep this client-only to avoid hydration mismatches.
-          -->
-          <ClientOnly>
-            <div v-if="headerClass" :class="$style.classBlock">
-              <div :class="$style.classMeta">
-                <ClassIcon
-                  :slug="headerClass.slug"
-                  :icon-url="headerClass.icon_url"
-                  :label="headerClass.name_ru"
-                  size="sm"
-                />
-                <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
-              </div>
-              <ClassTierStars
-                v-if="isSuperadmin || headerActiveTier"
-                :tier="headerActiveTier"
-                :editable="isSuperadmin"
-                :saving="tierSaving"
+          <div v-if="headerClass" :class="$style.classBlock">
+            <div :class="$style.classMeta">
+              <ClassIcon
+                :slug="headerClass.slug"
+                :icon-url="headerClass.icon_url"
+                :label="headerClass.name_ru"
                 size="sm"
-                @change="onHeaderTierChange"
               />
+              <h1 :class="$style.className">{{ headerClass.name_ru }}</h1>
             </div>
-          </ClientOnly>
+            <ClassTierStars
+              v-if="isSuperadmin || headerActiveTier"
+              :tier="headerActiveTier"
+              :editable="isSuperadmin"
+              :saving="tierSaving"
+              size="sm"
+              @change="onHeaderTierChange"
+            />
+          </div>
         </div>
         <div :class="$style.auth">
-          <ClientOnly>
-            <div v-if="headerClass" :class="[$style.filters, $style.desktopOnly]">
-              <GuideModePresetTabs :preset-fill="presetFill" />
-            </div>
-            <button
-              v-if="headerClass"
-              type="button"
-              :class="[$style.mobileToggle, $style.mobileOnly]"
-              :aria-expanded="mobileNavOpen"
-              aria-controls="mobile-guide-nav"
-              @click="mobileNavOpen = !mobileNavOpen"
-            >
-              {{ mobileNavOpen ? 'Скрыть' : 'Режим' }}
-            </button>
-          </ClientOnly>
+          <div v-if="headerClass" :class="[$style.filters, $style.desktopOnly]">
+            <GuideModePresetTabs :preset-fill="presetFill" />
+          </div>
+          <button
+            v-if="headerClass"
+            type="button"
+            :class="[$style.mobileToggle, $style.mobileOnly]"
+            :aria-expanded="mobileNavOpen"
+            aria-controls="mobile-guide-nav"
+            @click="mobileNavOpen = !mobileNavOpen"
+          >
+            {{ mobileNavOpen ? 'Скрыть' : 'Режим' }}
+          </button>
           <button
             type="button"
             :class="$style.proposals"
@@ -83,46 +73,41 @@
           >
             Макрос чата
           </button>
-          <!-- Cookie session known only after client refresh — keep out of SSR HTML. -->
-          <ClientOnly>
-            <NuxtLink
-              v-if="isSuperadmin"
-              to="/admin/proposals?status=pending"
-              :class="$style.proposals"
-            >
-              Заявки
-              <span v-if="pendingSummary.total > 0" :class="$style.proposalsBadge">
-                {{ pendingSummary.total }}
-              </span>
-            </NuxtLink>
-            <NuxtLink
-              v-if="isSuperadmin"
-              to="/admin/feedback"
-              :class="$style.proposals"
-            >
-              ОС
-            </NuxtLink>
-            <!-- Logged-in chrome stays in the header; login entry lives in the footer. -->
-            <component
-              :is="SuperadminAuth"
-              v-if="isSuperadmin && SuperadminAuth && authUiReady"
-              compact
-            />
-          </ClientOnly>
+          <NuxtLink
+            v-if="isSuperadmin"
+            to="/admin/proposals?status=pending"
+            :class="$style.proposals"
+          >
+            Заявки
+            <span v-if="pendingSummary.total > 0" :class="$style.proposalsBadge">
+              {{ pendingSummary.total }}
+            </span>
+          </NuxtLink>
+          <NuxtLink
+            v-if="isSuperadmin"
+            to="/admin/feedback"
+            :class="$style.proposals"
+          >
+            ОС
+          </NuxtLink>
+          <!-- Logged-in chrome stays in the header; login entry lives in the footer. -->
+          <component
+            :is="SuperadminAuth"
+            v-if="isSuperadmin && SuperadminAuth && authUiReady"
+            compact
+          />
         </div>
       </div>
 
-      <ClientOnly>
-        <div
-          v-if="headerClass && mobileNavOpen"
-          id="mobile-guide-nav"
-          :class="[$style.mobilePanel, $style.mobileOnly]"
-        >
-          <div class="mx-auto w-[min(100%-2rem,1920px)]" :class="$style.mobilePanelInner">
-            <GuideModePresetTabs :preset-fill="presetFill" />
-          </div>
+      <div
+        v-if="headerClass && mobileNavOpen"
+        id="mobile-guide-nav"
+        :class="[$style.mobilePanel, $style.mobileOnly]"
+      >
+        <div class="mx-auto w-[min(100%-2rem,1920px)]" :class="$style.mobilePanelInner">
+          <GuideModePresetTabs :preset-fill="presetFill" />
         </div>
-      </ClientOnly>
+      </div>
     </header>
 
     <main :class="$style.main">
@@ -152,39 +137,37 @@
             >GitLab</a>
           </p>
         </div>
-        <ClientOnly>
-          <component
-            :is="SuperadminAuth"
-            v-if="!isSuperadmin && SuperadminAuth && authUiReady"
-            compact
-            icon-trigger
-            :open-login-on-mount="authOpenLoginOnMount"
-          />
-          <button
-            v-else-if="!isSuperadmin && !authUiReady"
-            type="button"
-            :class="$style.authGate"
-            aria-label="Войти как суперадмин"
-            title="Войти как суперадмин"
-            @click="openAuthLogin"
+        <component
+          :is="SuperadminAuth"
+          v-if="!isSuperadmin && SuperadminAuth && authUiReady"
+          compact
+          icon-trigger
+          :open-login-on-mount="authOpenLoginOnMount"
+        />
+        <button
+          v-else-if="!isSuperadmin && !authUiReady"
+          type="button"
+          :class="$style.authGate"
+          aria-label="Войти как суперадмин"
+          title="Войти как суперадмин"
+          @click="openAuthLogin"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </button>
-        </ClientOnly>
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </button>
       </div>
     </footer>
 
@@ -206,8 +189,14 @@
 </template>
 
 <script setup lang="ts">
-import { type Component, computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue'
-import { updateClassTier, type ClassGuideBundle } from '@/entities/class'
+import { type Component, computed, ref, shallowRef, watch } from 'vue'
+import {
+  fetchClassGuideBySlug,
+  updateClassTier,
+  type ClassGuideBundle,
+} from '@/entities/class'
+import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
+import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import {
   useConfirm,
   useGuideSpecMode,
@@ -216,12 +205,9 @@ import {
   usePendingSummary,
   useSuperadmin,
 } from '@/shared/lib'
+import GuideModePresetTabs from './GuideModePresetTabs.vue'
 import HomeClassFilters from './HomeClassFilters.vue'
 
-/** Keep class-header / auth CSS off the home critical path until needed. */
-const ClassIcon = defineAsyncComponent(() => import('@/entities/class/ui/ClassIcon.vue'))
-const ClassTierStars = defineAsyncComponent(() => import('@/entities/class/ui/ClassTierStars.vue'))
-const GuideModePresetTabs = defineAsyncComponent(() => import('./GuideModePresetTabs.vue'))
 /** Loaded on demand — avoid shipping auth CSS on anonymous home Lighthouse runs. */
 const SuperadminAuth = shallowRef<Component | null>(null)
 const UiConfirm = shallowRef<Component | null>(null)
@@ -275,6 +261,47 @@ const authUiReady = ref(false)
 const authOpenLoginOnMount = ref(false)
 const tierSaving = ref(false)
 const showHomeFilters = computed(() => route.path === '/')
+
+const classSlug = computed(() => {
+  const m = route.path.match(/^\/class\/([^/]+)\/?$/)
+  return m?.[1] ? decodeURIComponent(m[1]) : ''
+})
+
+/** Same key as class/[slug].vue — Nuxt dedupes; fills headerClass before layout paint. */
+const { data: classBundle } = await useAsyncData(
+  () => (classSlug.value ? `class-${classSlug.value}` : 'class-header-idle'),
+  () => {
+    if (!classSlug.value) return null
+    return fetchClassGuideBySlug(classSlug.value)
+  },
+  {
+    watch: [classSlug],
+    default: () => null,
+  },
+)
+
+watch(
+  [classSlug, classBundle],
+  ([slug, bundle]) => {
+    if (!slug) {
+      // Leaving class routes — page onBeforeUnmount also clears; keep in sync on nav.
+      if (!route.path.startsWith('/class/')) headerClass.value = null
+      return
+    }
+    if (bundle?.class) {
+      headerClass.value = {
+        slug: bundle.class.slug,
+        name_ru: bundle.class.name_ru,
+        icon_url: bundle.class.icon_url,
+        tier_awakening: bundle.class.tier_awakening ?? null,
+        tier_succession: bundle.class.tier_succession ?? null,
+      }
+    } else {
+      headerClass.value = null
+    }
+  },
+  { immediate: true },
+)
 
 async function ensureAuthUi() {
   if (!SuperadminAuth.value) {

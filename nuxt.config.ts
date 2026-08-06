@@ -64,6 +64,7 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'node-server',
+    compressPublicAssets: { gzip: true, brotli: true },
     alias: {
       '@domain': `${rootDir}/domain`,
     },
@@ -204,6 +205,7 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-title', content: 'BDO Keep' },
       ],
       link: [
+        // Single manifest link (NuxtPwaManifest does not inject when virtual:pwa-info has no webManifest on SSR).
         { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },

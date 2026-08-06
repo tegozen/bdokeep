@@ -408,6 +408,7 @@
 <script setup lang="ts">
 import {
   computed,
+  defineAsyncComponent,
   onBeforeUnmount,
   ref,
   watch,
@@ -421,8 +422,11 @@ import {
   fetchPendingForClass,
   type PendingProposal,
 } from "@/features/superadmin-auth/api/pendingProposals";
-import PendingSectionDrafts from "@/features/superadmin-auth/ui/PendingSectionDrafts.vue";
 import { ShowEmptyGuide } from "@/features/show-empty-guide";
+
+const PendingSectionDrafts = defineAsyncComponent(
+  () => import("@/features/superadmin-auth/ui/PendingSectionDrafts.vue"),
+);
 
 import {
   codexIconSrc,

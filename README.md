@@ -148,6 +148,11 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 За reverse proxy выставь `TRUST_PROXY=1` в `.env`, иначе rate limit смотрит на TCP peer, а не на `X-Forwarded-For`.
 
 ```nginx
+gzip on;
+gzip_comp_level 5;
+gzip_types text/plain text/css text/html application/javascript application/json application/manifest+json image/svg+xml;
+gzip_vary on;
+
 location / {
   proxy_pass http://127.0.0.1:3000;
   proxy_set_header Host $host;
@@ -155,6 +160,8 @@ location / {
   proxy_set_header X-Forwarded-Proto $scheme;
 }
 ```
+
+Приложение само умеет gzip HTML/JSON (Nitro-плагин). Если gzip уже на nginx — поставь `NITRO_COMPRESS=0` в `.env`, чтобы не сжимать дважды.
 
 ## Дисклеймер и лицензии
 
