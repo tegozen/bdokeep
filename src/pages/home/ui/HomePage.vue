@@ -1,5 +1,5 @@
 <template>
-  <div :class="['mx-auto w-[min(100%-2rem,1920px)]', $style.page]">
+  <div :class="$style.page">
     <ClassGrid
       :classes="filteredClasses"
       :pending="pending"
@@ -83,5 +83,7 @@ useHead(() => {
 
 <style module>
 .page {
+  width: min(calc(100% - 2rem), 1920px);
+  margin-inline: auto;
 }
 </style>

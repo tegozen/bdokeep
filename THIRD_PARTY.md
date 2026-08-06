@@ -8,8 +8,6 @@ repository).
 
 | Package | License |
 |---------|---------|
-| `@fontsource/cinzel` | SIL Open Font License 1.1 |
-| `@fontsource/source-sans-3` | SIL Open Font License 1.1 |
 | `@vite-pwa/nuxt` | MIT |
 | `highlight.js` | BSD-3-Clause |
 | `markdown-it` | MIT |
@@ -20,13 +18,6 @@ repository).
 | `vue` | MIT |
 | `vue-router` | MIT |
 | `xss` | MIT |
-
-## Fonts (self-hosted via Fontsource)
-
-- **Cinzel** — Copyright 2020 The Cinzel Project Authors — SIL OFL 1.1
-- **Source Sans 3** — Copyright 2010–2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source' — SIL OFL 1.1
-
-OFL fonts are bundled locally; do not load them from a CDN (project CSP).
 
 ## Dev (`devDependencies`)
 

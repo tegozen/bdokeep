@@ -1,5 +1,5 @@
 <template>
-  <div :class="['mx-auto w-[min(100%-2rem,960px)]', $style.page]">
+  <div :class="$style.page">
     <header :class="$style.header">
       <h1 :class="$style.h1">Обратная связь</h1>
       <NuxtLink v-if="authed" to="/admin/proposals?status=pending" :class="$style.link">
@@ -214,6 +214,8 @@ onMounted(async () => {
 
 <style module>
 .page {
+  width: min(calc(100% - 2rem), 960px);
+  margin-inline: auto;
   padding: 2rem 0 4rem;
 }
 

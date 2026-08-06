@@ -138,11 +138,6 @@ export default defineNuxtConfig({
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     },
-    '/fonts/**': {
-      headers: {
-        'Cache-Control': 'public, max-age=31536000, stale-while-revalidate=86400',
-      },
-    },
     '/classes/**': {
       headers: {
         // Committed art; rare changes. Lighthouse wants ≥30d for static icons.

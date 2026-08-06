@@ -12,8 +12,6 @@
     "test": "tsx --import ./scripts/register-test-aliases.mjs --test domain/**/*.test.ts server/utils/**/*.test.ts"
   },
   "dependencies": {
-    "@fontsource/cinzel": "^5.3.0",
-    "@fontsource/source-sans-3": "^5.3.0",
     "@vite-pwa/nuxt": "^1.1.1",
     "h3": "^1.15.4",
     "highlight.js": "^11.11.1",

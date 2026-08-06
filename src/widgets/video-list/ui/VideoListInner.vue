@@ -80,7 +80,7 @@ function labelFor(video: ClassVideo, idx: number) {
 }
 
 .fade {
-  animation: fade-in 320ms ease both;
+  animation: fade-in 320ms ease;
 }
 
 .item {

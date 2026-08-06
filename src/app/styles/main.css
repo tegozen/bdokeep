@@ -16,14 +16,14 @@
   --color-muted: #9a9386;
   --color-danger: #c45c5c;
 
-  /* Fallbacks paint immediately; webfonts load async (fonts.client.ts). */
-  --font-display: "Cinzel", "Times New Roman", serif;
-  --font-sans: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  /* System UI only — no webfonts (avoids CLS from late font swap). */
+  --font-display: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --shadow-glow: 0 0 40px rgba(212, 175, 98, 0.08);
 
   --animate-shimmer: shimmer 1.4s ease-in-out infinite;
-  --animate-fade-in: fade-in 320ms ease both;
+  --animate-fade-in: fade-in 320ms ease;
 }
 
 
@@ -36,13 +36,12 @@
   }
 }
 
+/* Transform only — opacity+both hid LCP content (subtitle became LCP). */
 @keyframes fade-in {
   from {
-    opacity: 0;
     transform: translateY(6px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -100,7 +99,6 @@
   a {
     color: var(--color-gold);
     text-decoration: none;
-    transition: color 200ms ease;
   }
 
   a:hover {

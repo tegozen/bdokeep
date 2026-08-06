@@ -121,7 +121,7 @@ withDefaults(
 }
 
 .fade {
-  animation: fade-in 320ms ease both;
+  animation: fade-in 320ms ease;
 }
 
 .card {
@@ -253,7 +253,7 @@ withDefaults(
 }
 
 .error {
-  animation: fade-in 320ms ease both;
+  animation: fade-in 320ms ease;
   border: 1px solid var(--color-danger);
   background: color-mix(in srgb, var(--color-danger) 10%, transparent);
   padding: 1.5rem;
@@ -261,7 +261,7 @@ withDefaults(
 }
 
 .empty {
-  animation: fade-in 320ms ease both;
+  animation: fade-in 320ms ease;
   border: 1px dashed var(--color-border);
   background: var(--color-gold-dim);
   padding: 1.5rem;

@@ -34,7 +34,7 @@
   - Never omit both `instance` and url overrides — md-editor will fall back to `https://unpkg.com/...`.
 - **Read-only markdown** ([`UiMarkdownPreview.vue`](src/shared/ui/UiMarkdownPreview.vue)): use local `markdown-it` + `xss`, **not** md-editor `MdPreview` (keeps class pages light).
 - Setup for the editor lives in [`src/shared/ui/mdEditorSetup.client.ts`](src/shared/ui/mdEditorSetup.client.ts).
-- Icons/fonts already self-hosted (`@fontsource/*`, `public/`). Keep it that way.
+- Icons already self-hosted (`public/codex/`, `public/classes/`). Keep it that way. Typography uses system UI fonts (no webfonts / no CDN fonts).
 
 ## No CDN for catalog images (hard rule)
 

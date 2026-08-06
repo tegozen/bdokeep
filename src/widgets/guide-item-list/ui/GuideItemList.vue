@@ -36,7 +36,7 @@ defineProps<{
 }
 
 .fade {
-  animation: fade-in 320ms ease both;
+  animation: fade-in 320ms ease;
 }
 
 .item {

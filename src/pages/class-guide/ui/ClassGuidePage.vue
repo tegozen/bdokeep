@@ -1,5 +1,5 @@
 <template>
-  <div :class="['mx-auto w-[min(100%-2rem,1920px)]', $style.page]">
+  <div :class="$style.page">
     <div v-if="error && !pending" :class="$style.error">
       Не удалось загрузить гайд. Проверьте API и обновите страницу.
     </div>
@@ -7,7 +7,7 @@
     <template v-if="pending">
       <div v-for="n in 5" :key="n" :class="$style.skel">
         <UiSkeleton variant="text" width="30%" height="1.4rem" />
-        <UiSkeleton variant="block" height="120px" class="mt-3" />
+        <UiSkeleton variant="block" height="120px" :class="$style.skelGap" />
       </div>
     </template>
 
@@ -665,6 +665,11 @@ const lightstoneSetLabel = computed(() =>
 </script>
 
 <style module>
+.page {
+  width: min(calc(100% - 2rem), 1920px);
+  margin-inline: auto;
+}
+
 .error {
   margin-bottom: 1.5rem;
   border: 1px solid var(--color-danger);
@@ -675,6 +680,10 @@ const lightstoneSetLabel = computed(() =>
 
 .skel {
   margin-bottom: 1.5rem;
+}
+
+.skelGap {
+  margin-top: 0.75rem;
 }
 
 .summary {
@@ -689,7 +698,7 @@ const lightstoneSetLabel = computed(() =>
 }
 
 .fade {
-  animation: fade-in 320ms ease both;
+  animation: fade-in 320ms ease;
 }
 
 .pendingBadge {

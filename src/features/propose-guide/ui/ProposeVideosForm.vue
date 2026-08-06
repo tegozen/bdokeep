@@ -184,7 +184,6 @@ async function onSubmit() {
 .slotLabel {
   font-size: 0.85rem;
   color: var(--color-muted);
-  transition: color 120ms ease;
 }
 
 .slotInvalid .slotLabel {

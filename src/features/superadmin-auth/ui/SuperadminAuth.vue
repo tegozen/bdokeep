@@ -226,7 +226,7 @@ async function onLogout() {
   color: var(--color-muted);
   cursor: pointer;
   opacity: 0.4;
-  transition: opacity 140ms ease, color 140ms ease;
+  transition: opacity 140ms ease;
 }
 
 .iconTrigger:hover,

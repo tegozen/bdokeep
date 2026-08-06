@@ -68,8 +68,8 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 ### PWA / оболочка / перф
 
 - Установка как приложение (`@vite-pwa/nuxt`); баннер при новой версии SW
-- Шрифты self-hosted в `public/fonts/` (после first paint, `font-display: optional`)
-- Один CSS-бандл; подключение без блокировки first paint; gzip HTML/JSON в Nitro (`NITRO_COMPRESS=0`, если уже жмёт nginx)
+- Один CSS-бандл (stylesheet); gzip HTML/JSON в Nitro (`NITRO_COMPRESS=0`, если уже жмёт nginx)
+- Системные шрифты (`system-ui` / Segoe UI / Roboto) — без webfonts, без CLS от подмены гарнитуры
 - Портреты на главной: opaque WebP без alpha, LCP — `fetchpriority=high` + без lazy у первого ряда
 
 ### Ops / безопасность
@@ -174,4 +174,4 @@ location / {
 
 This is unofficial content which contains copyrighted materials and IP from Pearl Abyss, and is not official/endorsed content.
 
-Код проекта — **MIT** (см. [`LICENSE`](LICENSE)); `public/classes/` и `public/codex/` © Pearl Abyss и **не** под MIT — форки с артом обязаны сохранить дисклеймер PA ([`NOTICE`](NOTICE)). Зависимости и шрифты: [`THIRD_PARTY.md`](THIRD_PARTY.md).
+Код проекта — **MIT** (см. [`LICENSE`](LICENSE)); `public/classes/` и `public/codex/` © Pearl Abyss и **не** под MIT — форки с артом обязаны сохранить дисклеймер PA ([`NOTICE`](NOTICE)). Зависимости: [`THIRD_PARTY.md`](THIRD_PARTY.md).
