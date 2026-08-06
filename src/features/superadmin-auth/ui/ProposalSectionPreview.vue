@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import type { ClassVideo } from '@/entities/class'
 import {
   useProposalPreviewHydration,
@@ -174,13 +174,17 @@ import {
   type GuideSpecMode,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import UiMarkdownPreview from '@/shared/ui/UiMarkdownPreview.vue'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard } from '@/widgets/crystal-board'
 import { MorphBoard } from '@/widgets/morph-board'
 import { RelicBoard } from '@/widgets/relic-board'
-import { VideoList } from '@/widgets/video-list'
 
+const UiMarkdownPreview = defineAsyncComponent(
+  () => import('@/shared/ui/UiMarkdownPreview.vue'),
+)
+const VideoList = defineAsyncComponent(
+  () => import('@/widgets/video-list/ui/VideoList.vue'),
+)
 const props = withDefaults(
   defineProps<{
     item: ProposalPreviewItem

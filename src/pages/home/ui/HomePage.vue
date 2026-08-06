@@ -30,18 +30,18 @@ const pendingByClass = computed(() =>
   isSuperadmin.value ? summary.value.byClass : {},
 )
 
-function classTierMax(klass: BdoClass) {
-  const a = klass.tier_awakening == null ? 0 : Number(klass.tier_awakening)
-  const s = klass.tier_succession == null ? 0 : Number(klass.tier_succession)
+function classTierMax(bdoClass: BdoClass) {
+  const a = bdoClass.tier_awakening == null ? 0 : Number(bdoClass.tier_awakening)
+  const s = bdoClass.tier_succession == null ? 0 : Number(bdoClass.tier_succession)
   return Math.max(a, s)
 }
 
 const filteredClasses = computed(() => {
   const list = classes.value ?? []
-  return list.filter((klass) => {
-    if (hideEmpty.value && !klass.has_content) return false
+  return list.filter((bdoClass) => {
+    if (hideEmpty.value && !bdoClass.has_content) return false
     if (tierMin.value === 0) return true
-    return classTierMax(klass) >= tierMin.value
+    return classTierMax(bdoClass) >= tierMin.value
   })
 })
 
@@ -59,26 +59,6 @@ watch(
   },
   { immediate: true },
 )
-
-const lcpPortraitUrl = computed(() => filteredClasses.value[0]?.portrait_url ?? null)
-
-useHead(() => {
-  const portrait = lcpPortraitUrl.value
-  if (!portrait) return {}
-  return {
-    link: [
-      {
-        key: 'lcp-portrait',
-        rel: 'preload',
-        as: 'image',
-        href: portrait,
-        type: 'image/webp',
-        tagPriority: -200,
-        fetchpriority: 'high',
-      },
-    ],
-  }
-})
 </script>
 
 <style module>

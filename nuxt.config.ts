@@ -6,6 +6,35 @@ const rootDir = fileURLToPath(new URL('.', import.meta.url))
 const siteDescription =
   'Неофициальные гильдейские PvP-гайды по классам Black Desert Online'
 
+/** Chunks that must not land on anonymous first paint (login, editors, guide-only). */
+const DEFER_MANIFEST_CHUNKS = [
+  'SuperadminAuth',
+  'LoginFields',
+  'superadmin-auth/ui',
+  'UiConfirm',
+  'UiModal.vue',
+  'Propose',
+  'PendingSectionDrafts',
+  'ProposalSectionPreview',
+  'ClassGuidePage',
+  'VideoList',
+  'ComboChain',
+  'mdEditorSetup',
+  'md-editor-v3',
+  'UiMarkdownEditor',
+  'UiMarkdownPreview',
+  'YoutubeEmbed',
+  'markdown-it',
+  'highlight.js',
+  'screenfull',
+  'renderMarkdown',
+] as const
+
+function shouldDeferManifestChunk(file?: string, src?: string): boolean {
+  const id = `${file ?? ''} ${src ?? ''}`.toLowerCase()
+  return DEFER_MANIFEST_CHUNKS.some((chunk) => id.includes(chunk.toLowerCase()))
+}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -14,18 +43,11 @@ export default defineNuxtConfig({
   modules: ['@vite-pwa/nuxt'],
 
   hooks: {
-    // Don't prefetch click-only / editor-only chunks into anonymous page loads.
     'build:manifest'(manifest) {
       for (const item of Object.values(manifest)) {
-        const id = `${item.file ?? ''} ${item.src ?? ''}`
-        if (
-          /SuperadminAuth|LoginFields|superadmin-auth\/ui|UiConfirm|UiModal\.vue|Propose\w+Form|PendingSectionDrafts|ProposalSectionPreview|mdEditorSetup|md-editor-v3|UiMarkdownEditor|UiMarkdownPreview|YoutubeEmbed|markdown-it|highlight\.js|screenfull|renderMarkdown/i.test(
-            id,
-          )
-        ) {
-          item.prefetch = false
-          item.preload = false
-        }
+        if (!shouldDeferManifestChunk(item.file, item.src)) continue
+        item.prefetch = false
+        item.preload = false
       }
     },
   },
@@ -189,6 +211,14 @@ export default defineNuxtConfig({
           "form-action 'self'",
           "frame-ancestors 'none'",
         ].join('; '),
+      },
+    },
+  },
+
+  experimental: {
+    defaults: {
+      nuxtLink: {
+        prefetch: false,
       },
     },
   },

@@ -19,60 +19,54 @@
 
     <div v-else :class="$style.grid">
       <NuxtLink
-        v-for="(klass, index) in classes"
-        :key="klass.id"
-        :to="`/class/${klass.slug}`"
+        v-for="(bdoClass, index) in classes"
+        :key="bdoClass.id"
+        :to="`/class/${bdoClass.slug}`"
         :prefetch="false"
-        :class="[$style.card, !klass.has_content && $style.cardEmpty]"
+        :class="[$style.card, !bdoClass.has_content && $style.cardEmpty]"
       >
         <div :class="$style.media">
           <img
-            v-if="klass.portrait_url"
-            :src="klass.portrait_url"
-            :alt="klass.name_ru"
+            v-if="bdoClass.portrait_url"
+            :src="bdoClass.portrait_url"
+            :alt="bdoClass.name_ru"
             width="360"
             height="480"
-            :loading="index < EAGER_COUNT ? 'eager' : 'lazy'"
-            v-bind="
-              index === 0
-                ? { fetchpriority: 'high' }
-                : index < EAGER_COUNT
-                  ? { fetchpriority: 'low' }
-                  : {}
-            "
-            :decoding="index === 0 ? 'sync' : 'async'"
+            loading="eager"
+            :fetchpriority="index === lcpIndex ? 'high' : 'auto'"
+            :decoding="index === lcpIndex ? 'sync' : 'async'"
             :class="$style.img"
           >
           <div :class="$style.veil" />
           <span
-            v-if="pendingByClass[klass.slug]"
+            v-if="pendingByClass[bdoClass.slug]"
             :class="$style.pendingBadge"
-            :aria-label="`${pendingByClass[klass.slug]} заявок`"
+            :aria-label="`${pendingByClass[bdoClass.slug]} заявок`"
           >
-            {{ pendingByClass[klass.slug] }}
+            {{ pendingByClass[bdoClass.slug] }}
           </span>
           <div
-            v-if="klass.tier_awakening || klass.tier_succession"
+            v-if="bdoClass.tier_awakening || bdoClass.tier_succession"
             :class="$style.tiers"
           >
-            <div v-if="klass.tier_awakening" :class="$style.tierRow">
+            <div v-if="bdoClass.tier_awakening" :class="$style.tierRow">
               <span :class="$style.tierLabel">Проб.</span>
-              <ClassTierStars :tier="klass.tier_awakening" size="xs" />
+              <ClassTierStars :tier="bdoClass.tier_awakening" size="xs" />
             </div>
-            <div v-if="klass.tier_succession" :class="$style.tierRow">
+            <div v-if="bdoClass.tier_succession" :class="$style.tierRow">
               <span :class="$style.tierLabel">Насл.</span>
-              <ClassTierStars :tier="klass.tier_succession" size="xs" />
+              <ClassTierStars :tier="bdoClass.tier_succession" size="xs" />
             </div>
           </div>
         </div>
         <div :class="$style.meta">
           <ClassIcon
-            :slug="klass.slug"
-            :icon-url="klass.icon_url"
-            :label="klass.name_ru"
+            :slug="bdoClass.slug"
+            :icon-url="bdoClass.icon_url"
+            :label="bdoClass.name_ru"
             size="sm"
           />
-          <h2 :class="$style.name">{{ klass.name_ru }}</h2>
+          <h2 :class="$style.name">{{ bdoClass.name_ru }}</h2>
         </div>
       </NuxtLink>
     </div>
@@ -80,18 +74,19 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { BdoClass } from '@/entities/class/model/types'
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
 
 /**
- * First mobile row (~3) plus one spare. Non-LCP eager imgs use fetchpriority=low
- * so they do not compete with the LCP candidate on Slow-4G.
+ * Whole grid is above the fold and portraits are tiny — all eager so LCP
+ * cannot land on a lazy image. fetchpriority=high on the first filled card
+ * (dimmed empties rarely win LCP). Equal-size race may still make LH's
+ * "needs fetchpriority" checklist flaky; optimize the metric, not the checklist.
  */
-const EAGER_COUNT = 4
-
-withDefaults(
+const props = withDefaults(
   defineProps<{
     classes: BdoClass[]
     pending: boolean
@@ -104,6 +99,13 @@ withDefaults(
     emptyMessage: null,
   },
 )
+
+const lcpIndex = computed(() => {
+  const i = props.classes.findIndex(
+    (bdoClass) => bdoClass.has_content && bdoClass.portrait_url,
+  )
+  return i >= 0 ? i : 0
+})
 </script>
 
 <style module>
