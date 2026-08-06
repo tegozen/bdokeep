@@ -87,4 +87,4 @@ export function parseMorphBoardSlot(
 }
 
 /** Re-export for callers that only touch morph presets. */
-export { CRYSTAL_PRESET_IDS as MORPH_GUIDE_PRESET_IDS }
+export const MORPH_GUIDE_PRESET_IDS = CRYSTAL_PRESET_IDS

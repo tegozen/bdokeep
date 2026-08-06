@@ -406,13 +406,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  defineAsyncComponent,
-  onBeforeUnmount,
-  ref,
-  watch,
-} from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import {
   type ClassGuideBundle,
   fetchLightstoneSets,
@@ -422,12 +416,8 @@ import {
   fetchPendingForClass,
   type PendingProposal,
 } from "@/features/superadmin-auth/api/pendingProposals";
+import PendingSectionDrafts from "@/features/superadmin-auth/ui/PendingSectionDrafts.vue";
 import { ShowEmptyGuide } from "@/features/show-empty-guide";
-
-const PendingSectionDrafts = defineAsyncComponent(
-  () => import("@/features/superadmin-auth/ui/PendingSectionDrafts.vue"),
-);
-
 import {
   codexIconSrc,
   computePresetFill,
@@ -445,6 +435,7 @@ import {
   useSuperadmin,
   type GuideUiSection,
 } from "@/shared/lib";
+import UiMarkdownPreview from "@/shared/ui/UiMarkdownPreview.vue";
 import UiSkeleton from "@/shared/ui/UiSkeleton.vue";
 import { ComboChain } from "@/widgets/combo-chain";
 import { CrystalBoard } from "@/widgets/crystal-board";
@@ -452,15 +443,9 @@ import { GuideSection } from "@/widgets/guide-section";
 import { HardeningBoard } from "@/widgets/hardening-board";
 import { MorphBoard } from "@/widgets/morph-board";
 import { RelicBoard } from "@/widgets/relic-board";
+import { VideoList } from "@/widgets/video-list";
 import { useGuideBoardFills } from "../lib/useGuideBoardFills";
 
-/** Keep markdown-it / YouTube embed off the sync class-guide graph (home unused JS). */
-const UiMarkdownPreview = defineAsyncComponent(
-  () => import("@/shared/ui/UiMarkdownPreview.vue"),
-);
-const VideoList = defineAsyncComponent(
-  () => import("@/widgets/video-list/ui/VideoList.vue"),
-);
 const props = defineProps<{
   bundle: ClassGuideBundle | null;
   pending: boolean;
