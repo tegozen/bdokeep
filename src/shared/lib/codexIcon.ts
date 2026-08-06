@@ -6,6 +6,9 @@
  */
 export const CODEX_ICON_CACHE_V = '4'
 
+/** Shared prefix stripped from guide JSON to shrink SSR payload (restored in codexIconSrc). */
+export const CODEX_ITEM_ICON_PREFIX = '/codex/items/new_icon/'
+
 /** Rewrite known CDN hosts to local /codex paths (DB may still hold old URLs). */
 export function rewriteRemoteIconToLocal(url: string): string {
   let u = url.trim()
@@ -39,11 +42,16 @@ export function isLocalAppImageUrl(url: string): boolean {
 /**
  * Normalize icon URL for <img src> / API payloads.
  * bdocodex CDN → /codex/…; other remotes → null; /codex/ gets cache-bust.
+ * Accepts compact guide-payload form (`03_etc/….webp` without the shared prefix).
  */
 export function codexIconSrc(url: string | null | undefined): string | null {
   if (!url) return null
-  const trimmed = rewriteRemoteIconToLocal(url)
+  let trimmed = rewriteRemoteIconToLocal(url)
   if (!trimmed) return null
+  // Compact payload form (no leading slash) → full /codex/items/new_icon/…
+  if (!trimmed.startsWith('/') && !/^https?:\/\//i.test(trimmed) && !trimmed.startsWith('//')) {
+    trimmed = `${CODEX_ITEM_ICON_PREFIX}${trimmed}`
+  }
   if (!isLocalAppImageUrl(trimmed)) return null
   if (!trimmed.startsWith('/codex/')) return trimmed
   const base = trimmed.split('?')[0]!
@@ -55,6 +63,14 @@ export function codexIconDbPath(url: string | null | undefined): string | null {
   const src = codexIconSrc(url)
   if (!src) return null
   return src.split('?')[0] ?? null
+}
+
+/** Compact path for SSR/API JSON (drop shared /codex/items/new_icon/ prefix). */
+export function codexIconPayloadPath(url: string | null | undefined): string | null {
+  const path = codexIconDbPath(url)
+  if (!path) return null
+  if (path.startsWith(CODEX_ITEM_ICON_PREFIX)) return path.slice(CODEX_ITEM_ICON_PREFIX.length)
+  return path
 }
 
 export function withCodexIconCacheBust<T extends { icon_url?: string | null }>(
@@ -81,7 +97,11 @@ export function rewriteIconUrlsDeep<T>(value: T): T {
         (k === 'icon_url' || k === 'portrait_url') &&
         (typeof v === 'string' || v == null)
       ) {
-        out[k] = codexIconSrc(v as string | null)
+        // Compact /codex/items/new_icon/… in JSON; UI expands via codexIconSrc.
+        out[k] =
+          k === 'portrait_url'
+            ? codexIconDbPath(v as string | null)
+            : codexIconPayloadPath(v as string | null)
       } else {
         out[k] = rewriteIconUrlsDeep(v)
       }

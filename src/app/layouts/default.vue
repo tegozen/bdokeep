@@ -11,8 +11,8 @@
       </button>
     </div>
 
-    <header :class="$style.header">
-      <div :class="['mx-auto flex w-[min(100%-2rem,1920px)] flex-wrap items-center gap-x-4 gap-y-2 py-4', $style.headerInner]">
+    <header :class="[$style.header, headerClass && $style.headerClassPage]">
+      <div :class="$style.headerInner">
         <div :class="$style.left">
           <NuxtLink to="/" :class="$style.brand">
             <span :class="$style.brandMark">BDO</span>
@@ -104,7 +104,7 @@
         id="mobile-guide-nav"
         :class="[$style.mobilePanel, $style.mobileOnly]"
       >
-        <div class="mx-auto w-[min(100%-2rem,1920px)]" :class="$style.mobilePanelInner">
+        <div :class="$style.mobilePanelInner">
           <GuideModePresetTabs :preset-fill="presetFill" />
         </div>
       </div>
@@ -115,7 +115,7 @@
     </main>
 
     <footer :class="$style.footer">
-      <div class="mx-auto w-[min(100%-2rem,1920px)]" :class="$style.footerInner">
+      <div :class="$style.footerInner">
         <div :class="$style.footerCopy">
           <p :class="$style.disclaimer">
             Неофициальный фан-гайд гильдии, non-commercial. Не связан с Pearl Abyss / Black Desert.
@@ -189,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { type Component, computed, ref, shallowRef, watch } from 'vue'
+import { type Component, computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue'
 import {
   fetchClassGuideBySlug,
   updateClassTier,
@@ -206,7 +206,9 @@ import {
   useSuperadmin,
 } from '@/shared/lib'
 import GuideModePresetTabs from './GuideModePresetTabs.vue'
-import HomeClassFilters from './HomeClassFilters.vue'
+
+/** Home-only — keep filter CSS off /class/* critical CSS. */
+const HomeClassFilters = defineAsyncComponent(() => import('./HomeClassFilters.vue'))
 
 /** Loaded on demand — avoid shipping auth CSS on anonymous home Lighthouse runs. */
 const SuperadminAuth = shallowRef<Component | null>(null)
@@ -366,9 +368,13 @@ watch(headerClass, (v) => {
   if (!v) mobileNavOpen.value = false
 })
 
+// SSR + first client paint: include compact auth chrome when session already known
+// (loading it only in onMounted grew the sticky header → CLS on main).
+if (isSuperadmin.value) {
+  await ensureAuthUi()
+}
+
 onMounted(async () => {
-  // Session is resolved in plugins/superadmin-session.ts before pages paint.
-  if (isSuperadmin.value) await ensureAuthUi()
   await refreshPending()
 })
 
@@ -422,8 +428,21 @@ watch(isSuperadmin, (ok) => {
   background: linear-gradient(180deg, rgba(10, 11, 16, 0.95), rgba(10, 11, 16, 0.7));
 }
 
+/* Stable sticky row height on class pages (tabs + actions). */
+.headerClassPage .headerInner {
+  min-height: 2.75rem;
+}
+
 .headerInner {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
+  gap: 0.5rem 1rem;
+  width: min(calc(100% - 2rem), 1920px);
+  margin-inline: auto;
+  padding-block: 1rem;
 }
 
 .left {
@@ -490,6 +509,8 @@ watch(isSuperadmin, (ok) => {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  width: min(calc(100% - 2rem), 1920px);
+  margin-inline: auto;
 }
 
 .mobilePanelInner :global([class*='modeFilters']) {
@@ -615,6 +636,8 @@ watch(isSuperadmin, (ok) => {
   align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
+  width: min(calc(100% - 2rem), 1920px);
+  margin-inline: auto;
 }
 
 .footerCopy {

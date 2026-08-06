@@ -36,7 +36,8 @@
 import { computed } from 'vue'
 import type { ClassVideo } from '@/entities/class'
 import { isPlaceholderVideoTitle, sanitizeYoutubeUrl } from '@/shared/lib'
-import { UiEmptyState, YoutubeEmbed } from '@/shared/ui'
+import { UiEmptyState } from '@/shared/ui'
+import YoutubeEmbed from '@/shared/ui/YoutubeEmbed.vue'
 
 const props = defineProps<{
   videos: ClassVideo[]

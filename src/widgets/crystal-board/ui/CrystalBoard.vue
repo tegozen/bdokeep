@@ -6,12 +6,11 @@
     <div :class="$style.stack">
       <div :class="$style.canvas">
         <div :class="$style.sigil" aria-hidden="true" />
-        <div :class="$style.board" role="list">
+        <div :class="$style.board" role="group" aria-label="Кристаллы">
           <button
             v-for="slot in boardSlots"
             :key="slot.id"
             type="button"
-            role="listitem"
             :class="[
               $style.cell,
               $style[`kind_${slot.kind}`],
@@ -45,12 +44,11 @@
         </div>
       </div>
 
-      <div :class="$style.dawnCanvas" role="list" aria-label="Слоты рассвета">
+      <div :class="$style.dawnCanvas" role="group" aria-label="Слоты рассвета">
         <button
           v-for="slot in dawnSlots"
           :key="slot.id"
           type="button"
-          role="listitem"
           :class="[
             $style.cell,
             $style.kind_dawn,

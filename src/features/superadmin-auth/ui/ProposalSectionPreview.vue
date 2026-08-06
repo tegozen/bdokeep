@@ -173,7 +173,8 @@ import {
   type CrystalPresetId,
   type GuideSpecMode,
 } from '@/shared/lib'
-import { UiMarkdownPreview, UiPresetTabs } from '@/shared/ui'
+import { UiPresetTabs } from '@/shared/ui'
+import UiMarkdownPreview from '@/shared/ui/UiMarkdownPreview.vue'
 import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard } from '@/widgets/crystal-board'
 import { MorphBoard } from '@/widgets/morph-board'

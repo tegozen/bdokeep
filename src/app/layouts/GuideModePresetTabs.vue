@@ -31,7 +31,7 @@ import {
   type GuideSpecMode,
   type PresetFillMap,
 } from '@/shared/lib'
-import { UiPresetTabs } from '@/shared/ui'
+import UiPresetTabs from '@/shared/ui/UiPresetTabs.vue'
 
 withDefaults(
   defineProps<{

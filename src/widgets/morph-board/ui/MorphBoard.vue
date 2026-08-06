@@ -53,6 +53,14 @@
             ]"
             :disabled="!interactive"
             :title="fx.label || undefined"
+            :aria-label="
+              fx.label
+                || (interactive && filled[level]?.skill
+                  ? 'Выберите эффект'
+                  : interactive
+                    ? 'Сначала скилл'
+                    : `Пустой эффект ур. ${level}`)
+            "
             @click="onSelect(fx.id)"
           >
             <span :class="$style.effectText">

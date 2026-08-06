@@ -17,7 +17,7 @@
       {{ emptyMessage }}
     </div>
 
-    <div v-else :class="[$style.grid, $style.fade]">
+    <div v-else :class="$style.grid">
       <NuxtLink
         v-for="(klass, index) in classes"
         :key="klass.id"
@@ -33,8 +33,14 @@
             width="360"
             height="480"
             :loading="index < EAGER_COUNT ? 'eager' : 'lazy'"
-            :fetchpriority="index === 0 ? 'high' : undefined"
-            decoding="async"
+            v-bind="
+              index === 0
+                ? { fetchpriority: 'high' }
+                : index < EAGER_COUNT
+                  ? { fetchpriority: 'low' }
+                  : {}
+            "
+            :decoding="index === 0 ? 'sync' : 'async'"
             :class="$style.img"
           >
           <div :class="$style.veil" />
@@ -79,8 +85,11 @@ import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
 
-/** First row only — avoid competing with the LCP image. */
-const EAGER_COUNT = 2
+/**
+ * First mobile row (~3) plus one spare. Non-LCP eager imgs use fetchpriority=low
+ * so they do not compete with the LCP candidate on Slow-4G.
+ */
+const EAGER_COUNT = 4
 
 withDefaults(
   defineProps<{

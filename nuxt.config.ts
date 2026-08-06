@@ -19,7 +19,7 @@ export default defineNuxtConfig({
       for (const item of Object.values(manifest)) {
         const id = `${item.file ?? ''} ${item.src ?? ''}`
         if (
-          /SuperadminAuth|LoginFields|superadmin-auth\/ui|UiConfirm|UiModal\.vue|Propose\w+Form|PendingSectionDrafts|mdEditorSetup|md-editor-v3|UiMarkdownEditor|highlight\.js|screenfull/i.test(
+          /SuperadminAuth|LoginFields|superadmin-auth\/ui|UiConfirm|UiModal\.vue|Propose\w+Form|PendingSectionDrafts|ProposalSectionPreview|mdEditorSetup|md-editor-v3|UiMarkdownEditor|UiMarkdownPreview|YoutubeEmbed|markdown-it|highlight\.js|screenfull|renderMarkdown/i.test(
             id,
           )
         ) {
@@ -49,6 +49,10 @@ export default defineNuxtConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      // One stylesheet instead of many per-SFC chunks (Lighthouse render-blocking).
+      cssCodeSplit: false,
+    },
   },
 
   runtimeConfig: {
@@ -134,30 +138,36 @@ export default defineNuxtConfig({
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     },
+    '/fonts/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, stale-while-revalidate=86400',
+      },
+    },
     '/classes/**': {
       headers: {
-        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+        // Committed art; rare changes. Lighthouse wants ≥30d for static icons.
+        'Cache-Control': 'public, max-age=31536000, stale-while-revalidate=86400',
       },
     },
     '/codex/**': {
       headers: {
-        // Keep modest — long max-age on 404s poisoned browsers when icons were missing.
-        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+        // 200s: long TTL OK — UI busts via ?v= (CODEX_ICON_CACHE_V). 404s → no-store (codexCacheHeaders).
+        'Cache-Control': 'public, max-age=31536000, stale-while-revalidate=86400',
       },
     },
     '/android-chrome-*.png': {
       headers: {
-        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+        'Cache-Control': 'public, max-age=31536000, stale-while-revalidate=86400',
       },
     },
     '/favicon*': {
       headers: {
-        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+        'Cache-Control': 'public, max-age=31536000, stale-while-revalidate=86400',
       },
     },
     '/apple-touch-icon.png': {
       headers: {
-        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400',
+        'Cache-Control': 'public, max-age=31536000, stale-while-revalidate=86400',
       },
     },
     '/**': {
@@ -205,8 +215,6 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-title', content: 'BDO Keep' },
       ],
       link: [
-        // Single manifest link (NuxtPwaManifest does not inject when virtual:pwa-info has no webManifest on SSR).
-        { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },

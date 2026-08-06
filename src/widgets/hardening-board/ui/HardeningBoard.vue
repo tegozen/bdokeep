@@ -11,14 +11,13 @@
     <div
       v-if="!listOnly"
       :class="$style.slots"
-      role="list"
+      role="group"
       aria-label="Активные камни закалки"
     >
       <button
         v-for="slot in slots"
         :key="slot.id"
         type="button"
-        role="listitem"
         :class="[
           $style.slot,
           selectedId === slot.id && $style.selected,

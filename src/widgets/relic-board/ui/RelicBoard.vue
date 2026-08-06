@@ -1,11 +1,10 @@
 <template>
   <div :class="[$style.wrap, interactive && $style.interactive]">
-    <div :class="$style.relics" role="list" aria-label="Реликвии">
+    <div :class="$style.relics" role="group" aria-label="Реликвии">
       <button
         v-for="panel in panels"
         :key="panel.relic"
         type="button"
-        role="listitem"
         :class="[
           $style.relicSlot,
           selectedId === panel.relic && $style.selected,

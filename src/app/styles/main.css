@@ -1,10 +1,7 @@
-@import "@fontsource/cinzel/700.css";
-@import "@fontsource/source-sans-3/400.css";
-@import "@fontsource/source-sans-3/600.css";
-@import "@fontsource/source-sans-3/700.css";
 @import "tailwindcss";
 
 @theme {
+  /* Theme tokens consumed by utilities / CSS vars. */
   --color-bg-deep: #07080c;
   --color-bg: #0e1016;
   --color-bg-elevated: #161922;
@@ -19,14 +16,16 @@
   --color-muted: #9a9386;
   --color-danger: #c45c5c;
 
+  /* Fallbacks paint immediately; webfonts load async (fonts.client.ts). */
   --font-display: "Cinzel", "Times New Roman", serif;
-  --font-sans: "Source Sans 3", "Segoe UI", sans-serif;
+  --font-sans: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
 
   --shadow-glow: 0 0 40px rgba(212, 175, 98, 0.08);
 
   --animate-shimmer: shimmer 1.4s ease-in-out infinite;
   --animate-fade-in: fade-in 320ms ease both;
 }
+
 
 @keyframes shimmer {
   0% {
@@ -81,7 +80,15 @@
   }
 
   body {
-    @apply m-0 min-h-screen bg-bg font-sans text-base leading-relaxed text-ink antialiased;
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    font-family: var(--font-sans);
+    font-size: var(--text-base, 1rem);
+    line-height: 1.625;
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -10%, rgba(139, 58, 58, 0.18), transparent 55%),
@@ -91,21 +98,28 @@
   }
 
   a {
-    @apply text-gold no-underline transition-colors duration-200;
+    color: var(--color-gold);
+    text-decoration: none;
+    transition: color 200ms ease;
   }
 
   a:hover {
-    @apply text-gold-soft;
+    color: var(--color-gold-soft);
   }
 
   img {
-    @apply block max-w-full;
+    display: block;
+    max-width: 100%;
   }
 
   h1,
   h2,
   h3 {
-    @apply mb-2 font-display font-bold tracking-wide text-gold;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    color: var(--color-gold);
   }
 
   html.modal-open,

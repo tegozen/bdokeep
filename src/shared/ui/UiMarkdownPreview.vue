@@ -6,9 +6,8 @@
 </template>
 
 <script setup lang="ts">
-import MarkdownIt from 'markdown-it'
 import { computed, useAttrs } from 'vue'
-import filterXSS from 'xss'
+import { renderMarkdown } from '@/shared/lib/renderMarkdown'
 
 defineOptions({ inheritAttrs: false })
 
@@ -25,51 +24,8 @@ const props = withDefaults(
 
 const attrs = useAttrs()
 
-const md = new MarkdownIt({
-  html: false,
-  linkify: true,
-  breaks: true,
-})
-
-const html = computed(() => {
-  const raw = props.modelValue ?? ''
-  if (!raw.trim()) return ''
-  // markdown-it with html:false + xss whitelist — defense in depth (server also sanitizes).
-  return filterXSS(md.render(raw), {
-    whiteList: {
-      a: ['href', 'title', 'target', 'rel'],
-      p: [],
-      br: [],
-      strong: [],
-      b: [],
-      em: [],
-      i: [],
-      del: [],
-      s: [],
-      code: [],
-      pre: [],
-      blockquote: [],
-      ul: [],
-      ol: [],
-      li: [],
-      h1: [],
-      h2: [],
-      h3: [],
-      h4: [],
-      h5: [],
-      h6: [],
-      hr: [],
-      table: [],
-      thead: [],
-      tbody: [],
-      tr: [],
-      th: [],
-      td: [],
-    },
-    stripIgnoreTag: true,
-    stripIgnoreTagBody: ['script', 'style'],
-  })
-})
+// Sync on server + client — async paint left SSR HTML vs empty client v-html (hydration mismatch).
+const html = computed(() => renderMarkdown(props.modelValue ?? ''))
 </script>
 
 <style module>

@@ -65,10 +65,12 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Автоснятие «залипших» видео без превью (>48ч) — approved-заявка с автором `cron`
 - Отклонять заявки с копипастом чужих гайдов целиком
 
-### PWA / оболочка
+### PWA / оболочка / перф
 
 - Установка как приложение (`@vite-pwa/nuxt`); баннер при новой версии SW
-- Шрифты self-hosted (`@fontsource/cinzel`, `@fontsource/source-sans-3`)
+- Шрифты self-hosted в `public/fonts/` (после first paint, `font-display: optional`)
+- Один CSS-бандл; подключение без блокировки first paint; gzip HTML/JSON в Nitro (`NITRO_COMPRESS=0`, если уже жмёт nginx)
+- Портреты на главной: opaque WebP без alpha, LCP — `fetchpriority=high` + без lazy у первого ряда
 
 ### Ops / безопасность
 
@@ -136,6 +138,7 @@ SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты н
 - обновления каталогов (030+)
 
 Картинки классов: `public/classes/<slug>/{portrait-card-360.webp,icon.svg}` — © Pearl Abyss (см. `public/classes/README.md`).
+Портреты — opaque WebP на фоне `#07080c` (без alpha), уже пережаты под карточки главной.
 Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При `up` migrate сам переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
 
 На чистом сервере достаточно `docker compose up -d --build`: SQL-сиды и картинки уже в репо.
@@ -161,7 +164,7 @@ location / {
 }
 ```
 
-Приложение само умеет gzip HTML/JSON (Nitro-плагин). Если gzip уже на nginx — поставь `NITRO_COMPRESS=0` в `.env`, чтобы не сжимать дважды.
+Приложение само умеет gzip HTML/JSON через `beforeResponse`. Если gzip уже на nginx — поставь `NITRO_COMPRESS=0` в `.env`, чтобы не сжимать дважды.
 
 ## Дисклеймер и лицензии
 
