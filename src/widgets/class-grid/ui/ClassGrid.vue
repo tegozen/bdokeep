@@ -55,7 +55,7 @@
               :class="$style.tierRow"
             >
               <span :class="$style.tierLabel">{{ row.label }}</span>
-              <ClassTierStars :tier="row.tier" size="xs" />
+              <ClassTierStars :tier="row.tier" size="xs" compact />
             </div>
           </div>
         </div>

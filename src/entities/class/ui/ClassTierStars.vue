@@ -4,6 +4,7 @@
       $style.root,
       size === 'xs' && $style.xs,
       size === 'sm' && $style.sm,
+      compact && $style.compact,
       editable && $style.editable,
       saving && $style.saving,
     ]"
@@ -36,6 +37,21 @@
         </svg>
       </button>
     </template>
+    <template v-else-if="filled && compact">
+      <span :class="$style.score" aria-hidden="true">{{ filled }}</span>
+      <span :class="[$style.star, $style.on]" aria-hidden="true">
+        <svg
+          :class="$style.icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M12 3.2l2.35 5.55 6.05.55-4.6 4.05 1.4 5.95L12 16.2l-5.2 3.1 1.4-5.95-4.6-4.05 6.05-.55L12 3.2z"
+          />
+        </svg>
+      </span>
+    </template>
     <template v-else-if="filled">
       <span
         v-for="n in filled"
@@ -67,12 +83,15 @@ const props = withDefaults(
     editable?: boolean
     saving?: boolean
     size?: 'xs' | 'sm' | 'md'
+    /** Read-only: show `N★` instead of a row of stars (class grid). */
+    compact?: boolean
   }>(),
   {
     tier: null,
     editable: false,
     saving: false,
     size: 'md',
+    compact: false,
   },
 )
 
@@ -108,6 +127,22 @@ function onPick(n: number) {
 
 .xs {
   gap: 0.06rem;
+}
+
+.compact {
+  gap: 0.12rem;
+}
+
+.score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-gold);
+}
+
+.xs.compact .score {
+  font-size: 0.62rem;
 }
 
 .xs .icon {
