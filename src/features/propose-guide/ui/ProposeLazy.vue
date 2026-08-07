@@ -1,6 +1,6 @@
 <template>
   <UiButton
-    v-if="!Comp"
+    v-if="!Comp && online"
     type="button"
     :disabled="loading"
     @click="activate"
@@ -9,7 +9,7 @@
   </UiButton>
   <component
     :is="Comp"
-    v-else
+    v-else-if="Comp"
     ref="formRef"
     v-bind="formProps"
     :trigger-label="triggerLabel"
@@ -18,6 +18,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, shallowRef, type Component } from 'vue'
+import { useOnlineStatus } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 type Openable = { openModal: () => void }
@@ -39,9 +40,10 @@ const props = withDefaults(
 const Comp = shallowRef<Component | null>(null)
 const formRef = ref<Openable | null>(null)
 const loading = ref(false)
+const { online } = useOnlineStatus()
 
 async function activate() {
-  if (loading.value) return
+  if (loading.value || !online.value) return
   loading.value = true
   try {
     if (!Comp.value) {

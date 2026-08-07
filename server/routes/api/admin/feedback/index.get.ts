@@ -1,5 +1,6 @@
 export default defineEventHandler(async (event) => {
   requireAdmin(event)
+  setResponseHeader(event, 'Cache-Control', 'private, no-store')
   const query = getQuery(event)
   const classSlug =
     typeof query.class_slug === 'string' ? query.class_slug.trim().toLowerCase() : ''

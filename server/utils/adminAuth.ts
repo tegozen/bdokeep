@@ -106,6 +106,17 @@ export function isAdminSession(event: Parameters<typeof getCookie>[0]): boolean 
   return Boolean(token && parseToken(token).ok)
 }
 
+/** Session meta for clients (expiresAt is HMAC-validated). No token leaked. */
+export function getAdminSessionMeta(
+  event: Parameters<typeof getCookie>[0],
+): { ok: false } | { ok: true; expiresAt: number } {
+  const token = getCookie(event, COOKIE_NAME)
+  if (!token) return { ok: false }
+  const parsed = parseToken(token)
+  if (!parsed.ok || parsed.exp == null) return { ok: false }
+  return { ok: true, expiresAt: parsed.exp }
+}
+
 /**
  * Constant-time password check via scrypt digests (fixed 32-byte compare).
  * Avoids length short-circuit on the plaintext password.

@@ -68,6 +68,9 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 ### PWA / оболочка / перф
 
 - Установка как приложение (`@vite-pwa/nuxt`); баннер при новой версии SW
+- Offline-чтение уже посещённых `/`, `/class/:slug`, `/admin/proposals`, `/admin/feedback` (HTML/API — NetworkFirst; иконки `/classes`/`/codex`/превью YT — CacheFirst)
+- На главной офлайн видны только классы с закэшированным гайдом; «Предложить» и «Обратная связь» скрыты; тост при смене сети
+- Админ-кэш заявок/ОС сбрасывается при logout и истечении cookie `bdo_admin`
 - Один CSS-бандл (stylesheet); gzip HTML/JSON в Nitro (`NITRO_COMPRESS=0`, если уже жмёт nginx)
 - Системные шрифты (`system-ui` / Segoe UI / Roboto) — без webfonts, без CLS от подмены гарнитуры
 - Портреты на главной: opaque WebP без alpha, LCP — `fetchpriority=high` + без lazy у первого ряда

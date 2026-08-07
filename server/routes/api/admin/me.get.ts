@@ -1,3 +1,4 @@
 export default defineEventHandler((event) => {
-  return { ok: isAdminSession(event) }
+  setResponseHeader(event, 'Cache-Control', 'private, no-store')
+  return getAdminSessionMeta(event)
 })

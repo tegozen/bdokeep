@@ -1,6 +1,6 @@
 <template>
   <div :class="$style.wrap">
-    <UiButton type="button" @click="open = true">
+    <UiButton v-if="online" type="button" @click="open = true">
       {{ triggerLabel }}
     </UiButton>
 
@@ -81,6 +81,7 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue'
+import { useOnlineStatus } from '@/shared/lib'
 import { UiButton, UiModal, type UiModalSize } from '@/shared/ui'
 
 const SuperadminAuth = defineAsyncComponent(
@@ -122,6 +123,8 @@ const emit = defineEmits<{
 const open = defineModel<boolean>('open', { required: true })
 const honeypot = defineModel<string>('honeypot', { required: true })
 const author = defineModel<string>('author', { required: true })
+
+const { online } = useOnlineStatus()
 </script>
 
 <style module>

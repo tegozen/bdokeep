@@ -181,7 +181,7 @@ type Proposal = {
 
 const route = useRoute()
 const router = useRouter()
-const { isSuperadmin } = useSuperadmin()
+const { isSuperadmin, refresh, loseSession } = useSuperadmin()
 const { alert, confirm } = useConfirm()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 
@@ -266,13 +266,8 @@ function formatDate(iso: string) {
 }
 
 async function checkMe() {
-  try {
-    const res = await $fetch<{ ok: boolean }>('/api/admin/me')
-    authed.value = Boolean(res.ok)
-    isSuperadmin.value = authed.value
-  } catch {
-    authed.value = false
-  }
+  await refresh()
+  authed.value = isSuperadmin.value
 }
 
 async function login() {
@@ -281,8 +276,8 @@ async function login() {
   try {
     await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
     password.value = ''
-    authed.value = true
-    isSuperadmin.value = true
+    await refresh()
+    authed.value = isSuperadmin.value
     await refreshPendingSummary()
     await load()
   } catch {
@@ -308,7 +303,7 @@ async function load() {
         : 0
     if (code === 401) {
       authed.value = false
-      isSuperadmin.value = false
+      await loseSession()
     }
     items.value = []
   } finally {

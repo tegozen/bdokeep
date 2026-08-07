@@ -45,6 +45,9 @@ export { usePendingSummary } from './usePendingSummary'
 export { useConfirm, type ConfirmOptions, type AlertOptions } from './useConfirm'
 export { useModalEscape } from './useModalEscape'
 export { useUnsavedGuard } from './useUnsavedGuard'
+export { useOnlineStatus, type UseOnlineStatus } from './useOnlineStatus'
+export { clearAdminOfflineCaches, ADMIN_OFFLINE_CACHE_NAMES } from './clearAdminOfflineCaches'
+export { listCachedGuideSlugs } from './listCachedGuideSlugs'
 export {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_BOARD_SLOTS,

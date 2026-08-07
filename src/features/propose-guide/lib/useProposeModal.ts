@@ -1,5 +1,5 @@
 import { computed, nextTick, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
-import { useSuperadmin, useUnsavedGuard } from '@/shared/lib'
+import { useOnlineStatus, useSuperadmin, useUnsavedGuard } from '@/shared/lib'
 import { parseSubmitError } from './parseSubmitError'
 import { refreshGuideAfterApprove } from './refreshGuideAfterApprove'
 
@@ -24,6 +24,7 @@ export function useProposeModal(opts: {
   const baseline = ref('')
 
   const { isSuperadmin, refresh: refreshAdmin } = useSuperadmin()
+  const { online } = useOnlineStatus()
 
   function fullSerialize() {
     return JSON.stringify({
@@ -77,6 +78,10 @@ export function useProposeModal(opts: {
     fn: () => Promise<ProposeSubmitResult | null>,
   ): Promise<void> {
     formError.value = ''
+    if (!online.value) {
+      formError.value = 'Нет сети — отправка недоступна'
+      return
+    }
     if (!isSuperadmin.value && !author.value.trim()) {
       formError.value = 'Укажите игровой ник'
       return

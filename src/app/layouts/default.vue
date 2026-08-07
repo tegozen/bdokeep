@@ -44,6 +44,7 @@
         </div>
         <div :class="$style.auth">
           <button
+            v-if="online"
             type="button"
             :class="$style.proposals"
             :title="
@@ -165,6 +166,11 @@
       :class-slug="headerClass?.slug"
       @close="classFeedbackOpen = false"
     />
+    <component
+      :is="UiToast"
+      v-if="UiToast"
+      :message="connectivityToast"
+    />
   </div>
 </template>
 
@@ -182,6 +188,7 @@ import {
   useGuideSpecMode,
   useHeaderClass,
   useHeaderPresetFill,
+  useOnlineStatus,
   usePendingSummary,
   useSuperadmin,
 } from '@/shared/lib'
@@ -193,11 +200,15 @@ const HomeClassFilters = defineAsyncComponent(() => import('./HomeClassFilters.v
 /** Loaded on demand — avoid shipping auth CSS on anonymous home Lighthouse runs. */
 const SuperadminAuth = shallowRef<Component | null>(null)
 const UiConfirm = shallowRef<Component | null>(null)
+const UiToast = shallowRef<Component | null>(null)
 const ChatMacroGuideModal = shallowRef<Component | null>(null)
 const chatMacroGuideOpen = ref(false)
 const ClassFeedbackModal = shallowRef<Component | null>(null)
 const classFeedbackOpen = ref(false)
+const connectivityToast = ref('')
 const { request: confirmRequest } = useConfirm()
+const { online } = useOnlineStatus()
+const connectivityToastReady = ref(false)
 
 watch(
   confirmRequest,
@@ -207,6 +218,15 @@ watch(
   },
   { flush: 'sync' },
 )
+
+watch(online, async (isOnline) => {
+  if (!import.meta.client || !connectivityToastReady.value) return
+  const msg = isOnline ? 'Сеть снова доступна' : 'Нет сети'
+  // Retrigger toast even if the same string was shown earlier.
+  connectivityToast.value = ''
+  await nextTick()
+  connectivityToast.value = msg
+})
 
 async function openChatMacroGuide() {
   if (!ChatMacroGuideModal.value) {
@@ -218,6 +238,7 @@ async function openChatMacroGuide() {
 }
 
 async function openClassFeedback() {
+  if (!online.value) return
   if (!ClassFeedbackModal.value) {
     ClassFeedbackModal.value = (
       await import('@/features/class-feedback/ui/ClassFeedbackModal.vue')
@@ -350,6 +371,11 @@ if (isSuperadmin.value) {
 }
 
 onMounted(async () => {
+  if (!UiToast.value) {
+    UiToast.value = (await import('@/shared/ui/UiToast.vue')).default
+  }
+  // Announce connectivity only after mount — skip hydration baseline.
+  connectivityToastReady.value = true
   await refreshPending()
 })
 

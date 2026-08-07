@@ -11,10 +11,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { fetchPublishedClasses } from '@/entities/class/api/classApi'
 import type { BdoClass } from '@/entities/class/model/types'
-import { useHomeClassFilters, usePendingSummary, useSuperadmin } from '@/shared/lib'
+import {
+  listCachedGuideSlugs,
+  useHomeClassFilters,
+  useOnlineStatus,
+  usePendingSummary,
+  useSuperadmin,
+} from '@/shared/lib'
 import { ClassGrid } from '@/widgets/class-grid'
 
 const { data: classes, pending, error } = await useAsyncData('classes', () => fetchPublishedClasses(), {
@@ -25,6 +31,25 @@ const { data: classes, pending, error } = await useAsyncData('classes', () => fe
 const { isSuperadmin } = useSuperadmin()
 const { summary, refresh: refreshPending } = usePendingSummary()
 const { tierMin, hideEmpty } = useHomeClassFilters()
+const { online } = useOnlineStatus()
+
+const cachedGuideSlugs = ref<Set<string>>(new Set())
+
+async function refreshCachedSlugs() {
+  if (!import.meta.client || online.value) {
+    cachedGuideSlugs.value = new Set()
+    return
+  }
+  cachedGuideSlugs.value = await listCachedGuideSlugs()
+}
+
+watch(
+  online,
+  () => {
+    void refreshCachedSlugs()
+  },
+  { immediate: true },
+)
 
 const pendingByClass = computed(() =>
   isSuperadmin.value ? summary.value.byClass : {},
@@ -40,8 +65,9 @@ const filteredClasses = computed(() => {
   const list = classes.value ?? []
   return list.filter((bdoClass) => {
     if (hideEmpty.value && !bdoClass.has_content) return false
-    if (tierMin.value === 0) return true
-    return classTierMax(bdoClass) >= tierMin.value
+    if (tierMin.value !== 0 && classTierMax(bdoClass) < tierMin.value) return false
+    if (!online.value && !cachedGuideSlugs.value.has(bdoClass.slug)) return false
+    return true
   })
 })
 
@@ -49,6 +75,7 @@ const emptyFilterMessage = computed(() => {
   if (pending.value || error.value) return null
   if ((classes.value?.length ?? 0) === 0) return null
   if (filteredClasses.value.length > 0) return null
+  if (!online.value) return 'Нет сохранённых классов для просмотра офлайн'
   return 'Нет классов по выбранному фильтру'
 })
 

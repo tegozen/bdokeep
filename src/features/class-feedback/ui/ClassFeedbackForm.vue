@@ -25,6 +25,10 @@ const placeholder = computed(() =>
 
 async function onSubmit() {
   formError.value = ''
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    formError.value = 'Нет сети — отправка недоступна'
+    return
+  }
   const text = body.value.trim()
   if (!text) {
     formError.value = 'Введите сообщение'

@@ -145,6 +145,132 @@ export default defineNuxtConfig({
       // Shell only — skip large class portraits under public/classes/
       globPatterns: ['**/*.{js,css,ico,woff,woff2}', 'android-chrome-*.png', 'favicon*.png', 'apple-touch-icon.png', 'favicon.svg'],
       globIgnores: ['**/classes/**', '**/codex/**'],
+      runtimeCaching: [
+        {
+          urlPattern: ({ request, url }) => {
+            if (request.mode !== 'navigate') return false
+            const p = url.pathname
+            return p === '/' || p.startsWith('/class/')
+          },
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'pages',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 20, maxAgeSeconds: 7 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          urlPattern: ({ request, url }) =>
+            request.method === 'GET' && url.pathname === '/api/classes',
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-classes',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 1, maxAgeSeconds: 7 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          urlPattern: ({ request, url }) =>
+            request.method === 'GET' &&
+            /^\/api\/classes\/[^/]+\/guide$/.test(url.pathname),
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-guides',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 40, maxAgeSeconds: 7 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          urlPattern: ({ request, url }) =>
+            request.method === 'GET' && url.pathname === '/api/catalog/lightstone-sets',
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-catalog',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 1, maxAgeSeconds: 7 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          urlPattern: ({ request, url }) =>
+            request.method === 'GET' &&
+            (url.pathname.startsWith('/classes/') || url.pathname.startsWith('/codex/')),
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'static-media',
+            expiration: { maxEntries: 800, maxAgeSeconds: 30 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          urlPattern: ({ request, url }) =>
+            request.method === 'GET' && url.pathname.startsWith('/api/youtube/thumb/'),
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'yt-thumbs',
+            expiration: { maxEntries: 80, maxAgeSeconds: 7 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          // Cookie gate: only serve/cache admin HTML while bdo_admin exp is in the future.
+          urlPattern: ({ request, url }) => {
+            if (request.mode !== 'navigate') return false
+            const p = url.pathname
+            if (p !== '/admin/proposals' && p !== '/admin/feedback') return false
+            const raw = request.headers.get('cookie') || ''
+            const m = raw.match(/(?:^|;\s*)bdo_admin=([^;]+)/)
+            if (!m) return false
+            let token = m[1]
+            try {
+              token = decodeURIComponent(token)
+            } catch {
+              /* keep raw */
+            }
+            const parts = token.split('.')
+            if (parts.length !== 3 || parts[0] !== 'admin') return false
+            const exp = Number(parts[1])
+            return Number.isFinite(exp) && exp > Date.now()
+          },
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'admin-pages',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 10, maxAgeSeconds: 7 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+        {
+          urlPattern: ({ request, url }) => {
+            if (request.method !== 'GET') return false
+            const p = url.pathname
+            if (p !== '/api/admin/proposals' && p !== '/api/admin/feedback') return false
+            const raw = request.headers.get('cookie') || ''
+            const m = raw.match(/(?:^|;\s*)bdo_admin=([^;]+)/)
+            if (!m) return false
+            let token = m[1]
+            try {
+              token = decodeURIComponent(token)
+            } catch {
+              /* keep raw */
+            }
+            const parts = token.split('.')
+            if (parts.length !== 3 || parts[0] !== 'admin') return false
+            const exp = Number(parts[1])
+            return Number.isFinite(exp) && exp > Date.now()
+          },
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'admin-api',
+            networkTimeoutSeconds: 3,
+            expiration: { maxEntries: 20, maxAgeSeconds: 7 * 86400 },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+      ],
     },
     client: {
       registerPlugin: true,
