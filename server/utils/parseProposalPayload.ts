@@ -17,6 +17,7 @@ import {
   UUID_RE,
   comboModeFromSection,
   isBuffsSection,
+  isComboKindId,
   isComboSection,
   isCrystalPresetId,
   isCrystalSlotId,
@@ -133,6 +134,11 @@ export async function parseAndValidatePayload(
 
   if (isComboSection(section)) {
     const mode = comboModeFromSection(section)
+    const rawKind = body.kind == null ? 'pvp' : String(body.kind)
+    if (!isComboKindId(rawKind)) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный тип комбы' })
+    }
+    const kind = rawKind
 
     type RawCombo = { title?: unknown; notes?: unknown; skill_ids?: unknown }
     let rawCombos: RawCombo[] = []
@@ -209,13 +215,13 @@ export async function parseAndValidatePayload(
 
     if (!combos.length) {
       if (skipUnknown) {
-        // Stale combo — approve as empty replace for this mode.
-        return { payload: { mode, combos: [] }, verifiedVideos: null }
+        // Stale combo — approve as empty replace for this mode+kind.
+        return { payload: { mode, kind, combos: [] }, verifiedVideos: null }
       }
       throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один скилл' })
     }
 
-    return { payload: { mode, combos }, verifiedVideos: null }
+    return { payload: { mode, kind, combos }, verifiedVideos: null }
   }
 
   if (isBuffsSection(section)) {

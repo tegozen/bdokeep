@@ -35,8 +35,10 @@ watch(
         slug: b.class.slug,
         name_ru: b.class.name_ru,
         icon_url: b.class.icon_url,
-        tier_awakening: b.class.tier_awakening ?? null,
-        tier_succession: b.class.tier_succession ?? null,
+        tier_pvp_awakening: b.class.tier_pvp_awakening ?? null,
+        tier_pvp_succession: b.class.tier_pvp_succession ?? null,
+        tier_pve_awakening: b.class.tier_pve_awakening ?? null,
+        tier_pve_succession: b.class.tier_pve_succession ?? null,
       }
     } else {
       headerClass.value = null

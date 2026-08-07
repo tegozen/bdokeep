@@ -5,10 +5,13 @@ import { isMorphPresetId, morphGuidePreset } from './morphPresets'
 export type PresetFillMap = Record<CrystalPresetId, boolean>
 
 export function emptyPresetFill(): PresetFillMap {
-  return { t1: false, t2: false, besp: false, sub: false }
+  const out = {} as PresetFillMap
+  for (const id of CRYSTAL_PRESET_IDS) out[id] = false
+  return out
 }
 
-/** Whether a guide preset has any filled crystals / relics / lightstones / hardening / buffs / morphs. */
+/** Whether a guide preset has any filled crystals / relics / lightstones / hardening / buffs / morphs.
+ * Combos: only the ПВЕ tab lights from `kind=pve` chains (PvP combos are shared across gear presets). */
 export function computePresetFill(bundle: ClassGuideBundle | null | undefined): PresetFillMap {
   const out = emptyPresetFill()
   if (!bundle) return out
@@ -34,8 +37,17 @@ export function computePresetFill(bundle: ClassGuideBundle | null | undefined): 
       if (!row.skills || !isMorphPresetId(preset)) return false
       return morphGuidePreset(preset) === id
     })
+    const hasCombo =
+      id === 'pve' &&
+      bundle.combos.some((c) => (c.kind || 'pvp') === 'pve' && c.steps?.length)
     out[id] =
-      hasCrystal || hasRelic || hasLightstone || hasHardening || hasBuff || hasMorph
+      hasCrystal ||
+      hasRelic ||
+      hasLightstone ||
+      hasHardening ||
+      hasBuff ||
+      hasMorph ||
+      hasCombo
   }
 
   return out

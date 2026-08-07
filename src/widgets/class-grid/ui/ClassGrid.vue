@@ -46,16 +46,16 @@
             {{ pendingByClass[bdoClass.slug] }}
           </span>
           <div
-            v-if="bdoClass.tier_awakening || bdoClass.tier_succession"
+            v-if="hasAnyTier(bdoClass)"
             :class="$style.tiers"
           >
-            <div v-if="bdoClass.tier_awakening" :class="$style.tierRow">
-              <span :class="$style.tierLabel">Проб.</span>
-              <ClassTierStars :tier="bdoClass.tier_awakening" size="xs" />
-            </div>
-            <div v-if="bdoClass.tier_succession" :class="$style.tierRow">
-              <span :class="$style.tierLabel">Насл.</span>
-              <ClassTierStars :tier="bdoClass.tier_succession" size="xs" />
+            <div
+              v-for="row in tierRows(bdoClass)"
+              :key="row.key"
+              :class="$style.tierRow"
+            >
+              <span :class="$style.tierLabel">{{ row.label }}</span>
+              <ClassTierStars :tier="row.tier" size="xs" />
             </div>
           </div>
         </div>
@@ -79,6 +79,50 @@ import type { BdoClass } from '@/entities/class/model/types'
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
+
+type TierRow = { key: string; label: string; tier: number }
+
+function hasAnyTier(bdoClass: BdoClass) {
+  return Boolean(
+    bdoClass.tier_pvp_awakening ||
+      bdoClass.tier_pvp_succession ||
+      bdoClass.tier_pve_awakening ||
+      bdoClass.tier_pve_succession,
+  )
+}
+
+function tierRows(bdoClass: BdoClass): TierRow[] {
+  const rows: TierRow[] = []
+  if (bdoClass.tier_pvp_awakening) {
+    rows.push({
+      key: 'pvp_aw',
+      label: 'ПВП·Проб.',
+      tier: bdoClass.tier_pvp_awakening,
+    })
+  }
+  if (bdoClass.tier_pvp_succession) {
+    rows.push({
+      key: 'pvp_succ',
+      label: 'ПВП·Насл.',
+      tier: bdoClass.tier_pvp_succession,
+    })
+  }
+  if (bdoClass.tier_pve_awakening) {
+    rows.push({
+      key: 'pve_aw',
+      label: 'ПВЕ·Проб.',
+      tier: bdoClass.tier_pve_awakening,
+    })
+  }
+  if (bdoClass.tier_pve_succession) {
+    rows.push({
+      key: 'pve_succ',
+      label: 'ПВЕ·Насл.',
+      tier: bdoClass.tier_pve_succession,
+    })
+  }
+  return rows
+}
 
 /**
  * Whole grid is above the fold and portraits are tiny — all eager so LCP

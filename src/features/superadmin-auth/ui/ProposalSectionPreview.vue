@@ -341,9 +341,11 @@ const emptyPresetMessage = computed(() => {
 })
 
 const comboLabel = computed(() => {
-  if (props.item.section === 'combo_awakening') return 'Комба · пробуждение'
-  if (props.item.section === 'combo_succession') return 'Комба · наследие'
-  return 'Комба'
+  const kindRaw = String(payload.value.kind || 'pvp')
+  const kind = kindRaw === 'pve' ? 'ПВЕ' : 'ПВП'
+  if (props.item.section === 'combo_awakening') return `Комба · пробуждение · ${kind}`
+  if (props.item.section === 'combo_succession') return `Комба · наследие · ${kind}`
+  return `Комба · ${kind}`
 })
 
 const videosFor = computed((): ClassVideo[] => {

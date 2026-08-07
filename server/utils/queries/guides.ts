@@ -3,10 +3,26 @@ import { rewriteIconUrlsDeep } from '@/shared/lib/codexIcon'
 
 type Sql = ReturnType<typeof postgres>
 
-function tierMax(aw: number | null | undefined, succ: number | null | undefined) {
-  const a = aw == null ? -1 : Number(aw)
-  const s = succ == null ? -1 : Number(succ)
-  return Math.max(a, s)
+function tierNum(v: unknown): number | null {
+  return v == null ? null : Number(v)
+}
+
+function tierMax(...values: Array<number | null | undefined>) {
+  let max = -1
+  for (const v of values) {
+    const n = v == null ? -1 : Number(v)
+    if (n > max) max = n
+  }
+  return max
+}
+
+function mapClassTiers(row: Record<string, unknown>) {
+  return {
+    tier_pvp_awakening: tierNum(row.tier_pvp_awakening),
+    tier_pvp_succession: tierNum(row.tier_pvp_succession),
+    tier_pve_awakening: tierNum(row.tier_pve_awakening),
+    tier_pve_succession: tierNum(row.tier_pve_succession),
+  }
 }
 
 export async function listPublishedClasses(sql: Sql) {
@@ -21,8 +37,10 @@ export async function listPublishedClasses(sql: Sql) {
       c.succession_name,
       c.sort_order,
       c.published,
-      c.tier_awakening,
-      c.tier_succession,
+      c.tier_pvp_awakening,
+      c.tier_pvp_succession,
+      c.tier_pve_awakening,
+      c.tier_pve_succession,
       (
         (g.id is not null and (
           coalesce(trim(g.summary_awakening), '') <> ''
@@ -45,16 +63,25 @@ export async function listPublishedClasses(sql: Sql) {
 
   const mapped = rows.map((row) => ({
     ...row,
-    tier_awakening: row.tier_awakening == null ? null : Number(row.tier_awakening),
-    tier_succession: row.tier_succession == null ? null : Number(row.tier_succession),
+    ...mapClassTiers(row as Record<string, unknown>),
     has_content: Boolean(row.has_content),
   }))
 
   mapped.sort((a, b) => {
     const byContent = Number(Boolean(b.has_content)) - Number(Boolean(a.has_content))
     if (byContent !== 0) return byContent
-    const tierA = tierMax(a.tier_awakening, a.tier_succession)
-    const tierB = tierMax(b.tier_awakening, b.tier_succession)
+    const tierA = tierMax(
+      a.tier_pvp_awakening,
+      a.tier_pvp_succession,
+      a.tier_pve_awakening,
+      a.tier_pve_succession,
+    )
+    const tierB = tierMax(
+      b.tier_pvp_awakening,
+      b.tier_pvp_succession,
+      b.tier_pve_awakening,
+      b.tier_pve_succession,
+    )
     if (tierA !== tierB) return tierB - tierA
     return Number(a.sort_order) - Number(b.sort_order)
   })
@@ -83,8 +110,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
   if (!klassRow) return null
   const klass = {
     ...klassRow,
-    tier_awakening: klassRow.tier_awakening == null ? null : Number(klassRow.tier_awakening),
-    tier_succession: klassRow.tier_succession == null ? null : Number(klassRow.tier_succession),
+    ...mapClassTiers(klassRow as Record<string, unknown>),
   }
 
   const [guideRows, videoRows] = await Promise.all([
@@ -125,6 +151,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
       select
         gc.id as combo_id,
         gc.mode,
+        gc.kind,
         gc.sort_order as combo_sort_order,
         gc.title,
         gc.notes,
@@ -277,6 +304,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
     {
       id: string
       mode: string
+      kind: string
       sort_order: number
       title: string | null
       notes: string | null
@@ -294,6 +322,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
       combo = {
         id: comboId,
         mode: String(row.mode),
+        kind: String(row.kind || 'pvp'),
         sort_order: Number(row.combo_sort_order) || 0,
         title: row.title == null ? null : String(row.title),
         notes: row.notes == null ? null : String(row.notes),

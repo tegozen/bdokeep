@@ -25,15 +25,15 @@ export const MAX_COMBOS_PER_MODE = 6
 export const MAX_COMBO_TITLE_LEN = 60
 export const MAX_COMBO_NOTES_LEN = 500
 export const MAX_BUFFS = 20
-export const MAX_BUFFS_ALL_PRESETS = 20 * 4
+export const MAX_BUFFS_ALL_PRESETS = 20 * 5
 export const MAX_CRYSTALS = 23
-export const MAX_CRYSTALS_ALL_PRESETS = 23 * 4
-export const MAX_RELICS_ALL_PRESETS = 2 * 4
-export const MAX_LIGHTSTONES_ALL_PRESETS = 4 * 4
+export const MAX_CRYSTALS_ALL_PRESETS = 23 * 5
+export const MAX_RELICS_ALL_PRESETS = 2 * 5
+export const MAX_LIGHTSTONES_ALL_PRESETS = 4 * 5
 export const MAX_HARDENING = 5
-export const MAX_HARDENING_ALL_PRESETS = 5 * 4
+export const MAX_HARDENING_ALL_PRESETS = 5 * 5
 export const MAX_VIDEOS = 3
-export const MAX_MORPHS_ALL_PRESETS = 6 * 8
+export const MAX_MORPHS_ALL_PRESETS = 6 * 10
 export const MAX_AUTHOR_LEN = 80
 
 /** System author for automated video TTL cleanup proposals. */
@@ -41,18 +41,24 @@ export const CRON_AUTHOR_LABEL = 'cron'
 
 export const VIDEO_PROCESSING_TTL_MS = 48 * 60 * 60 * 1000
 
-export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub'] as const
+export const CRYSTAL_PRESET_IDS = ['t1', 't2', 'besp', 'sub', 'pve'] as const
 export type CrystalPresetId = (typeof CRYSTAL_PRESET_IDS)[number]
+
+/** Combos share one PvP set across T1/T2/besp/sub; only `pve` uses PvE combos. */
+export const COMBO_KIND_IDS = ['pvp', 'pve'] as const
+export type ComboKindId = (typeof COMBO_KIND_IDS)[number]
 
 export const MORPH_PRESET_IDS = [
   'aw_t1',
   'aw_t2',
   'aw_besp',
   'aw_sub',
+  'aw_pve',
   'succ_t1',
   'succ_t2',
   'succ_besp',
   'succ_sub',
+  'succ_pve',
 ] as const
 export type MorphPresetId = (typeof MORPH_PRESET_IDS)[number]
 
@@ -122,6 +128,49 @@ export function isMorphsSection(section: ProposalSection): boolean {
 
 export function comboModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
   return section === 'combo_succession' ? 'succession' : 'awakening'
+}
+
+export function isComboKindId(id: string): id is ComboKindId {
+  return (COMBO_KIND_IDS as readonly string[]).includes(id)
+}
+
+/** Header preset → combo bucket. Anything except ПВЕ is PvP. */
+export function comboKindFromPreset(preset: string): ComboKindId {
+  return preset === 'pve' ? 'pve' : 'pvp'
+}
+
+export function comboKindLabel(kind: ComboKindId): string {
+  return kind === 'pve' ? 'ПВЕ' : 'ПВП'
+}
+
+export type GuideSpecMode = 'awakening' | 'succession'
+
+export type ClassTierField =
+  | 'tier_pvp_awakening'
+  | 'tier_pvp_succession'
+  | 'tier_pve_awakening'
+  | 'tier_pve_succession'
+
+export const CLASS_TIER_FIELDS = [
+  'tier_pvp_awakening',
+  'tier_pvp_succession',
+  'tier_pve_awakening',
+  'tier_pve_succession',
+] as const satisfies ReadonlyArray<ClassTierField>
+
+export function classTierField(
+  kind: ComboKindId,
+  mode: GuideSpecMode,
+): ClassTierField {
+  return `tier_${kind}_${mode}`
+}
+
+/** Header preset + spec mode → which tier cell is active. */
+export function classTierFieldFromGuide(
+  preset: string,
+  mode: GuideSpecMode,
+): ClassTierField {
+  return classTierField(comboKindFromPreset(preset), mode)
 }
 
 export function summaryModeFromSection(section: ProposalSection): 'awakening' | 'succession' {

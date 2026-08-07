@@ -84,8 +84,35 @@ describe('parseAndValidatePayload combo', () => {
     })
     assert.deepEqual(out.payload, {
       mode: 'awakening',
+      kind: 'pvp',
       combos: [{ title: '', notes: '', skill_ids: [SKILL_A, SKILL_B] }],
     })
+  })
+
+  it('accepts kind pve', async () => {
+    const out = await parseAndValidatePayload({
+      sql: dummySql,
+      classSlug: 'warrior',
+      section: 'combo_awakening',
+      rawPayload: { kind: 'pve', combos: [{ skill_ids: [SKILL_A] }] },
+      catalogIdsExist: allowAll([SKILL_A]),
+    })
+    assert.equal(out.payload.kind, 'pve')
+  })
+
+  it('rejects invalid kind', async () => {
+    await expectHttpError(
+      () =>
+        parseAndValidatePayload({
+          sql: dummySql,
+          classSlug: 'warrior',
+          section: 'combo_awakening',
+          rawPayload: { kind: 't1', combos: [{ skill_ids: [SKILL_A] }] },
+          catalogIdsExist: allowAll([SKILL_A]),
+        }),
+      400,
+      'Некорректный тип комбы',
+    )
   })
 
   it('rejects empty combo', async () => {
@@ -130,7 +157,7 @@ describe('parseAndValidatePayload combo', () => {
       skipUnknownCatalog: true,
       catalogIdsExist: allowNone(),
     })
-    assert.deepEqual(out.payload, { mode: 'succession', combos: [] })
+    assert.deepEqual(out.payload, { mode: 'succession', kind: 'pvp', combos: [] })
   })
 })
 

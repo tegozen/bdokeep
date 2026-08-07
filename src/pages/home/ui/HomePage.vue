@@ -56,9 +56,13 @@ const pendingByClass = computed(() =>
 )
 
 function classTierMax(bdoClass: BdoClass) {
-  const a = bdoClass.tier_awakening == null ? 0 : Number(bdoClass.tier_awakening)
-  const s = bdoClass.tier_succession == null ? 0 : Number(bdoClass.tier_succession)
-  return Math.max(a, s)
+  const vals = [
+    bdoClass.tier_pvp_awakening,
+    bdoClass.tier_pvp_succession,
+    bdoClass.tier_pve_awakening,
+    bdoClass.tier_pve_succession,
+  ].map((v) => (v == null ? 0 : Number(v)))
+  return Math.max(0, ...vals)
 }
 
 const filteredClasses = computed(() => {

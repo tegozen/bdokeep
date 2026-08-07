@@ -35,7 +35,7 @@
           <div :class="$style.metaLine">
             <span>Черновик</span>
             <span v-if="current.author_label">{{ current.author_label }}</span>
-            <span v-if="modeLabel(current.section)">{{ modeLabel(current.section) }}</span>
+            <span v-if="draftModeLabel(current)">{{ draftModeLabel(current) }}</span>
           </div>
           <div :class="$style.metaDate">{{ formatDate(current.created_at) }}</div>
         </div>
@@ -171,6 +171,18 @@ function goNext() {
 
 function isSummary(section: string) {
   return section === 'summary_awakening' || section === 'summary_succession'
+}
+
+function draftModeLabel(item: PendingProposal) {
+  const mode = modeLabel(item.section)
+  if (
+    item.section === 'combo_awakening' ||
+    item.section === 'combo_succession'
+  ) {
+    const kind = (item.payload as { kind?: string } | null)?.kind === 'pve' ? 'ПВЕ' : 'ПВП'
+    return mode ? `${mode} · ${kind}` : kind
+  }
+  return mode
 }
 
 function modeLabel(section: string) {

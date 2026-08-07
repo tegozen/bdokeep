@@ -29,6 +29,7 @@
           </div>
           <ClassTierStars
             v-if="isSuperadmin || headerActiveTier"
+            :key="activeTierField"
             :tier="headerActiveTier"
             :editable="isSuperadmin"
             :saving="tierSaving"
@@ -177,6 +178,11 @@
 <script setup lang="ts">
 import { type Component, computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue'
 import {
+  classTierFieldFromGuide,
+  comboKindFromPreset,
+  type ClassTierField,
+} from '@domain'
+import {
   fetchClassGuideBySlug,
   updateClassTier,
   type ClassGuideBundle,
@@ -185,6 +191,7 @@ import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import {
   useConfirm,
+  useGuidePreset,
   useGuideSpecMode,
   useHeaderClass,
   useHeaderPresetFill,
@@ -256,6 +263,7 @@ type PwaClient = {
 const pwa = computed(() => useNuxtApp().$pwa as PwaClient | undefined)
 const headerClass = useHeaderClass()
 const specMode = useGuideSpecMode()
+const guidePreset = useGuidePreset()
 const presetFill = useHeaderPresetFill()
 const { isSuperadmin } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
@@ -295,8 +303,10 @@ watch(
         slug: bundle.class.slug,
         name_ru: bundle.class.name_ru,
         icon_url: bundle.class.icon_url,
-        tier_awakening: bundle.class.tier_awakening ?? null,
-        tier_succession: bundle.class.tier_succession ?? null,
+        tier_pvp_awakening: bundle.class.tier_pvp_awakening ?? null,
+        tier_pvp_succession: bundle.class.tier_pvp_succession ?? null,
+        tier_pve_awakening: bundle.class.tier_pve_awakening ?? null,
+        tier_pve_succession: bundle.class.tier_pve_succession ?? null,
       }
     } else {
       headerClass.value = null
@@ -319,19 +329,20 @@ function openAuthLogin() {
   void ensureAuthUi()
 }
 
+const activeTierField = computed(() =>
+  classTierFieldFromGuide(guidePreset.value, specMode.value),
+)
+
 const headerActiveTier = computed(() => {
   const hc = headerClass.value
   if (!hc) return null
-  return specMode.value === 'succession'
-    ? (hc.tier_succession ?? null)
-    : (hc.tier_awakening ?? null)
+  return hc[activeTierField.value] ?? null
 })
 
-function patchClassTier(tier: number | null, mode: 'awakening' | 'succession') {
+function patchClassTier(tier: number | null, field: ClassTierField) {
   const hc = headerClass.value
   if (!hc) return
-  const patch =
-    mode === 'succession' ? { tier_succession: tier } : { tier_awakening: tier }
+  const patch = { [field]: tier } as Partial<typeof hc>
   headerClass.value = { ...hc, ...patch }
 
   const cached = useNuxtData<ClassGuideBundle | null>(`class-${hc.slug}`)
@@ -349,16 +360,17 @@ async function onHeaderTierChange(tier: number | null) {
   if (!hc || !isSuperadmin.value || tierSaving.value) return
 
   const mode = specMode.value
-  const prev =
-    mode === 'succession' ? (hc.tier_succession ?? null) : (hc.tier_awakening ?? null)
+  const kind = comboKindFromPreset(guidePreset.value)
+  const field = classTierFieldFromGuide(guidePreset.value, mode)
+  const prev = hc[field] ?? null
 
-  patchClassTier(tier, mode)
+  patchClassTier(tier, field)
   tierSaving.value = true
   try {
-    await updateClassTier(hc.slug, tier, mode)
+    await updateClassTier(hc.slug, tier, mode, kind)
     clearNuxtData('classes')
   } catch {
-    patchClassTier(prev, mode)
+    patchClassTier(prev, field)
   } finally {
     tierSaving.value = false
   }

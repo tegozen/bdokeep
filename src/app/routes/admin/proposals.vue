@@ -60,7 +60,7 @@
         <li v-for="item in items" :key="item.id" :class="$style.card">
           <div :class="$style.cardHead">
             <strong>{{ item.class_slug }}</strong>
-            <span :class="$style.badge">{{ sectionLabel(item.section) }}</span>
+            <span :class="$style.badge">{{ sectionLabel(item) }}</span>
             <span v-if="item.author_label" :class="$style.muted">· {{ item.author_label }}</span>
             <span :class="$style.status">{{ statusLabel(item.status) }}</span>
           </div>
@@ -160,6 +160,7 @@ type Proposal = {
     buff_ids?: string[]
     buffs?: Array<{ preset?: string; buff_id: string }>
     mode?: string
+    kind?: string
     crystals?: Array<{ preset?: string; slot: string; item_id: string }>
     relics?: Array<{ preset?: string; slot: string; item_id: string }>
     lightstones?: Array<{ preset?: string; slot: string; item_id: string }>
@@ -237,8 +238,16 @@ function clearClassFilter() {
   if (authed.value) void load()
 }
 
-function sectionLabel(section: string) {
-  return domainSectionLabel(section)
+function sectionLabel(item: Proposal) {
+  const base = domainSectionLabel(item.section)
+  if (
+    item.section === 'combo_awakening' ||
+    item.section === 'combo_succession'
+  ) {
+    const kind = item.payload?.kind === 'pve' ? 'ПВЕ' : 'ПВП'
+    return `${base} · ${kind}`
+  }
+  return base
 }
 
 function isSummary(section: string) {

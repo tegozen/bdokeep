@@ -164,6 +164,8 @@ export async function applyProposal(
 
       if (isComboSection(section)) {
         const mode = comboModeFromSection(section)
+        const rawKind = payload.kind == null ? 'pvp' : String(payload.kind)
+        const kind = rawKind === 'pve' ? 'pve' : 'pvp'
         type ComboEntry = { title?: unknown; notes?: unknown; skill_ids?: unknown }
         let rawCombos: ComboEntry[] = []
         if (Array.isArray(payload.combos)) {
@@ -174,7 +176,7 @@ export async function applyProposal(
 
         await tx`
           delete from guide_combos
-          where guide_id = ${guide.id} and mode = ${mode}
+          where guide_id = ${guide.id} and mode = ${mode} and kind = ${kind}
         `
 
         for (let ci = 0; ci < rawCombos.length; ci++) {
@@ -186,8 +188,8 @@ export async function applyProposal(
           const title = String(entry.title ?? '').trim() || null
           const notes = String(entry.notes ?? '').trim() || null
           const inserted = await tx`
-            insert into guide_combos (guide_id, mode, sort_order, title, notes)
-            values (${guide.id}, ${mode}, ${ci}, ${title}, ${notes})
+            insert into guide_combos (guide_id, mode, kind, sort_order, title, notes)
+            values (${guide.id}, ${mode}, ${kind}, ${ci}, ${title}, ${notes})
             returning id
           `
           const comboId = inserted[0]?.id

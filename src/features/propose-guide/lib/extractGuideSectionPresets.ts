@@ -22,11 +22,15 @@ export type BuffPickItem = { id: string; name_ru: string; icon_url: string | nul
 export type BuffPresetBoards = Record<CrystalPresetId, BuffPickItem[]>
 
 export function emptyItemPresetBoards(): ItemPresetBoards {
-  return { t1: {}, t2: {}, besp: {}, sub: {} }
+  const next = {} as ItemPresetBoards
+  for (const id of CRYSTAL_PRESET_IDS) next[id] = {}
+  return next
 }
 
 export function emptyBuffPresetBoards(): BuffPresetBoards {
-  return { t1: [], t2: [], besp: [], sub: [] }
+  const next = {} as BuffPresetBoards
+  for (const id of CRYSTAL_PRESET_IDS) next[id] = []
+  return next
 }
 
 export function extractCrystalPresets(rows: readonly GuideItemRow[]): ItemPresetBoards {

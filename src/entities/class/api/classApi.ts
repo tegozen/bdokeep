@@ -6,6 +6,7 @@ import type {
   LightstoneSet,
   Skill,
 } from '../model/types'
+import type { ComboKindId, GuideSpecMode } from '@domain'
 
 export async function fetchPublishedClasses(): Promise<BdoClass[]> {
   return $fetch<BdoClass[]>('/api/classes')
@@ -14,18 +15,22 @@ export async function fetchPublishedClasses(): Promise<BdoClass[]> {
 export async function updateClassTier(
   slug: string,
   tier: number | null,
-  mode: 'awakening' | 'succession',
+  mode: GuideSpecMode,
+  kind: ComboKindId = 'pvp',
 ): Promise<{
   ok: boolean
   slug: string
-  mode: 'awakening' | 'succession'
+  mode: GuideSpecMode
+  kind: ComboKindId
   tier: number | null
-  tier_awakening: number | null
-  tier_succession: number | null
+  tier_pvp_awakening: number | null
+  tier_pvp_succession: number | null
+  tier_pve_awakening: number | null
+  tier_pve_succession: number | null
 }> {
   return $fetch(`/api/admin/classes/${encodeURIComponent(slug)}/tier`, {
     method: 'PATCH',
-    body: { tier, mode },
+    body: { tier, mode, kind },
   })
 }
 

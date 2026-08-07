@@ -16,7 +16,8 @@
     <div :class="$style.workspace">
       <div :class="$style.left">
         <p :class="$style.hint">
-          Комба {{ isSuccession ? 'наследия' : 'пробуждения' }} — выберите скиллы по порядку.
+          Комба {{ isSuccession ? 'наследия' : 'пробуждения' }} ·
+          {{ kindLabel }} — выберите скиллы по порядку.
           Можно добавить несколько комб; у каждой — своя заметка.
         </p>
 
@@ -67,10 +68,12 @@ import { computed, ref } from 'vue'
 import {
   MAX_COMBO_STEPS,
   MAX_COMBOS_PER_MODE,
+  comboKindLabel,
   combosFromEditorItems,
   editorItemsFromCombos,
   type ComboEditorItem,
   type ComboEditorSkill,
+  type ComboKindId,
 } from '@domain'
 import {
   fetchClassSkills,
@@ -90,10 +93,13 @@ const props = withDefaults(
   defineProps<{
     classSlug: string
     section: 'combo_awakening' | 'combo_succession'
+    /** PvP unless header preset is ПВЕ. */
+    kind?: ComboKindId
     initialCombos?: GuideCombo[]
     triggerLabel?: string
   }>(),
   {
+    kind: 'pvp',
     initialCombos: () => [],
     triggerLabel: 'Предложить',
   },
@@ -107,8 +113,10 @@ const catalogError = ref(false)
 let dividerSeq = 0
 
 const isSuccession = computed(() => props.section === 'combo_succession')
-const title = computed(() =>
-  isSuccession.value ? 'Комба: наследие' : 'Комба: пробуждение',
+const kindLabel = computed(() => comboKindLabel(props.kind))
+const title = computed(
+  () =>
+    `${isSuccession.value ? 'Комба: наследие' : 'Комба: пробуждение'} · ${kindLabel.value}`,
 )
 const maxPicked = MAX_COMBO_STEPS
 const skillCount = computed(
@@ -196,6 +204,7 @@ const {
   classSlug: () => props.classSlug,
   serialize: () =>
     JSON.stringify({
+      kind: props.kind,
       combo: combosFromEditorItems(picked.value).map((c) => c.skill_ids),
     }),
   onOpen: async () => {
@@ -305,6 +314,7 @@ async function onSubmit() {
       section: props.section,
       payload: {
         mode: isSuccession.value ? 'succession' : 'awakening',
+        kind: props.kind,
         combos: combos.map((c) => ({
           notes: c.notes || undefined,
           skill_ids: c.skill_ids,

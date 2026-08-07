@@ -69,11 +69,12 @@
             </template>
             <template #actions>
               <ProposeLazy
-                :key="comboSection"
+                :key="`${comboSection}-${comboKind}`"
                 :loader="() => import('@/features/propose-guide/ui/ProposeComboForm.vue')"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   section: comboSection,
+                  kind: comboKind,
                   initialCombos: activeCombos,
                 }"
               />
@@ -94,8 +95,8 @@
                   :label="
                     combo.notes ||
                     (specMode === 'succession'
-                      ? 'Комба наследия'
-                      : 'Комба пробуждения')
+                      ? `Комба наследия · ${comboKindLabel(comboKind)}`
+                      : `Комба пробуждения · ${comboKindLabel(comboKind)}`)
                   "
                 />
               </div>
@@ -407,6 +408,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { comboKindFromPreset, comboKindLabel } from "@domain";
 import {
   type ClassGuideBundle,
   fetchLightstoneSets,
@@ -584,17 +586,24 @@ onBeforeUnmount(() => {
   headerPresetFill.value = emptyPresetFill();
 });
 
+const comboKind = computed(() => comboKindFromPreset(guidePreset.value));
 const awakeningCombos = computed(
   () =>
     props.bundle?.combos
-      .filter((c) => c.mode === "awakening")
+      .filter(
+        (c) =>
+          c.mode === "awakening" && (c.kind || "pvp") === comboKind.value,
+      )
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order) ?? [],
 );
 const successionCombos = computed(
   () =>
     props.bundle?.combos
-      .filter((c) => c.mode === "succession")
+      .filter(
+        (c) =>
+          c.mode === "succession" && (c.kind || "pvp") === comboKind.value,
+      )
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order) ?? [],
 );

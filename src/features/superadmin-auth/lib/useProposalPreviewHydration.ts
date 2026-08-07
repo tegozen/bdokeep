@@ -15,6 +15,8 @@ import type { RelicFill } from '@/widgets/relic-board'
 
 export type ProposalPreviewPayload = {
   text?: string
+  mode?: string
+  kind?: string
   skill_ids?: string[]
   combos?: Array<{
     title?: string

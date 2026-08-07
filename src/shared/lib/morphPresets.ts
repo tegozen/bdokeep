@@ -17,10 +17,12 @@ export const MORPH_PRESETS: ReadonlyArray<{ id: MorphPresetId; label: string }> 
   { id: 'aw_t2', label: 'T2 — проб' },
   { id: 'aw_besp', label: 'Беспорезки — проб' },
   { id: 'aw_sub', label: 'Субботка — проб' },
+  { id: 'aw_pve', label: 'ПВЕ — проб' },
   { id: 'succ_t1', label: 'T1 — насл' },
   { id: 'succ_t2', label: 'T2 — насл' },
   { id: 'succ_besp', label: 'Беспорезки — насл' },
   { id: 'succ_sub', label: 'Субботка — насл' },
+  { id: 'succ_pve', label: 'ПВЕ — насл' },
 ]
 
 export const MORPH_PRESET_IDS: MorphPresetId[] = [...DOMAIN_MORPH_PRESET_IDS]

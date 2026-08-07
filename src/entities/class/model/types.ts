@@ -8,10 +8,14 @@ export type BdoClass = {
   succession_name: string | null
   sort_order: number
   published: boolean
-  /** PvP tier 1–5 for awakening (admin-set). Null = not rated. */
-  tier_awakening?: number | null
-  /** PvP tier 1–5 for succession (admin-set). Null = not rated. */
-  tier_succession?: number | null
+  /** ПВП тир 1–5 для пробуждения (админ). Null = не оценён. */
+  tier_pvp_awakening?: number | null
+  /** ПВП тир 1–5 для наследия (админ). Null = не оценён. */
+  tier_pvp_succession?: number | null
+  /** ПВЕ тир 1–5 для пробуждения (админ). Null = не оценён. */
+  tier_pve_awakening?: number | null
+  /** ПВЕ тир 1–5 для наследия (админ). Null = не оценён. */
+  tier_pve_succession?: number | null
   /** Guide has any filled content (summary / sections / videos) */
   has_content?: boolean
 }
@@ -109,6 +113,8 @@ export type GuideComboStepRow = {
 export type GuideCombo = {
   id: string
   mode: 'awakening' | 'succession' | string
+  /** PvP (default) or PvE — shared across gear presets except `pve`. */
+  kind?: 'pvp' | 'pve' | string
   sort_order: number
   title: string | null
   notes: string | null
@@ -118,7 +124,7 @@ export type GuideCombo = {
 export type GuideBuffRow = {
   id: string
   slot: string | null
-  /** Preset: t1 / t2 / besp / sub. */
+  /** Preset: t1 / t2 / besp / sub / pve. */
   preset?: string | null
   group_name: string | null
   notes: string | null
@@ -129,7 +135,7 @@ export type GuideBuffRow = {
 export type GuideItemRow = {
   id: string
   slot: string | null
-  /** Preset: t1 / t2 / besp / sub (crystals, relics, lightstones, hardening). */
+  /** Preset: t1 / t2 / besp / sub / pve (crystals, relics, lightstones, hardening). */
   preset?: string | null
   notes: string | null
   sort_order: number

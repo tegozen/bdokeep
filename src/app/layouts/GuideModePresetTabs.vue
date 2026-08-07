@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import {
   CRYSTAL_PRESETS,
+  emptyPresetFill,
   useGuidePreset,
   useGuideSpecMode,
   type GuideSpecMode,
@@ -38,7 +39,7 @@ withDefaults(
     presetFill?: PresetFillMap
   }>(),
   {
-    presetFill: () => ({ t1: false, t2: false, besp: false, sub: false }),
+    presetFill: () => emptyPresetFill(),
   },
 )
 

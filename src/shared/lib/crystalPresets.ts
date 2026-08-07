@@ -13,6 +13,7 @@ export const CRYSTAL_PRESETS: ReadonlyArray<{ id: CrystalPresetId; label: string
   { id: 't2', label: 'T2' },
   { id: 'besp', label: 'Беспорезки' },
   { id: 'sub', label: 'Субботка' },
+  { id: 'pve', label: 'ПВЕ' },
 ]
 
 export const CRYSTAL_PRESET_IDS: CrystalPresetId[] = [...DOMAIN_PRESET_IDS]
