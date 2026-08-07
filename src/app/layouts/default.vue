@@ -578,6 +578,7 @@ watch(isSuperadmin, (ok) => {
 
 /*
   Phone / tablet: brand + actions on top, class + mode/preset tabs below.
+  Home filters stay on the brand/auth row when they fit; wrap only via flex-wrap.
 */
 @media (max-width: 1099px) {
   .headerInner {
@@ -590,19 +591,23 @@ watch(isSuperadmin, (ok) => {
     align-items: center;
   }
 
-  .auth {
+  .homeFilters {
     order: 2;
+    flex: 0 0 auto;
+  }
+
+  .auth {
+    order: 3;
     max-width: calc(100% - 7.5rem);
   }
 
   .classBlock {
-    order: 3;
+    order: 4;
     flex: 1 1 100%;
   }
 
-  .guideModes,
-  .homeFilters {
-    order: 4;
+  .guideModes {
+    order: 5;
     flex: 1 1 100%;
   }
 
@@ -612,7 +617,7 @@ watch(isSuperadmin, (ok) => {
   }
 }
 
-/* Narrow phones: actions on their own row under the brand. */
+/* Narrow phones: actions on their own row under the brand; filters follow. */
 @media (max-width: 640px) {
   .brandMark,
   .brandName {
@@ -620,19 +625,24 @@ watch(isSuperadmin, (ok) => {
   }
 
   .auth {
+    order: 2;
     flex: 1 1 100%;
     max-width: none;
     margin-left: 0;
     justify-content: flex-start;
   }
 
-  .classBlock {
+  .homeFilters {
     order: 3;
+    flex: 1 1 100%;
   }
 
-  .guideModes,
-  .homeFilters {
+  .classBlock {
     order: 4;
+  }
+
+  .guideModes {
+    order: 5;
   }
 }
 
@@ -652,6 +662,11 @@ watch(isSuperadmin, (ok) => {
     flex: 1 1 auto;
   }
 
+  .homeFilters {
+    order: 3;
+    flex: 0 0 auto;
+  }
+
   .guideModes {
     order: 3;
     flex: 0 1 auto;
@@ -669,11 +684,6 @@ watch(isSuperadmin, (ok) => {
     gap: 0.85rem;
     height: 2rem;
     max-width: none;
-  }
-
-  .homeFilters {
-    order: 5;
-    flex: 1 1 100%;
   }
 }
 

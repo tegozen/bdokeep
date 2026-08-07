@@ -35,22 +35,22 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
 <style module>
 .root {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.45rem 0.85rem;
   min-width: 0;
-  width: 100%;
 }
 
 .chips {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: stretch;
   gap: 0.3rem;
 }
 
 .chip {
   box-sizing: border-box;
+  flex-shrink: 0;
   height: 2rem;
   border: 1px solid var(--color-border);
   background: transparent;
@@ -60,6 +60,17 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
   font-size: 0.78rem;
   line-height: 1;
   padding: 0 0.65rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .root {
+    flex-wrap: wrap;
+  }
+
+  .chips {
+    flex-wrap: wrap;
+  }
 }
 
 .chip:hover {
