@@ -206,6 +206,8 @@ import {
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import {
+  computePresetFill,
+  emptyPresetFill,
   useConfirm,
   useGuidePreset,
   useGuideSpecMode,
@@ -338,7 +340,11 @@ watch(
   ([slug, bundle]) => {
     if (!slug) {
       // Leaving class routes — page onBeforeUnmount also clears; keep in sync on nav.
-      if (!route.path.startsWith('/class/')) headerClass.value = null
+      if (!route.path.startsWith('/class/')) {
+        headerClass.value = null
+        // Preset dots live in the layout header — must clear with class header.
+        presetFill.value = emptyPresetFill()
+      }
       return
     }
     if (bundle?.class) {
@@ -351,8 +357,12 @@ watch(
         tier_pve_awakening: bundle.class.tier_pve_awakening ?? null,
         tier_pve_succession: bundle.class.tier_pve_succession ?? null,
       }
+      // Set before layout render (SSR). Page also syncs; layout must win first paint
+      // or header dots hydrate against empty HTML while payload has fills.
+      presetFill.value = computePresetFill(bundle)
     } else {
       headerClass.value = null
+      presetFill.value = emptyPresetFill()
     }
   },
   { immediate: true },
