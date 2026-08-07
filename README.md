@@ -1,6 +1,6 @@
 # BDO Keep
 
-Гильдейские PvP-гайды по классам Black Desert Online (только RU).
+Гильдейские гайды по классам Black Desert Online — PvP и PvE (только RU).
 
 Неофициальный фан-ресурс гильдии, **non-commercial**. Не связан с Pearl Abyss / Black Desert.
 Игровые изображения (портреты/иконки классов и каталог `/codex/`) © Pearl Abyss.
@@ -77,6 +77,12 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Системные шрифты (`system-ui` / Segoe UI / Roboto) — без webfonts, без CLS от подмены гарнитуры
 - Портреты на главной: opaque WebP без alpha, LCP — `fetchpriority=high` + без lazy у первого ряда
 
+### SEO
+
+- Title/description и OG/Twitter на `/` и `/class/[slug]` (PvP и PvE); лёгкий JSON-LD (`WebSite` / `WebPage`)
+- `/sitemap.xml` — главная + опубликованные классы; `/robots.txt` — `Disallow: /admin` (админку в индекс не пускаем)
+- В production задайте `NUXT_PUBLIC_SITE_URL` (абсолютный origin без trailing slash) — canonical, OG и sitemap
+
 ### Ops / безопасность
 
 - Три сервиса: `web` (сайт + API), `migrate` (авто-SQL), `db` (Postgres)
@@ -115,6 +121,7 @@ cp .env.example .env
 # Заполни POSTGRES_PASSWORD, BDOKEEP_APP_PASSWORD, DATABASE_URL,
 # ADMIN_PASSWORD, ADMIN_SESSION_SECRET (openssl rand -base64 48)
 # ADMIN_PASSWORD в production не может быть changeme / password / admin / 123456
+# NUXT_PUBLIC_SITE_URL=https://your-domain.example (canonical / OG / sitemap)
 docker compose up -d --build
 ```
 
@@ -123,7 +130,7 @@ docker compose up -d --build
 На VPS ~4 CPU / 6G (idle уже ~1 ядро + ~4G) билд Nuxt иначе упирается в потолок. Дефолт: `BUILD_CPU_COUNT=1`, heap `768` МБ; runtime `web`: `WEB_CPUS=1` / `WEB_MEM_LIMIT=512m` (см. `.env.example`).
 
 
-Env только в корне: `.env` / `.env.example` (Compose сам подхватывает `.env`). Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля).
+Env только в корне: `.env` / `.env.example` (Compose сам подхватывает `.env`). Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля). В production для SEO ещё `NUXT_PUBLIC_SITE_URL` (напр. `https://example.com`).
 
 SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты на хосте не нужны).
 

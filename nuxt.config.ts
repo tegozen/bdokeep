@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
 
 const siteDescription =
-  'Неофициальные гильдейские PvP-гайды по классам Black Desert Online'
+  'Неофициальные гильдейские гайды по классам Black Desert Online — PvP и PvE'
 
 /** Chunks that must not land on anonymous first paint (login, editors, guide-only). */
 const DEFER_MANIFEST_CHUNKS = [
@@ -84,6 +84,8 @@ export default defineNuxtConfig({
     adminSessionSecret: '',
     public: {
       siteName: 'BDO Keep',
+      // Absolute origin for canonical / OG / sitemap (NUXT_PUBLIC_SITE_URL). Required in production.
+      siteUrl: '',
     },
   },
 
@@ -358,7 +360,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'ru' },
-      title: 'BDO Keep — гильдейские PvP-гайды',
+      title: 'BDO Keep — гильдейские гайды BDO (PvP и PvE)',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
