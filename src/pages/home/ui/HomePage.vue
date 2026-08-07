@@ -6,6 +6,7 @@
       :error="!!error"
       :pending-by-class="pendingByClass"
       :empty-message="emptyFilterMessage"
+      :guild-banner="guildBanner"
     />
   </div>
 </template>
@@ -22,11 +23,20 @@ import {
   useSuperadmin,
 } from '@/shared/lib'
 import { ClassGrid } from '@/widgets/class-grid'
+import type { GuildBannerPublic } from '@/widgets/guild-banner/model/types'
 
 const { data: classes, pending, error } = await useAsyncData('classes', () => fetchPublishedClasses(), {
   server: true,
   default: () => [] as BdoClass[],
 })
+
+const { data: guildBanner } = await useAsyncData(
+  'guild-banner',
+  () => $fetch<GuildBannerPublic>('/api/guild-banner'),
+  {
+    default: () => ({ enabled: false }) as GuildBannerPublic,
+  },
+)
 
 const { isSuperadmin } = useSuperadmin()
 const { summary, refresh: refreshPending } = usePendingSummary()

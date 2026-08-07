@@ -82,6 +82,15 @@
           >
             ОС
           </NuxtLink>
+          <button
+            v-if="isSuperadmin && showGuildBannerSlot"
+            type="button"
+            :class="$style.proposals"
+            title="Баннер набора в гильдию"
+            @click="openGuildBannerEdit"
+          >
+            Баннер
+          </button>
           <!-- Logged-in chrome stays in the header; login entry lives in the footer. -->
           <component
             :is="SuperadminAuth"
@@ -168,6 +177,13 @@
       @close="classFeedbackOpen = false"
     />
     <component
+      :is="GuildRecruitBannerModal"
+      v-if="GuildRecruitBannerModal"
+      :open="guildBannerEditOpen"
+      @close="guildBannerEditOpen = false"
+      @saved="onGuildBannerUpdated"
+    />
+    <component
       :is="UiToast"
       v-if="UiToast"
       :message="connectivityToast"
@@ -200,6 +216,7 @@ import {
   useSuperadmin,
 } from '@/shared/lib'
 import GuideModePresetTabs from './GuideModePresetTabs.vue'
+import type { GuildBannerPublic } from '@/widgets/guild-banner/model/types'
 
 /** Home-only — keep filter CSS off /class/* critical CSS. */
 const HomeClassFilters = defineAsyncComponent(() => import('./HomeClassFilters.vue'))
@@ -212,6 +229,8 @@ const ChatMacroGuideModal = shallowRef<Component | null>(null)
 const chatMacroGuideOpen = ref(false)
 const ClassFeedbackModal = shallowRef<Component | null>(null)
 const classFeedbackOpen = ref(false)
+const GuildRecruitBannerModal = shallowRef<Component | null>(null)
+const guildBannerEditOpen = ref(false)
 const connectivityToast = ref('')
 const { request: confirmRequest } = useConfirm()
 const { online } = useOnlineStatus()
@@ -254,6 +273,15 @@ async function openClassFeedback() {
   classFeedbackOpen.value = true
 }
 
+async function openGuildBannerEdit() {
+  if (!GuildRecruitBannerModal.value) {
+    GuildRecruitBannerModal.value = (
+      await import('@/widgets/guild-banner/ui/GuildRecruitBannerModal.vue')
+    ).default
+  }
+  guildBannerEditOpen.value = true
+}
+
 const route = useRoute()
 /** @vite-pwa/nuxt injects $pwa at runtime; types may be absent until prepare. */
 type PwaClient = {
@@ -271,6 +299,21 @@ const authUiReady = ref(false)
 const authOpenLoginOnMount = ref(false)
 const tierSaving = ref(false)
 const showHomeFilters = computed(() => route.path === '/')
+const isClassPage = computed(() => /^\/class\/[^/]+\/?$/.test(route.path))
+/** Редактирование баннера с главной и страниц класса. */
+const showGuildBannerSlot = computed(() => route.path === '/' || isClassPage.value)
+
+const { data: guildBanner } = await useAsyncData(
+  'guild-banner',
+  () => $fetch<GuildBannerPublic>('/api/guild-banner'),
+  {
+    default: () => ({ enabled: false }) as GuildBannerPublic,
+  },
+)
+
+function onGuildBannerUpdated(next: GuildBannerPublic) {
+  guildBanner.value = next
+}
 
 const classSlug = computed(() => {
   const m = route.path.match(/^\/class\/([^/]+)\/?$/)

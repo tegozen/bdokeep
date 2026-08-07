@@ -247,7 +247,13 @@ export default defineNuxtConfig({
           urlPattern: ({ request, url }) => {
             if (request.method !== 'GET') return false
             const p = url.pathname
-            if (p !== '/api/admin/proposals' && p !== '/api/admin/feedback') return false
+            if (
+              p !== '/api/admin/proposals' &&
+              p !== '/api/admin/feedback' &&
+              p !== '/api/admin/guild-banner'
+            ) {
+              return false
+            }
             const raw = request.headers.get('cookie') || ''
             const m = raw.match(/(?:^|;\s*)bdo_admin=([^;]+)/)
             if (!m) return false

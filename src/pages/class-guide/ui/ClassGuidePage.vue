@@ -23,13 +23,20 @@
     </template>
 
     <template v-else>
-      <div :class="$style.comboMorphRow">
-        <div :class="$style.comboMorphCell">
-          <GuideSection
-            flush
-            :title="`Заметки (${comboKindLabel(comboKind)})`"
-            :subtitle="sectionSubtitle('summary')"
-          >
+      <div :class="$style.topBlock">
+        <div
+          v-if="showRecruitCol"
+          :class="$style.recruitCol"
+        >
+          <GuildRecruitBanner :data="guildBanner" />
+        </div>
+        <div :class="$style.comboMorphRow">
+          <div :class="$style.comboMorphCell">
+            <GuideSection
+              flush
+              :title="`Заметки (${comboKindLabel(comboKind)})`"
+              :subtitle="sectionSubtitle('summary')"
+            >
             <template v-if="summaryPendingCount" #badge>
               <span :class="$style.pendingBadge" title="На модерации">{{
                 summaryPendingCount
@@ -158,6 +165,7 @@
             />
           </div>
         </template>
+        </div>
       </div>
 
       <div :class="$style.gearBlock">
@@ -451,7 +459,27 @@ import { HardeningBoard } from "@/widgets/hardening-board";
 import { MorphBoard } from "@/widgets/morph-board";
 import { RelicBoard } from "@/widgets/relic-board";
 import { VideoList } from "@/widgets/video-list";
+import GuildRecruitBanner from "@/widgets/guild-banner/ui/GuildRecruitBanner.vue";
+import type { GuildBannerPublic } from "@/widgets/guild-banner/model/types";
 import { useGuideBoardFills } from "../lib/useGuideBoardFills";
+
+const { data: guildBanner } = await useAsyncData(
+  "guild-banner",
+  () => $fetch<GuildBannerPublic>("/api/guild-banner"),
+  {
+    default: () => ({ enabled: false }) as GuildBannerPublic,
+  },
+);
+
+const showRecruitCol = computed(() => {
+  const d = guildBanner.value;
+  if (!d || d.enabled !== true) return false;
+  return (
+    Boolean(d.body) ||
+    d.has_icon ||
+    (Array.isArray(d.links) && d.links.length > 0)
+  );
+});
 
 const props = defineProps<{
   bundle: ClassGuideBundle | null;
@@ -819,13 +847,35 @@ const lightstoneSetLabel = computed(() =>
   color: var(--color-muted);
 }
 
-.comboMorphRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+.topBlock {
+  display: flex;
+  align-items: flex-start;
   gap: 1px;
   margin-bottom: 2.5rem;
   background: var(--color-border);
   border: 1px solid var(--color-border);
+  overflow: visible;
+}
+
+.recruitCol {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  background: var(--color-bg);
+}
+
+.comboMorphRow {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  margin: 0;
+  border: none;
+  background: var(--color-border);
   overflow: visible;
 }
 
@@ -1032,8 +1082,13 @@ const lightstoneSetLabel = computed(() =>
 }
 
 @media (max-width: 1100px) {
+  .topBlock {
+    flex-direction: column;
+  }
+
   .comboMorphRow {
     grid-template-columns: 1fr;
+    width: 100%;
   }
 }
 

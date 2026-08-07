@@ -13,11 +13,21 @@
       Не удалось загрузить классы. Проверьте API и обновите страницу.
     </div>
 
-    <div v-else-if="emptyMessage" :class="[$style.empty, $style.fade]">
-      {{ emptyMessage }}
+    <div v-else-if="emptyMessage" :class="$style.fade">
+      <div v-if="guildBanner" :class="$style.grid">
+        <GuildRecruitBanner :data="guildBanner" :span="3" />
+      </div>
+      <div :class="$style.empty">
+        {{ emptyMessage }}
+      </div>
     </div>
 
     <div v-else :class="$style.grid">
+      <GuildRecruitBanner
+        v-if="guildBanner"
+        :data="guildBanner"
+        :span="3"
+      />
       <NuxtLink
         v-for="(bdoClass, index) in classes"
         :key="bdoClass.id"
@@ -79,6 +89,8 @@ import type { BdoClass } from '@/entities/class/model/types'
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
+import GuildRecruitBanner from '@/widgets/guild-banner/ui/GuildRecruitBanner.vue'
+import type { GuildBannerPublic } from '@/widgets/guild-banner/model/types'
 
 type TierRow = { key: string; label: string; tier: number }
 
@@ -137,10 +149,12 @@ const props = withDefaults(
     error: boolean
     pendingByClass?: Record<string, number>
     emptyMessage?: string | null
+    guildBanner?: GuildBannerPublic | null
   }>(),
   {
     pendingByClass: () => ({}),
     emptyMessage: null,
+    guildBanner: null,
   },
 )
 
@@ -173,6 +187,7 @@ const lcpIndex = computed(() => {
 .card {
   position: relative;
   display: block;
+  align-self: start;
   overflow: hidden;
   border: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
