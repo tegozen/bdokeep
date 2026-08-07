@@ -22,6 +22,12 @@ export function useConfirm() {
 
   function confirm(options: ConfirmOptions): Promise<boolean> {
     return new Promise((resolve) => {
+      // Drop any pending dialog so its waiter does not hang forever.
+      const prev = request.value
+      if (prev) {
+        request.value = null
+        prev.resolve(false)
+      }
       request.value = {
         variant: 'confirm',
         ...options,

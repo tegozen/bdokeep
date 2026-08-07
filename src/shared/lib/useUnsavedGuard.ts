@@ -33,11 +33,12 @@ export function useUnsavedGuard(opts: {
           confirmLabel: opts.confirmLabel ?? 'Закрыть',
           cancelLabel: opts.cancelLabel ?? 'Остаться',
         })
-        if (!ok) return
+        if (!ok || !opts.active.value) return
       } finally {
         busy = false
       }
     }
+    if (!opts.active.value) return
     opts.onClose()
   }
 
