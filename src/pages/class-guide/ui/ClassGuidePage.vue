@@ -27,7 +27,7 @@
         <div :class="$style.comboMorphCell">
           <GuideSection
             flush
-            title="Роль на осаде"
+            :title="`Заметки (${comboKindLabel(comboKind)})`"
             :subtitle="sectionSubtitle('summary')"
           >
             <template v-if="summaryPendingCount" #badge>
@@ -37,11 +37,12 @@
             </template>
             <template #actions>
               <ProposeLazy
-                :key="summarySection"
+                :key="`${summarySection}-${comboKind}`"
                 :loader="() => import('@/features/propose-guide/ui/ProposeSummaryForm.vue')"
                 :form-props="{
                   classSlug: bundle.class.slug,
                   section: summarySection,
+                  kind: comboKind,
                   initialText: activeSummary,
                 }"
               />
@@ -408,7 +409,11 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { comboKindFromPreset, comboKindLabel } from "@domain";
+import {
+  classSummaryFieldFromGuide,
+  comboKindFromPreset,
+  comboKindLabel,
+} from "@domain";
 import {
   type ClassGuideBundle,
   fetchLightstoneSets,
@@ -462,13 +467,14 @@ const classPending = ref<PendingProposal[]>([]);
 const pendingRestoreAt = new Map<string, number>();
 const specMode = useGuideSpecMode();
 const guidePreset = useGuidePreset();
+const comboKind = computed(() => comboKindFromPreset(guidePreset.value));
 
 const sectionUpdates = computed(() =>
   parseSectionUpdates(props.bundle?.guide?.section_updates),
 );
 
 function sectionSubtitle(key: GuideUiSection) {
-  const metaKey = sectionUpdateKey(key, specMode.value);
+  const metaKey = sectionUpdateKey(key, specMode.value, comboKind.value);
   return formatSectionUpdated(sectionUpdates.value[metaKey]);
 }
 
@@ -586,7 +592,6 @@ onBeforeUnmount(() => {
   headerPresetFill.value = emptyPresetFill();
 });
 
-const comboKind = computed(() => comboKindFromPreset(guidePreset.value));
 const awakeningCombos = computed(
   () =>
     props.bundle?.combos
@@ -621,10 +626,8 @@ const comboSection = computed(() =>
 const activeSummary = computed(() => {
   const guide = props.bundle?.guide;
   if (!guide) return null;
-  const text =
-    specMode.value === "succession"
-      ? guide.summary_succession
-      : guide.summary_awakening;
+  const field = classSummaryFieldFromGuide(guidePreset.value, specMode.value);
+  const text = guide[field];
   return text?.trim() ? text : null;
 });
 

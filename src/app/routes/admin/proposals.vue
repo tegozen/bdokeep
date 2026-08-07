@@ -242,7 +242,9 @@ function sectionLabel(item: Proposal) {
   const base = domainSectionLabel(item.section)
   if (
     item.section === 'combo_awakening' ||
-    item.section === 'combo_succession'
+    item.section === 'combo_succession' ||
+    item.section === 'summary_awakening' ||
+    item.section === 'summary_succession'
   ) {
     const kind = item.payload?.kind === 'pve' ? 'ПВЕ' : 'ПВП'
     return `${base} · ${kind}`

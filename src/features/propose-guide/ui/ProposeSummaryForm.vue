@@ -3,7 +3,7 @@
     v-model:open="open"
     v-model:honeypot="honeypot"
     v-model:author="author"
-    title="Предложить роль на осаде"
+    :title="title"
     :trigger-label="triggerLabel"
     :submitting="submitting"
     :form-error="formError"
@@ -17,7 +17,7 @@
       <UiMarkdownEditor
         id="propose-summary-editor"
         v-model="text"
-        placeholder="Опишите роль класса на осаде в Markdown…"
+        placeholder="Заметки по классу в Markdown…"
         height="100%"
       />
     </div>
@@ -25,8 +25,12 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref } from 'vue'
-import type { ProposalSection } from '@/entities/class'
+import { computed, defineAsyncComponent, ref } from 'vue'
+import {
+  comboKindLabel,
+  type ComboKindId,
+  type ProposalSection,
+} from '@domain'
 import { submitGuideProposal } from '../api/submitProposal'
 import { useProposeModal } from '../lib/useProposeModal'
 import ProposeModalShell from './ProposeModalShell.vue'
@@ -39,17 +43,27 @@ const props = withDefaults(
   defineProps<{
     classSlug: string
     section?: Extract<ProposalSection, 'summary_awakening' | 'summary_succession'>
+    /** PvP unless header preset is ПВЕ. */
+    kind?: ComboKindId
     triggerLabel?: string
     initialText?: string | null
   }>(),
   {
     section: 'summary_awakening',
+    kind: 'pvp',
     triggerLabel: 'Предложить',
     initialText: null,
   },
 )
 
 const text = ref('')
+
+const isSuccession = computed(() => props.section === 'summary_succession')
+const kindLabel = computed(() => comboKindLabel(props.kind))
+const title = computed(
+  () =>
+    `Заметки: ${isSuccession.value ? 'наследие' : 'пробуждение'} · ${kindLabel.value}`,
+)
 
 const {
   open,
@@ -63,7 +77,7 @@ const {
   runSubmit,
 } = useProposeModal({
   classSlug: () => props.classSlug,
-  serialize: () => JSON.stringify({ text: text.value }),
+  serialize: () => JSON.stringify({ kind: props.kind, text: text.value }),
   onOpen: () => {
     text.value = props.initialText?.trim() ? props.initialText : ''
   },
@@ -77,13 +91,13 @@ defineExpose({ openModal })
 async function onSubmit() {
   await runSubmit(async () => {
     if (!text.value.trim()) {
-      formError.value = 'Введите текст сути'
+      formError.value = 'Введите текст заметок'
       return null
     }
     return submitGuideProposal({
       class_slug: props.classSlug,
       section: props.section,
-      payload: { text: text.value.trim() },
+      payload: { text: text.value.trim(), kind: props.kind },
       author_label: author.value.trim() || undefined,
       website: honeypot.value,
     })

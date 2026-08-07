@@ -43,8 +43,10 @@ export async function listPublishedClasses(sql: Sql) {
       c.tier_pve_succession,
       (
         (g.id is not null and (
-          coalesce(trim(g.summary_awakening), '') <> ''
-          or coalesce(trim(g.summary_succession), '') <> ''
+          coalesce(trim(g.summary_pvp_awakening), '') <> ''
+          or coalesce(trim(g.summary_pvp_succession), '') <> ''
+          or coalesce(trim(g.summary_pve_awakening), '') <> ''
+          or coalesce(trim(g.summary_pve_succession), '') <> ''
         ))
         or exists (select 1 from guide_buffs x where x.guide_id = g.id)
         or exists (select 1 from guide_relics x where x.guide_id = g.id)

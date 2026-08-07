@@ -34,7 +34,8 @@ export default defineEventHandler(async (event) => {
       })
     }
     const original = String(payload.text || '').trim()
-    payload = { text }
+    const kind = payload.kind === 'pve' ? 'pve' : 'pvp'
+    payload = { text, kind }
     if (raw !== original) {
       reviewNote = 'отредактировано перед одобрением'
     }

@@ -40,6 +40,12 @@ export function computePresetFill(bundle: ClassGuideBundle | null | undefined): 
     const hasCombo =
       id === 'pve' &&
       bundle.combos.some((c) => (c.kind || 'pvp') === 'pve' && c.steps?.length)
+    const hasNotes =
+      id === 'pve' &&
+      Boolean(
+        bundle.guide?.summary_pve_awakening?.trim() ||
+          bundle.guide?.summary_pve_succession?.trim(),
+      )
     out[id] =
       hasCrystal ||
       hasRelic ||
@@ -47,7 +53,8 @@ export function computePresetFill(bundle: ClassGuideBundle | null | undefined): 
       hasHardening ||
       hasBuff ||
       hasMorph ||
-      hasCombo
+      hasCombo ||
+      hasNotes
   }
 
   return out

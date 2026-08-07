@@ -177,7 +177,9 @@ function draftModeLabel(item: PendingProposal) {
   const mode = modeLabel(item.section)
   if (
     item.section === 'combo_awakening' ||
-    item.section === 'combo_succession'
+    item.section === 'combo_succession' ||
+    item.section === 'summary_awakening' ||
+    item.section === 'summary_succession'
   ) {
     const kind = (item.payload as { kind?: string } | null)?.kind === 'pve' ? 'ПВЕ' : 'ПВП'
     return mode ? `${mode} · ${kind}` : kind

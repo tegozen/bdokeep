@@ -23,12 +23,14 @@ export function uiSectionFromProposal(section: string): string | null {
   return mapProposalSection(section)
 }
 
-/** Resolve section_updates key for a guide UI block given active spec mode. */
+/** Resolve section_updates key for a guide UI block given active spec mode (+ kind for notes). */
 export function sectionUpdateKey(
   base: GuideUiSection,
   mode: 'awakening' | 'succession' = 'awakening',
+  kind: 'pvp' | 'pve' = 'pvp',
 ): string {
-  if (base === 'summary' || base === 'videos') return `${base}_${mode}`
+  if (base === 'summary') return `summary_${kind}_${mode}`
+  if (base === 'videos') return `videos_${mode}`
   return base
 }
 

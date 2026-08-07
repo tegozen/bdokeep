@@ -1,8 +1,8 @@
 <template>
   <UiModal
     :open="open"
-    title="Редактировать роль на осаде"
-    aria-label="Редактировать роль на осаде перед одобрением"
+    title="Редактировать заметки"
+    aria-label="Редактировать заметки перед одобрением"
     full
     :z-index="90"
     @close="requestClose"
@@ -15,7 +15,7 @@
           id="review-summary-editor"
           v-model="text"
           height="100%"
-          placeholder="Отредактируйте роль на осаде…"
+          placeholder="Отредактируйте заметки…"
         />
       </div>
 
@@ -107,7 +107,7 @@ async function onApprove() {
   const trimmed = text.value.trim()
   if (!id) return
   if (!trimmed) {
-    error.value = 'Введите текст сути'
+    error.value = 'Введите текст заметок'
     return
   }
   error.value = ''

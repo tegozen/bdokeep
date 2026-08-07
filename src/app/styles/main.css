@@ -48,7 +48,7 @@
 
 @layer base {
   :root {
-    /* Page shell + class guide top row (Роль на осаде | Комба | Морфы). */
+    /* Page shell + class guide top row (Заметки | Комба | Морфы). */
     --page-gutter: 1rem;
     --page-max: 1920px;
     --page-width: min(calc(100vw - 2 * var(--page-gutter)), var(--page-max));

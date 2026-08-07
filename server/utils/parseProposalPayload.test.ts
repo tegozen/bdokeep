@@ -382,6 +382,31 @@ describe('parseAndValidatePayload summary', () => {
       rawPayload: { text: 'Роль: **танк**' },
     })
     assert.equal(out.payload.text, 'Роль: **танк**')
+    assert.equal(out.payload.kind, 'pvp')
+  })
+
+  it('accepts kind pve', async () => {
+    const out = await parseAndValidatePayload({
+      sql: dummySql,
+      classSlug: 'warrior',
+      section: 'summary_awakening',
+      rawPayload: { text: 'ПВЕ заметки', kind: 'pve' },
+    })
+    assert.equal(out.payload.kind, 'pve')
+  })
+
+  it('rejects invalid kind', async () => {
+    await expectHttpError(
+      () =>
+        parseAndValidatePayload({
+          sql: dummySql,
+          classSlug: 'warrior',
+          section: 'summary_awakening',
+          rawPayload: { text: 'x', kind: 't1' },
+        }),
+      400,
+      'Некорректный тип заметок',
+    )
   })
 
   it('rejects empty text', async () => {

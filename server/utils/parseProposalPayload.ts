@@ -807,7 +807,11 @@ export async function parseAndValidatePayload(
     if (text.length > MAX_TEXT_LEN) {
       throw createError({ statusCode: 400, statusMessage: 'Текст слишком длинный' })
     }
-    return { payload: { text }, verifiedVideos: null }
+    const rawKind = body.kind == null ? 'pvp' : String(body.kind)
+    if (!isComboKindId(rawKind)) {
+      throw createError({ statusCode: 400, statusMessage: 'Некорректный тип заметок' })
+    }
+    return { payload: { text, kind: rawKind }, verifiedVideos: null }
   }
 
   throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })

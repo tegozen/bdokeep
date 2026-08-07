@@ -1,6 +1,7 @@
 import { createError } from 'h3'
 import {
   PROPOSAL_SECTIONS,
+  classSummaryField,
   comboModeFromSection,
   isBuffsSection,
   isComboSection,
@@ -467,16 +468,31 @@ export async function applyProposal(
         }
       } else if (isSummarySection(section)) {
         const text = String(payload.text || '').trim()
-        if (summaryModeFromSection(section) === 'succession') {
+        const rawKind = payload.kind == null ? 'pvp' : String(payload.kind)
+        const kind = rawKind === 'pve' ? 'pve' : 'pvp'
+        const mode = summaryModeFromSection(section)
+        if (kind === 'pve' && mode === 'succession') {
           await tx`
             update class_guides
-            set summary_succession = ${text}
+            set summary_pve_succession = ${text}
+            where id = ${guide.id}
+          `
+        } else if (kind === 'pve') {
+          await tx`
+            update class_guides
+            set summary_pve_awakening = ${text}
+            where id = ${guide.id}
+          `
+        } else if (mode === 'succession') {
+          await tx`
+            update class_guides
+            set summary_pvp_succession = ${text}
             where id = ${guide.id}
           `
         } else {
           await tx`
             update class_guides
-            set summary_awakening = ${text}
+            set summary_pvp_awakening = ${text}
             where id = ${guide.id}
           `
         }
@@ -484,7 +500,12 @@ export async function applyProposal(
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
       }
 
-      const metaKey = uiSectionFromProposal(section)
+      let metaKey = uiSectionFromProposal(section)
+      if (isSummarySection(section)) {
+        const rawKind = payload.kind == null ? 'pvp' : String(payload.kind)
+        const kind = rawKind === 'pve' ? 'pve' : 'pvp'
+        metaKey = classSummaryField(kind, summaryModeFromSection(section))
+      }
       if (!metaKey) {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
       }

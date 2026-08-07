@@ -173,6 +173,33 @@ export function classTierFieldFromGuide(
   return classTierField(comboKindFromPreset(preset), mode)
 }
 
+export type ClassSummaryField =
+  | 'summary_pvp_awakening'
+  | 'summary_pvp_succession'
+  | 'summary_pve_awakening'
+  | 'summary_pve_succession'
+
+export const CLASS_SUMMARY_FIELDS = [
+  'summary_pvp_awakening',
+  'summary_pvp_succession',
+  'summary_pve_awakening',
+  'summary_pve_succession',
+] as const satisfies ReadonlyArray<ClassSummaryField>
+
+export function classSummaryField(
+  kind: ComboKindId,
+  mode: GuideSpecMode,
+): ClassSummaryField {
+  return `summary_${kind}_${mode}`
+}
+
+export function classSummaryFieldFromGuide(
+  preset: string,
+  mode: GuideSpecMode,
+): ClassSummaryField {
+  return classSummaryField(comboKindFromPreset(preset), mode)
+}
+
 export function summaryModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
   return section === 'summary_succession' ? 'succession' : 'awakening'
 }
@@ -293,9 +320,9 @@ export function uiSectionFromProposal(section: string): string | null {
 export function sectionLabel(section: string): string {
   switch (section) {
     case 'summary_awakening':
-      return 'Роль на осаде (пробуждение)'
+      return 'Заметки (пробуждение)'
     case 'summary_succession':
-      return 'Роль на осаде (наследие)'
+      return 'Заметки (наследие)'
     case 'buffs':
       return 'Забаф'
     case 'combo_awakening':

@@ -28,10 +28,12 @@ export type SectionUpdateMeta = {
 export type ClassGuide = {
   id: string
   class_id: string
-  summary_awakening: string | null
-  summary_succession: string | null
+  summary_pvp_awakening: string | null
+  summary_pvp_succession: string | null
+  summary_pve_awakening: string | null
+  summary_pve_succession: string | null
   updated_at: string
-  /** Per UI-section last update keys (summary_awakening, combo, videos_succession, …) */
+  /** Per UI-section last update keys (summary_pvp_awakening, combo, videos_succession, …) */
   section_updates?: Record<string, SectionUpdateMeta> | null
 }
 
