@@ -5,7 +5,6 @@
     size="sm"
     border-strong
     :z-index="100"
-    :obscured="obscured"
     :title-id="titleId"
     :labelled-by="titleId"
     :described-by="messageId"
@@ -34,17 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import { useConfirm, useModalEscape } from '@/shared/lib'
+import { useConfirm } from '@/shared/lib'
 import UiButton from './UiButton.vue'
 import UiModal from './UiModal.vue'
 
 const titleId = useId()
 const messageId = useId()
 const { request, settle } = useConfirm()
-const confirmOpen = computed(() => Boolean(request.value))
 const isAlert = computed(() => request.value?.variant === 'alert')
-
-const { obscured } = useModalEscape(confirmOpen, () => onClose())
 
 function onClose() {
   // Esc / backdrop: cancel for confirm, acknowledge for alert.

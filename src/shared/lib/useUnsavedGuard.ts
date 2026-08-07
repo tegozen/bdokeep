@@ -1,7 +1,6 @@
 import type { ComputedRef, Ref } from 'vue'
 import { toValue } from 'vue'
 import { useConfirm } from './useConfirm'
-import { useModalEscape } from './useModalEscape'
 
 const DEFAULT_MESSAGE =
   'Есть несохранённые изменения. Закрыть без сохранения?'
@@ -9,6 +8,7 @@ const DEFAULT_MESSAGE =
 /**
  * Guard modal close (backdrop / Esc / cancel) when `dirty`.
  * Also registers browser `beforeunload` while the modal is open and dirty.
+ * Esc itself is handled by `UiModal` → `@close` → `requestClose`.
  */
 export function useUnsavedGuard(opts: {
   active: Ref<boolean>
@@ -55,9 +55,5 @@ export function useUnsavedGuard(opts: {
     window.removeEventListener('beforeunload', onBeforeUnload)
   })
 
-  const { obscured } = useModalEscape(opts.active, () => {
-    void requestClose()
-  })
-
-  return { requestClose, obscured }
+  return { requestClose }
 }

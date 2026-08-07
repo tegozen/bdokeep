@@ -52,7 +52,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Копирование пресета с того же класса или с другого класса (кристаллы, реликвии, закалки, забаф; морфы — с пресета)
 - Drag-and-drop порядка в комбе и забафе
 - Игровой ник для гостей, honeypot от ботов, rate limit
-- Guard несохранённых правок (confirm + `beforeunload`)
+- Guard несохранённых правок (confirm + `beforeunload`); Esc закрывает модалки сверху вниз
 - Не копируйте чужие гайды целиком без разрешения автора — модерация отклонит
 
 ### Модерация

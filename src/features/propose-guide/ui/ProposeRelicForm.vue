@@ -7,7 +7,6 @@
     :trigger-label="triggerLabel"
     :submitting="submitting"
     :form-error="formError"
-    :obscured="obscured"
     :is-superadmin="isSuperadmin"
     :request-close="requestClose"
     size="lg"
@@ -231,7 +230,6 @@ const {
   author,
   submitting,
   formError,
-  obscured,
   requestClose,
   isSuperadmin,
   openModal,

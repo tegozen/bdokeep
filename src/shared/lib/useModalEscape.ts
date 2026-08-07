@@ -8,9 +8,10 @@ function syncPageLock(openCount: number) {
 }
 
 /**
- * Closes the topmost registered modal on Escape.
+ * Closes the topmost registered modal on Escape (LIFO stack).
  * While any modal is open, locks page scroll and blurs `#__nuxt`.
  * Returns `obscured` — true when this modal is open but not on top (blur it).
+ * Primary consumer: `UiModal` — do not register again in parents.
  */
 export function useModalEscape(active: Ref<boolean>, onClose: () => void) {
   const id = Symbol('modal')

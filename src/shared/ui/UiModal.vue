@@ -4,7 +4,7 @@
       :class="[
         $style.backdrop,
         full && $style.backdropFull,
-        obscured && $style.obscured,
+        stackObscured && $style.obscured,
       ]"
       :style="zIndex != null ? { zIndex } : undefined"
       @pointerdown="onBackdropPointerDown"
@@ -51,14 +51,15 @@
 </template>
 
 <script setup lang="ts">
+import { useModalEscape } from '@/shared/lib'
+
 export type UiModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'fluid'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     open: boolean
     title?: string
     ariaLabel?: string
-    obscured?: boolean
     full?: boolean
     showHeader?: boolean
     role?: 'dialog' | 'alertdialog'
@@ -72,7 +73,6 @@ withDefaults(
   {
     title: undefined,
     ariaLabel: undefined,
-    obscured: false,
     full: false,
     showHeader: true,
     role: 'dialog',
@@ -88,6 +88,9 @@ withDefaults(
 const emit = defineEmits<{
   close: []
 }>()
+
+const openRef = toRef(props, 'open')
+const { obscured: stackObscured } = useModalEscape(openRef, () => emit('close'))
 
 /** Close only if press started on backdrop — not drag-from-dialog release. */
 const backdropPress = ref(false)

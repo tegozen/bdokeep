@@ -5,7 +5,6 @@
     aria-label="Редактировать роль на осаде перед одобрением"
     full
     :z-index="90"
-    :obscured="obscured"
     @close="requestClose"
   >
     <div :class="$style.body">
@@ -80,7 +79,7 @@ function close() {
   emit('close')
 }
 
-const { requestClose, obscured } = useUnsavedGuard({
+const { requestClose } = useUnsavedGuard({
   active: openRef,
   dirty,
   onClose: close,

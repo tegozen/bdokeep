@@ -14,7 +14,6 @@
       title="Скопировать из другого класса"
       aria-label="Скопировать данные из пресета другого класса"
       :z-index="90"
-      :obscured="obscured"
       :size="size"
       @close="close"
     >
@@ -103,7 +102,6 @@ import {
 import {
   CRYSTAL_PRESETS,
   useConfirm,
-  useModalEscape,
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiButton, UiModal, UiPresetTabs, type UiModalSize } from '@/shared/ui'
@@ -148,10 +146,6 @@ const sourceBoards = ref<ItemPresetBoards | BuffPresetBoards | null>(null)
 const guidePending = ref(false)
 const guideError = ref(false)
 const guideCache = new Map<string, ClassGuideBundle>()
-
-const { obscured } = useModalEscape(open, () => {
-  open.value = false
-})
 
 const targetLabel = computed(
   () => CRYSTAL_PRESETS.find((p) => p.id === props.targetPreset)?.label ?? props.targetPreset,

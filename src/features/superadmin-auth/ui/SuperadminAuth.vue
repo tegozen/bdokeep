@@ -46,44 +46,32 @@
           Войти как суперадмин
         </UiButton>
 
-        <Teleport v-if="openLogin" to="body">
-          <div
-            :class="[$style.backdrop, obscured && $style.obscured]"
-            @pointerdown="onLoginBackdropPointerDown"
-            @click="onLoginBackdropClick"
-          >
-            <div
-              :class="$style.modal"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Вход суперадмина"
-              @pointerdown.stop
-            >
-              <header :class="$style.head">
-                <h3 :class="$style.title">Войти как суперадмин</h3>
-                <button type="button" :class="$style.close" aria-label="Закрыть" @click="closeLogin">
-                  ×
-                </button>
-              </header>
-              <div :class="$style.modalBody">
-                <LoginFields
-                  v-model:password="password"
-                  :busy="busy"
-                  :error="error"
-                  @login="onLogin"
-                />
-              </div>
-            </div>
+        <UiModal
+          :open="openLogin"
+          title="Войти как суперадмин"
+          aria-label="Вход суперадмина"
+          size="sm"
+          :z-index="90"
+          @close="closeLogin"
+        >
+          <div :class="$style.modalBody">
+            <LoginFields
+              v-model:password="password"
+              :busy="busy"
+              :error="error"
+              @login="onLogin"
+            />
           </div>
-        </Teleport>
+        </UiModal>
       </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useModalEscape, useSuperadmin } from '@/shared/lib'
+import { useSuperadmin } from '@/shared/lib'
 import UiButton from '@/shared/ui/UiButton.vue'
+import UiModal from '@/shared/ui/UiModal.vue'
 import LoginFields from './LoginFields.vue'
 
 const props = withDefaults(
@@ -106,22 +94,6 @@ const busy = ref(false)
 const error = ref('')
 const openLogin = ref(props.openLoginOnMount)
 
-const { obscured } = useModalEscape(openLogin, closeLogin)
-
-/** Close only if press started on backdrop — not drag-from-dialog release. */
-const loginBackdropPress = ref(false)
-
-function onLoginBackdropPointerDown(e: PointerEvent) {
-  loginBackdropPress.value = e.target === e.currentTarget
-}
-
-function onLoginBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget && loginBackdropPress.value) {
-    closeLogin()
-  }
-  loginBackdropPress.value = false
-}
-
 onMounted(() => {
   void refresh()
 })
@@ -130,7 +102,6 @@ function closeLogin() {
   openLogin.value = false
   password.value = ''
   error.value = ''
-  loginBackdropPress.value = false
 }
 
 async function onLogin() {
@@ -244,55 +215,6 @@ async function onLogout() {
   font: inherit;
   font-size: 0.85rem;
   text-decoration: underline;
-}
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  transition: filter 160ms ease;
-}
-
-.obscured {
-  filter: blur(10px);
-  pointer-events: none;
-  user-select: none;
-}
-
-.modal {
-  width: min(100%, 22rem);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-elevated);
-  box-shadow: var(--shadow-glow);
-}
-
-.head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.75rem 1rem;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.05rem;
-}
-
-.close {
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
 }
 
 .modalBody {

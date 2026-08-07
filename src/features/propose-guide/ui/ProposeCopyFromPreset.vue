@@ -16,7 +16,6 @@
       title="Скопировать из пресета"
       aria-label="Скопировать данные из другого пресета"
       :z-index="90"
-      :obscured="obscured"
       :size="size"
       @close="close"
     >
@@ -52,7 +51,6 @@ import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
   useConfirm,
-  useModalEscape,
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiButton, UiModal, UiPresetTabs, type UiModalSize } from '@/shared/ui'
@@ -80,10 +78,6 @@ const emit = defineEmits<{
 const { confirm } = useConfirm()
 const open = ref(false)
 const sourcePreset = ref<CrystalPresetId>('t1')
-
-const { obscured } = useModalEscape(open, () => {
-  open.value = false
-})
 
 const targetLabel = computed(
   () => CRYSTAL_PRESETS.find((p) => p.id === props.targetPreset)?.label ?? props.targetPreset,

@@ -42,7 +42,7 @@ export function useProposeModal(opts: {
     open.value = false
   }
 
-  const { requestClose, obscured } = useUnsavedGuard({
+  const { requestClose } = useUnsavedGuard({
     active: open,
     dirty,
     onClose: close,
@@ -111,7 +111,6 @@ export function useProposeModal(opts: {
     author,
     submitting,
     formError,
-    obscured,
     requestClose,
     isSuperadmin,
     close,

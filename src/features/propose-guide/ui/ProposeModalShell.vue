@@ -8,7 +8,6 @@
       :open="open"
       :title="title"
       :aria-label="title"
-      :obscured="obscured"
       :full="full"
       :size="size"
       :border-strong="borderStrong"
@@ -94,7 +93,6 @@ withDefaults(
     triggerLabel?: string
     submitting: boolean
     formError: string
-    obscured: boolean
     isSuperadmin: boolean
     requestClose: () => void | Promise<void>
     full?: boolean
