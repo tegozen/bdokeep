@@ -64,8 +64,10 @@ async function ensureLegacyPolicyRoles(url: string) {
 }
 
 /**
- * Existing volumes already have the full schema. Stamp drizzle journal hashes so
- * baseline CREATE is not re-executed (never DROP/recreate).
+ * Existing volumes already have the pre-Drizzle schema (≈ migration 0000).
+ * Stamp only that baseline hash so CREATE is not re-executed.
+ * Later journal entries (e.g. admin_users) must actually run via migrate —
+ * stamping the whole journal skips them on old volumes.
  */
 async function ensureBaselineStamp(url: string) {
   const sql = postgres(url, { max: 1, onnotice: () => {} })
@@ -105,20 +107,23 @@ async function ensureBaselineStamp(url: string) {
     const journal = JSON.parse(fs.readFileSync(journalPath, 'utf8')) as {
       entries: Array<{ tag: string; when: number }>
     }
-
-    for (const entry of journal.entries) {
-      const sqlPath = path.join(drizzleDir, `${entry.tag}.sql`)
-      if (!fs.existsSync(sqlPath)) {
-        throw new Error(`migrate: missing ${entry.tag}.sql for baseline stamp`)
-      }
-      const query = fs.readFileSync(sqlPath, 'utf8')
-      const hash = crypto.createHash('sha256').update(query).digest('hex')
-      await sql`
-        insert into drizzle.__drizzle_migrations (hash, created_at)
-        values (${hash}, ${entry.when})
-      `
-      console.log(`migrate: baseline stamp ${entry.tag}`)
+    const baseline = journal.entries[0]
+    if (!baseline) {
+      console.log('migrate: empty drizzle journal — skip baseline stamp')
+      return
     }
+
+    const sqlPath = path.join(drizzleDir, `${baseline.tag}.sql`)
+    if (!fs.existsSync(sqlPath)) {
+      throw new Error(`migrate: missing ${baseline.tag}.sql for baseline stamp`)
+    }
+    const query = fs.readFileSync(sqlPath, 'utf8')
+    const hash = crypto.createHash('sha256').update(query).digest('hex')
+    await sql`
+      insert into drizzle.__drizzle_migrations (hash, created_at)
+      values (${hash}, ${baseline.when})
+    `
+    console.log(`migrate: baseline stamp ${baseline.tag} (additive migrations will apply)`)
   } finally {
     await sql.end({ timeout: 5 })
   }

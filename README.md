@@ -146,7 +146,7 @@ SQL к БД: `docker compose exec db psql -h 127.0.0.1 -U postgres -d bdokeep` (
 
 - **Схема:** правишь [`db/schema/`](db/schema/) → `npm run db:generate` → коммит `drizzle/`. Единственная ручная db-команда.
 - **Накат (авто):** сервис `migrate` при `compose up` / rebuild: Drizzle migrate → seed (ledger `drizzle.__catalog_seeds`) → sync `bdokeep_app`.
-- **Сиды:** fixtures в [`db/seed/sql/`](db/seed/sql/); unchanged по sha256 скипаются. Переиграть всё: `FORCE_SEED=1` в `.env` и `compose up`. На существующем volume schema baseline только **stamp** (гайды/proposals не пересоздаются).
+- **Сиды:** fixtures в [`db/seed/sql/`](db/seed/sql/); unchanged по sha256 скипаются. Переиграть всё: `FORCE_SEED=1` в `.env` и `compose up`. На существующем volume **stamp только baseline `0000_*`** (не весь journal) — аддитивные миграции (`admin_users` и далее) накатываются реально; гайды/proposals не пересоздаются.
 
 Если БД уже была создана со старым общим паролем, достаточно поправить `BDOKEEP_APP_PASSWORD` в `.env` и снова `docker compose up -d` — `migrate` синхронизирует роль `bdokeep_app`.
 
