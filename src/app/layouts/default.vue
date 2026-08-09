@@ -50,6 +50,19 @@
           "
           @click="openClassFeedback"
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+            <path d="M12 11v.01M8.5 11v.01M15.5 11v.01" />
+          </svg>
           Обратная связь
         </button>
         <button
@@ -58,6 +71,19 @@
           title="Как настроить макрос чата"
           @click="openChatMacroGuide"
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="2" y="6" width="20" height="12" rx="2" />
+            <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
+          </svg>
           Макрос чата
         </button>
         <NuxtLink
@@ -65,6 +91,19 @@
           to="/admin"
           :class="actionClass"
         >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3 4 6v5c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6z" />
+            <path d="M9.5 12.5 11 14l3.5-3.5" />
+          </svg>
           Админка
           <span v-if="pendingSummary.total > 0" :class="badgeClass">
             {{ pendingSummary.total }}
@@ -75,6 +114,7 @@
           :is="SuperadminAuth"
           v-if="isStaff && SuperadminAuth && authUiReady"
           compact
+          header-nav
         />
       </template>
     </SiteHeader>

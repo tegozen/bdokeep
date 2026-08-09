@@ -60,7 +60,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 ### Модерация
 
 - JWT-вход по логину/паролю (httpOnly cookie `bdo_admin`); bootstrap-суперадмин `admin` + `ADMIN_PASSWORD`
-- Раздел `/admin` со своим меню: заявки, ОС, баннер, пользователи (только суперадмин)
+- Раздел `/admin` со сайдбаром: заявки, ОС, баннер, пользователи (только суперадмин)
 - Роли: **admin** — заявки, ОС, баннер, тиры, auto-approve; **superadmin** — то же + управление пользователями
 - Очередь заявок `/admin/proposals` — одобрить / отклонить / **переприменить**; превью секции; правка summary перед approve
 - Инбокс ОС `/admin/feedback` — список и удаление

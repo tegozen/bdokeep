@@ -1,29 +1,39 @@
 <template>
   <header :class="[$style.header, stableHeight && $style.headerStable]">
-    <div :class="$style.headerInner">
-      <NuxtLink to="/" :class="$style.brand">
-        <span :class="$style.brandMark">BDO</span>
-        <span :class="$style.brandName">Keep</span>
-      </NuxtLink>
+    <div :class="$style.headerBar">
+      <div :class="$style.headerInner">
+        <NuxtLink to="/" :class="$style.brand" aria-label="BDO Keep — на главную">
+          <img
+            src="/brand/bdo-keep-logo.png"
+            alt="BDO KEEP"
+            width="282"
+            height="92"
+            :class="$style.brandLogo"
+            decoding="async"
+          >
+        </NuxtLink>
 
-      <div v-if="$slots.class" :class="$style.classBlock">
-        <slot name="class" />
+        <div v-if="$slots.class" :class="$style.classBlock">
+          <slot name="class" />
+        </div>
+
+        <div v-if="$slots.modes" :class="$style.guideModes">
+          <slot name="modes" />
+        </div>
+
+        <div :class="$style.actions">
+          <slot
+            name="actions"
+            :action-class="$style.action"
+            :badge-class="$style.actionBadge"
+          />
+        </div>
       </div>
+    </div>
 
-      <div v-if="$slots.modes" :class="$style.guideModes">
-        <slot name="modes" />
-      </div>
-
-      <div v-if="$slots.filters" :class="$style.homeFilters">
+    <div v-if="$slots.filters" :class="$style.filtersBar">
+      <div :class="$style.filtersInner">
         <slot name="filters" />
-      </div>
-
-      <div :class="$style.actions">
-        <slot
-          name="actions"
-          :action-class="$style.action"
-          :badge-class="$style.actionBadge"
-        />
       </div>
     </div>
   </header>
@@ -46,9 +56,15 @@ withDefaults(
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid var(--color-border);
-  backdrop-filter: blur(12px);
-  background: linear-gradient(180deg, rgba(10, 11, 16, 0.95), rgba(10, 11, 16, 0.7));
+  background:
+    radial-gradient(ellipse 38% 110% at 6% 35%, rgba(212, 175, 98, 0.12), transparent 58%),
+    radial-gradient(ellipse 30% 80% at 88% 10%, rgba(212, 175, 98, 0.05), transparent 52%),
+    linear-gradient(180deg, rgba(5, 6, 9, 0.98), rgba(7, 8, 12, 0.9));
+  backdrop-filter: blur(14px);
+}
+
+.headerBar {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent);
 }
 
 /* Stable sticky row height on class pages (tabs + actions). */
@@ -61,36 +77,34 @@ withDefaults(
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
-  width: min(calc(100% - 2rem), 1920px);
+  gap: 0.65rem 1.25rem;
+  width: var(--page-width);
   margin-inline: auto;
-  padding-block: 0.85rem;
+  padding-block: 1.15rem;
 }
 
 .brand {
   display: inline-flex;
   flex-shrink: 0;
-  align-items: baseline;
-  gap: 0.375rem;
-  color: var(--color-ink);
+  align-items: center;
+  line-height: 0;
   text-decoration: none;
 }
 
-.brand:hover {
-  color: var(--color-ink);
+.brand:hover .brandLogo {
+  filter:
+    drop-shadow(0 0 10px rgba(212, 175, 98, 0.35))
+    brightness(1.06);
 }
 
-.brandMark {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 0.12em;
-  color: var(--color-gold);
-}
-
-.brandName {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 0.05em;
+.brandLogo {
+  display: block;
+  width: auto;
+  height: 2.65rem;
+  max-width: min(14.5rem, 52vw);
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 98, 0.22));
+  transition: filter 140ms ease;
 }
 
 .classBlock {
@@ -99,12 +113,6 @@ withDefaults(
   align-items: center;
   gap: 0.45rem 0.65rem;
   min-width: 0;
-}
-
-.homeFilters {
-  display: flex;
-  min-width: 0;
-  align-items: center;
 }
 
 .guideModes {
@@ -122,99 +130,134 @@ withDefaults(
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0;
   margin-left: auto;
   min-width: 0;
-  min-height: 2rem;
+  min-height: 2.25rem;
+}
+
+/* Equal breathing room on both sides of every divider. */
+.actions > :global(*) {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.35rem 1.35rem;
+}
+
+.actions > :global(*:first-child) {
+  padding-left: 0;
+}
+
+.actions > :global(*:last-child) {
+  padding-right: 0;
+}
+
+.actions > :global(* + *)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 1.15rem;
+  background: color-mix(in srgb, var(--color-gold-soft) 35%, transparent);
+  transform: translateY(-50%);
 }
 
 .action {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.55rem;
   box-sizing: border-box;
-  height: 2rem;
-  border: 1px solid var(--color-border);
+  min-height: 2.25rem;
+  border: 0;
   background: transparent;
-  color: var(--color-gold-soft);
+  color: color-mix(in srgb, var(--color-gold-soft) 88%, var(--color-muted));
   cursor: pointer;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
+  font-weight: 400;
   line-height: 1;
-  padding: 0 0.65rem;
   text-decoration: none;
   white-space: nowrap;
 }
 
-.action:hover {
-  border-color: var(--color-border-strong);
+.action :global(svg) {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.action:hover,
+.action:focus-visible {
   color: var(--color-gold);
+  outline: none;
 }
 
 .actionBadge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--color-gold) 50%, transparent);
+  min-width: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 45%, transparent);
   border-radius: 999px;
-  background: var(--color-gold-dim);
+  background: color-mix(in srgb, var(--color-gold) 18%, transparent);
   color: var(--color-gold);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  padding: 0.15rem 0.35rem;
+  padding: 0.14rem 0.34rem;
   text-align: center;
   pointer-events: none;
 }
 
+.filtersBar {
+  padding: 1rem var(--page-gutter) 1.15rem;
+}
+
+.filtersInner {
+  width: var(--page-width);
+  margin-inline: auto;
+}
+
 /*
   Phone / tablet: brand + actions on top, class + mode/preset tabs below.
-  Home filters stay on the brand/actions row when they fit; wrap only via flex-wrap.
 */
 @media (max-width: 1099px) {
   .headerInner {
     align-items: flex-start;
+    padding-block: 0.95rem;
   }
 
   .brand {
     order: 1;
-    min-height: 2rem;
-    align-items: center;
-  }
-
-  .homeFilters {
-    order: 2;
-    flex: 0 0 auto;
+    min-height: 2.25rem;
   }
 
   .actions {
-    order: 3;
-    max-width: calc(100% - 7.5rem);
+    order: 2;
+    max-width: calc(100% - 8.5rem);
   }
 
   .classBlock {
-    order: 4;
+    order: 3;
     flex: 1 1 100%;
   }
 
   .guideModes {
-    order: 5;
+    order: 4;
     flex: 1 1 100%;
   }
 
   .action {
-    font-size: 0.78rem;
-    padding: 0 0.5rem;
+    font-size: 0.82rem;
   }
 }
 
-/* Narrow phones: actions on their own row under the brand; filters follow. */
 @media (max-width: 640px) {
-  .brandMark,
-  .brandName {
-    font-size: 1.25rem;
+  .brandLogo {
+    height: 2.2rem;
   }
 
   .actions {
@@ -225,25 +268,37 @@ withDefaults(
     justify-content: flex-start;
   }
 
-  .homeFilters {
-    order: 3;
-    flex: 1 1 100%;
+  .actions > :global(*) {
+    padding: 0.3rem 1rem;
+  }
+
+  .actions > :global(*:first-child) {
+    padding-left: 0;
+  }
+
+  .actions > :global(*:last-child) {
+    padding-right: 0;
   }
 
   .classBlock {
-    order: 4;
+    order: 3;
   }
 
   .guideModes {
-    order: 5;
+    order: 4;
+  }
+
+  .filtersBar {
+    padding-top: 0.7rem;
+    padding-bottom: 0.85rem;
   }
 }
 
 @media (min-width: 1100px) {
   .headerInner {
     align-items: center;
-    padding-block: 1rem;
-    gap: 0.75rem 1.25rem;
+    padding-block: 1.25rem;
+    gap: 0.85rem 1.5rem;
   }
 
   .brand {
@@ -253,11 +308,6 @@ withDefaults(
   .classBlock {
     order: 2;
     flex: 1 1 auto;
-  }
-
-  .homeFilters {
-    order: 3;
-    flex: 0 0 auto;
   }
 
   .guideModes {
@@ -273,9 +323,8 @@ withDefaults(
     order: 4;
     flex-wrap: nowrap;
     flex-shrink: 0;
-    align-items: stretch;
-    gap: 0.85rem;
-    height: 2rem;
+    align-items: center;
+    min-height: 2.25rem;
     max-width: none;
   }
 }
