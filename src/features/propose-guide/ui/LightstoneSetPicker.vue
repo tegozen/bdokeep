@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { LightstoneSet } from '@/entities/class'
+import type { LightstoneSet } from '@/entities/catalog'
 import { codexIconSrc } from '@/shared/lib'
 
 const props = withDefaults(

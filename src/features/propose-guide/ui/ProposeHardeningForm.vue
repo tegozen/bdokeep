@@ -85,11 +85,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import {
-  fetchHardening,
-  type GuideItemRow,
-  type Item,
-} from '@/entities/class'
+import { fetchHardening, type Item } from '@/entities/catalog'
+import type { GuideItemRow } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
@@ -99,7 +96,7 @@ import {
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import type { HardeningFill } from '@/shared/lib'
-import { HardeningBoard } from '@/widgets/hardening-board'
+import { HardeningBoard } from '@/shared/ui/hardening-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

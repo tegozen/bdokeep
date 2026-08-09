@@ -1,2 +1,2 @@
-export { default as MorphBoard } from './ui/MorphBoard.vue'
-export type { MorphSlotFill } from '@/shared/lib/boardFills'
+/** @deprecated Import from `@/shared/ui/morph-board`. */
+export { MorphBoard, type MorphSlotFill } from '@/shared/ui/morph-board'

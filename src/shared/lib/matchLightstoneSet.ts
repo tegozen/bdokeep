@@ -1,4 +1,4 @@
-import type { LightstoneSet } from '@/entities/class'
+import type { LightstoneSet } from '@/entities/catalog'
 import { LIGHTSTONE_SLOT_IDS } from './relicSlots'
 
 export type MatchedLightstoneSet = {

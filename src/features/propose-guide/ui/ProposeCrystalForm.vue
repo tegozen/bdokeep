@@ -151,7 +151,8 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { fetchCrystals, type GuideItemRow, type Item } from '@/entities/class'
+import { fetchCrystals, type Item } from '@/entities/catalog'
+import type { GuideItemRow } from '@/entities/class'
 import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
@@ -165,7 +166,7 @@ import {
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import type { CrystalFill } from '@/shared/lib'
-import { CrystalBoard } from '@/widgets/crystal-board'
+import { CrystalBoard } from '@/shared/ui/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

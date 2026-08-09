@@ -9,24 +9,11 @@ export type {
   GuideItemRow,
   GuideMorphRow,
   Skill,
-  SkillAddonEffect,
-  Buff,
-  Item,
-  LightstoneSet,
-  LightstoneSetStone,
-  ProposalSection,
 } from './model/types'
 export {
   fetchPublishedClasses,
   fetchClassGuideBySlug,
   fetchClassSkills,
-  fetchSkillAddonEffects,
-  fetchBuffs,
-  fetchCrystals,
-  fetchRelics,
-  fetchLightstones,
-  fetchLightstoneSets,
-  fetchHardening,
   updateClassTier,
 } from './api/classApi'
 export { default as ClassIcon } from './ui/ClassIcon.vue'

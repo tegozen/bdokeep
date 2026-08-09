@@ -104,9 +104,9 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 | Путь | Назначение |
 |------|------------|
-| `src/` | FSD: `app` → `pages` → `widgets` → `features` → `entities` → `shared` |
+| `src/` | FSD: `app` → `pages` → `widgets` → `features` → `entities` (`class`, `catalog`) → `shared` (в т.ч. UI-доски) |
 | `domain/` | Общие лимиты/типы proposals, YouTube, комбо (клиент + сервер) |
-| `server/` | Nitro API + utils (db, auth, applyProposal, каталоги) |
+| `server/` | Nitro API + utils (`proposals/` parse·apply registry, auth, каталоги) |
 | `db/schema/` | Drizzle schema по доменам (`index.ts` barrel) |
 | `drizzle/` | SQL-миграции схемы |
 | `db/seed/sql/` | Каталожные сиды (SQL fixtures + hash ledger) |

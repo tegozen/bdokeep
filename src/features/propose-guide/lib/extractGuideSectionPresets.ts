@@ -1,8 +1,8 @@
+import type { Item } from '@/entities/catalog'
 import type {
   ClassGuideBundle,
   GuideBuffRow,
   GuideItemRow,
-  Item,
 } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,

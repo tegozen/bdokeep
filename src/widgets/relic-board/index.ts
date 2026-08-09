@@ -1,2 +1,2 @@
-export { default as RelicBoard } from './ui/RelicBoard.vue'
-export type { RelicFill } from '@/shared/lib/boardFills'
+/** @deprecated Import from `@/shared/ui/relic-board`. */
+export { RelicBoard, type RelicFill } from '@/shared/ui/relic-board'

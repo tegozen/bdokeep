@@ -1,5 +1,6 @@
 import { reactive, watch, type Ref } from 'vue'
-import type { Buff, Skill, SkillAddonEffect } from '@/entities/class'
+import type { Buff, SkillAddonEffect } from '@/entities/catalog'
+import type { Skill } from '@/entities/class'
 import { resolveCatalogIds } from '@/shared/api/catalogResolve'
 import {
   morphPresetFrom,

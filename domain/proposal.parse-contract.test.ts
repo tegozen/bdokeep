@@ -53,7 +53,7 @@ describe('parseAndValidatePayload replaced contract', () => {
     const out = parseReplaced([...CRYSTAL_PRESET_IDS], structural, keptAfterCatalog)
     assert.equal(out.ok, true)
     if (out.ok) {
-      assert.deepEqual(out.replaced, ['t1', 'besp', 'sub'])
+      assert.deepEqual(out.replaced, ['t1', 'besp', 'sub', 'pve'])
       assert.ok(!out.replaced.includes('t2'))
     }
   })
@@ -62,7 +62,7 @@ describe('parseAndValidatePayload replaced contract', () => {
     const out = parseReplaced([...CRYSTAL_PRESET_IDS], ['t1', 't2'], [])
     assert.equal(out.ok, true)
     if (out.ok) {
-      assert.deepEqual(out.replaced, ['besp', 'sub'])
+      assert.deepEqual(out.replaced, ['besp', 'sub', 'pve'])
     }
   })
 

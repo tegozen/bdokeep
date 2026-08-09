@@ -1,4 +1,4 @@
-import type { ProposalSection } from '@/entities/class'
+import type { ProposalSection } from '@domain'
 
 export type SubmitProposalInput = {
   class_slug: string

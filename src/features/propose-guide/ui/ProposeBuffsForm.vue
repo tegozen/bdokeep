@@ -115,7 +115,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { fetchBuffs, type Buff, type GuideBuffRow, type Item } from '@/entities/class'
+import { fetchBuffs, type Buff, type Item } from '@/entities/catalog'
+import type { GuideBuffRow } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,

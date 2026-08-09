@@ -109,12 +109,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { fetchSkillAddonEffects, type SkillAddonEffect } from '@/entities/catalog'
 import {
   fetchClassSkills,
-  fetchSkillAddonEffects,
   type GuideMorphRow,
   type Skill,
-  type SkillAddonEffect,
 } from '@/entities/class'
 import {
   CRYSTAL_PRESETS,
@@ -136,7 +135,7 @@ import {
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import type { MorphSlotFill } from '@/shared/lib'
-import { MorphBoard } from '@/widgets/morph-board'
+import { MorphBoard } from '@/shared/ui/morph-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneMorphBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'

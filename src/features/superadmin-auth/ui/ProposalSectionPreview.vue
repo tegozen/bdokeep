@@ -175,9 +175,9 @@ import {
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import { ComboChain } from '@/widgets/combo-chain'
-import { CrystalBoard } from '@/widgets/crystal-board'
-import { MorphBoard } from '@/widgets/morph-board'
-import { RelicBoard } from '@/widgets/relic-board'
+import { CrystalBoard } from '@/shared/ui/crystal-board'
+import { MorphBoard } from '@/shared/ui/morph-board'
+import { RelicBoard } from '@/shared/ui/relic-board'
 
 const UiMarkdownPreview = defineAsyncComponent(
   () => import('@/shared/ui/UiMarkdownPreview.vue'),

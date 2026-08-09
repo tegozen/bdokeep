@@ -1,2 +1,2 @@
-export { default as CrystalBoard } from './ui/CrystalBoard.vue'
-export type { CrystalFill } from '@/shared/lib/boardFills'
+/** @deprecated Import from `@/shared/ui/crystal-board` (presentational boards live in shared). */
+export { CrystalBoard, type CrystalFill } from '@/shared/ui/crystal-board'

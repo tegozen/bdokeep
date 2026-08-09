@@ -44,7 +44,8 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-import type { ClassVideo, ProposalSection } from '@/entities/class'
+import type { ProposalSection } from '@domain'
+import type { ClassVideo } from '@/entities/class'
 import { sanitizeYoutubeUrl, youtubeVideoId } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
 import { parseSubmitError } from '../lib/parseSubmitError'

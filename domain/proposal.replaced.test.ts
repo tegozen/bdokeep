@@ -71,7 +71,7 @@ describe('finalizeReplacedPresets', () => {
     )
     assert.equal(result.ok, true)
     if (result.ok) {
-      assert.deepEqual(result.replaced, ['t1', 'besp', 'sub'])
+      assert.deepEqual(result.replaced, ['t1', 'besp', 'sub', 'pve'])
       assert.ok(!result.replaced.includes('t2'))
     }
   })

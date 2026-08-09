@@ -125,11 +125,11 @@ import { computed, ref, watch } from 'vue'
 import {
   fetchLightstoneSets,
   fetchRelics,
-  type GuideItemRow,
   type Item,
   type LightstoneSet,
   type LightstoneSetStone,
-} from '@/entities/class'
+} from '@/entities/catalog'
+import type { GuideItemRow } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
@@ -140,7 +140,7 @@ import {
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import type { RelicFill } from '@/shared/lib'
-import { RelicBoard } from '@/widgets/relic-board'
+import { RelicBoard } from '@/shared/ui/relic-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

@@ -91,13 +91,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { Item } from '@/entities/catalog'
 import {
   ClassIcon,
   fetchClassGuideBySlug,
   fetchPublishedClasses,
   type BdoClass,
   type ClassGuideBundle,
-  type Item,
 } from '@/entities/class'
 import {
   CRYSTAL_PRESETS,
