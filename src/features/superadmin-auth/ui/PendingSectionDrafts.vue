@@ -125,7 +125,7 @@ import {
 import { BorderSparkler } from '@/shared/ui'
 import ProposalSectionPreview from './ProposalSectionPreview.vue'
 import ReviewSummaryModal from './ReviewSummaryModal.vue'
-import { formatRuDateTime, useConfirm } from '@/shared/lib'
+import { formatRuDateTime, parseApiError, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 const props = defineProps<{
@@ -233,13 +233,9 @@ async function onApprove(item: PendingProposal) {
     emit('changed', 'approve')
   } catch (e: unknown) {
     emit('optimistic-restore', item)
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
     await alert({
       title: 'Ошибка',
-      message: msg || 'Ошибка одобрения',
+      message: parseApiError(e, 'Ошибка одобрения'),
     })
   } finally {
     acting.value = null
@@ -256,13 +252,9 @@ async function onReject(id: string) {
     emit('changed', 'reject')
   } catch (e: unknown) {
     if (item) emit('optimistic-restore', item)
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
     await alert({
       title: 'Ошибка',
-      message: msg || 'Ошибка отклонения',
+      message: parseApiError(e, 'Ошибка отклонения'),
     })
   } finally {
     acting.value = null

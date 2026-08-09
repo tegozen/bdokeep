@@ -129,6 +129,7 @@
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { parseApiError } from '@/shared/lib'
 import { UiButton, UiModal, UiSwitch } from '@/shared/ui'
 import GuildRecruitBanner from './GuildRecruitBanner.vue'
 import type { GuildBannerLink, GuildBannerPublic } from '../model/types'
@@ -254,8 +255,8 @@ async function load() {
   try {
     const res = await $fetch<BannerAdmin>('/api/admin/guild-banner')
     applyAdmin(res)
-  } catch {
-    saveError.value = 'Не удалось загрузить'
+  } catch (e: unknown) {
+    saveError.value = parseApiError(e, 'Не удалось загрузить')
   } finally {
     loading.value = false
   }
@@ -341,11 +342,7 @@ async function save() {
       emit('close')
     }
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    saveError.value = msg || 'Не удалось сохранить'
+    saveError.value = parseApiError(e, 'Не удалось сохранить')
   } finally {
     saving.value = false
   }

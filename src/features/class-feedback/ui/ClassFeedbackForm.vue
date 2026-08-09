@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref } from 'vue'
+import { parseApiError } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 import { submitFeedback } from '../api/submitFeedback'
 
@@ -54,11 +55,7 @@ async function onSubmit() {
     honeypot.value = ''
     sent.value = true
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    formError.value = msg || 'Не удалось отправить. Попробуйте позже.'
+    formError.value = parseApiError(e, 'Не удалось отправить. Попробуйте позже.')
   } finally {
     submitting.value = false
   }

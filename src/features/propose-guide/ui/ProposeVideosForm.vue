@@ -46,9 +46,8 @@
 import { reactive } from 'vue'
 import type { ProposalSection } from '@domain'
 import type { ClassVideo } from '@/entities/class'
-import { sanitizeYoutubeUrl, youtubeVideoId } from '@/shared/lib'
+import { parseApiError, sanitizeYoutubeUrl, youtubeVideoId } from '@/shared/lib'
 import { submitGuideProposal } from '../api/submitProposal'
-import { parseSubmitError } from '../lib/parseSubmitError'
 import { useProposeModal } from '../lib/useProposeModal'
 import ProposeModalShell from './ProposeModalShell.vue'
 
@@ -156,7 +155,7 @@ async function onSubmit() {
         website: honeypot.value || undefined,
       })
     } catch (e: unknown) {
-      if (applyFieldErrorFromMessage(parseSubmitError(e))) return null
+      if (applyFieldErrorFromMessage(parseApiError(e))) return null
       throw e
     }
   })

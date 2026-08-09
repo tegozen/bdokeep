@@ -223,7 +223,7 @@ import {
   useHeaderClass,
   useHeaderPresetFill,
 } from '@/pages/class-guide'
-import { useConfirm, useOnlineStatus } from '@/shared/lib'
+import { parseApiError, useConfirm, useOnlineStatus } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 import { SiteFooter } from '@/widgets/site-footer'
 import { SiteHeader } from '@/widgets/site-header'
@@ -241,7 +241,7 @@ const chatMacroGuideOpen = ref(false)
 const ClassFeedbackModal = shallowRef<Component | null>(null)
 const classFeedbackOpen = ref(false)
 const connectivityToast = ref('')
-const { request: confirmRequest } = useConfirm()
+const { request: confirmRequest, alert } = useConfirm()
 const { online } = useOnlineStatus()
 const connectivityToastReady = ref(false)
 
@@ -405,8 +405,12 @@ async function onHeaderTierChange(tier: number | null) {
   try {
     await updateClassTier(hc.slug, tier, mode, kind)
     clearNuxtData('classes')
-  } catch {
+  } catch (e: unknown) {
     patchClassTier(prev, field)
+    await alert({
+      title: 'Ошибка',
+      message: parseApiError(e, 'Не удалось сохранить тир'),
+    })
   } finally {
     tierSaving.value = false
   }

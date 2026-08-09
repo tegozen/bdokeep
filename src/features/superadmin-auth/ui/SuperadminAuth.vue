@@ -110,9 +110,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useSuperadmin } from '../lib/useSuperadmin'
+import { parseApiError } from '@/shared/lib'
 import UiButton from '@/shared/ui/UiButton.vue'
 import UiModal from '@/shared/ui/UiModal.vue'
+import { useSuperadmin } from '../lib/useSuperadmin'
 import LoginFields from './LoginFields.vue'
 
 const props = withDefaults(
@@ -170,8 +171,8 @@ async function onLogin() {
     if (props.afterLoginTo) {
       await navigateTo(props.afterLoginTo)
     }
-  } catch {
-    error.value = 'Неверный логин или пароль'
+  } catch (e) {
+    error.value = parseApiError(e, 'Неверный логин или пароль')
   } finally {
     busy.value = false
   }

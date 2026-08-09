@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { approveProposal } from '../api/pendingProposals'
-import { useUnsavedGuard } from '@/shared/lib'
+import { parseApiError, useUnsavedGuard } from '@/shared/lib'
 import { UiButton, UiModal } from '@/shared/ui'
 
 const UiMarkdownEditor = defineAsyncComponent(
@@ -117,11 +117,7 @@ async function onApprove() {
     emit('approved')
     emit('close')
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    error.value = msg || 'Ошибка одобрения'
+    error.value = parseApiError(e, 'Ошибка одобрения')
   } finally {
     submitting.value = false
   }

@@ -1,7 +1,6 @@
 import { computed, nextTick, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
 import { useSuperadmin } from '@/features/superadmin-auth'
-import { useOnlineStatus, useUnsavedGuard } from '@/shared/lib'
-import { parseSubmitError } from './parseSubmitError'
+import { parseApiError, useOnlineStatus, useUnsavedGuard } from '@/shared/lib'
 import { refreshGuideAfterApprove } from './refreshGuideAfterApprove'
 
 export type ProposeSubmitResult = { autoApproved?: boolean }
@@ -96,7 +95,7 @@ export function useProposeModal(opts: {
         await refreshGuideAfterApprove(toValue(opts.classSlug))
       }
     } catch (e: unknown) {
-      formError.value = parseSubmitError(e)
+      formError.value = parseApiError(e, 'Не удалось отправить. Попробуйте позже.')
     } finally {
       submitting.value = false
     }

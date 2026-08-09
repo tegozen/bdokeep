@@ -133,7 +133,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useSuperadmin } from '@/features/superadmin-auth'
-import { useConfirm } from '@/shared/lib'
+import { parseApiError, useConfirm } from '@/shared/lib'
 import { UiButton, UiModal } from '@/shared/ui'
 
 definePageMeta({ layout: 'admin' })
@@ -174,10 +174,12 @@ async function load() {
       e && typeof e === 'object' && 'statusCode' in e
         ? Number((e as { statusCode?: number }).statusCode)
         : 0
+    items.value = []
     if (code === 401) {
       await loseSession()
+      return
     }
-    items.value = []
+    await alert({ title: 'Ошибка', message: parseApiError(e, 'Не удалось загрузить') })
   } finally {
     loading.value = false
   }
@@ -195,11 +197,7 @@ async function createUser() {
     newPassword.value = ''
     await load()
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    createError.value = msg || 'Не удалось создать'
+    createError.value = parseApiError(e, 'Не удалось создать')
   } finally {
     creating.value = false
   }
@@ -236,11 +234,7 @@ async function submitPassword() {
     passwordValue.value = ''
     await alert({ title: 'Готово', message: 'Пароль обновлён' })
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    passwordError.value = msg || 'Не удалось сменить пароль'
+    passwordError.value = parseApiError(e, 'Не удалось сменить пароль')
   } finally {
     acting.value = null
   }
@@ -264,11 +258,7 @@ async function setDisabled(item: AdminUserItem, disabled: boolean) {
     })
     await load()
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    await alert({ title: 'Ошибка', message: msg || 'Не удалось обновить' })
+    await alert({ title: 'Ошибка', message: parseApiError(e, 'Не удалось обновить') })
   } finally {
     acting.value = null
   }
@@ -287,11 +277,7 @@ async function remove(item: AdminUserItem) {
     await $fetch(`/api/admin/users/${item.id}`, { method: 'DELETE' })
     await load()
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
-    await alert({ title: 'Ошибка', message: msg || 'Не удалось удалить' })
+    await alert({ title: 'Ошибка', message: parseApiError(e, 'Не удалось удалить') })
   } finally {
     acting.value = null
   }

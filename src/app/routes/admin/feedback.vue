@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useSuperadmin } from '@/features/superadmin-auth'
-import { formatRuDateTime, useConfirm } from '@/shared/lib'
+import { formatRuDateTime, parseApiError, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 const UiMarkdownPreview = defineAsyncComponent(
@@ -106,10 +106,12 @@ async function load() {
       e && typeof e === 'object' && 'statusCode' in e
         ? Number((e as { statusCode?: number }).statusCode)
         : 0
+    items.value = []
     if (code === 401) {
       await loseSession()
+      return
     }
-    items.value = []
+    await alert({ title: 'Ошибка', message: parseApiError(e, 'Не удалось загрузить') })
   } finally {
     loading.value = false
   }
@@ -129,13 +131,9 @@ async function remove(item: FeedbackItem) {
     await $fetch(`/api/admin/feedback/${item.id}`, { method: 'DELETE' })
     items.value = items.value.filter((i) => i.id !== item.id)
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
     await alert({
       title: 'Ошибка',
-      message: msg || 'Не удалось удалить',
+      message: parseApiError(e, 'Не удалось удалить'),
     })
   } finally {
     acting.value = null

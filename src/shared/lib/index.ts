@@ -18,6 +18,7 @@ export {
 export { formatRuDate, formatRuDateTime } from './dates'
 export { renderMarkdown } from './renderMarkdown'
 export { useConfirm, type ConfirmOptions, type AlertOptions } from './useConfirm'
+export { parseApiError } from './parseApiError'
 export { useModalEscape } from './useModalEscape'
 export { useUnsavedGuard } from './useUnsavedGuard'
 export { useOnlineStatus, type UseOnlineStatus } from './useOnlineStatus'

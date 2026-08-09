@@ -91,7 +91,7 @@ import {
   usePendingSummary,
   useSuperadmin,
 } from '@/features/superadmin-auth'
-import { formatRuDateTime, useConfirm } from '@/shared/lib'
+import { formatRuDateTime, parseApiError, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 definePageMeta({ layout: 'admin' })
@@ -197,10 +197,12 @@ async function load() {
       e && typeof e === 'object' && 'statusCode' in e
         ? Number((e as { statusCode?: number }).statusCode)
         : 0
+    items.value = []
     if (code === 401) {
       await loseSession()
+      return
     }
-    items.value = []
+    await alert({ title: 'Ошибка', message: parseApiError(e, 'Не удалось загрузить') })
   } finally {
     loading.value = false
   }
@@ -242,13 +244,9 @@ async function approve(item: Proposal) {
       items.value.splice(idx, 0, removed)
       adjustPendingSummary(1, item.class_slug)
     }
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
     await alert({
       title: 'Ошибка',
-      message: msg || 'Ошибка одобрения',
+      message: parseApiError(e, 'Ошибка одобрения'),
     })
   } finally {
     acting.value = null
@@ -277,13 +275,9 @@ async function reapply(item: Proposal) {
       }
     }
   } catch (e: unknown) {
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
     await alert({
       title: 'Ошибка',
-      message: msg || 'Не удалось применить',
+      message: parseApiError(e, 'Не удалось применить'),
     })
   } finally {
     acting.value = null
@@ -305,13 +299,9 @@ async function reject(id: string) {
       items.value.splice(idx, 0, removed)
       adjustPendingSummary(1, removed.class_slug)
     }
-    const msg =
-      e && typeof e === 'object' && 'data' in e
-        ? String((e as { data?: { statusMessage?: string } }).data?.statusMessage || '')
-        : ''
     await alert({
       title: 'Ошибка',
-      message: msg || 'Ошибка отклонения',
+      message: parseApiError(e, 'Ошибка отклонения'),
     })
   } finally {
     acting.value = null
