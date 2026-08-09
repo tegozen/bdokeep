@@ -106,9 +106,38 @@ const tierTabs = computed(() =>
 
 @media (max-width: 640px) {
   .root {
-    border-radius: 1.15rem;
-    padding: 0.6rem 0.85rem;
-    gap: 0.6rem 1.15rem;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 1rem;
+    padding: 0.7rem 0.8rem;
+    gap: 0.7rem;
+  }
+
+  /* Tier tabs stretch full width. */
+  .root > :global([role='tablist']) {
+    display: flex;
+    width: 100%;
+  }
+
+  .root > :global([role='tablist'] > *) {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 0.35rem;
+    font-size: 0.78rem;
+  }
+
+  .switches {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    width: 100%;
+    margin-left: 0;
+    font-size: 0.88rem;
+  }
+
+  .switches > :global(*) {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>

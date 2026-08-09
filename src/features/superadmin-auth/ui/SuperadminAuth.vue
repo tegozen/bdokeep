@@ -1,31 +1,49 @@
 <template>
-  <div :class="[headerNav ? $style.headerNavRoot : $style.row, !headerNav && compact && $style.rowCompact]">
+  <!-- Header nav: same UiButton cell as the other header actions. -->
+  <UiButton
+    v-if="headerNav && isStaff"
+    variant="ghost"
+    size="sm"
+    rounded
+    color="var(--color-gold-soft)"
+    icon-color="var(--color-gold-soft)"
+    hover-color="var(--color-gold)"
+    title="Выйти"
+    aria-label="Выйти"
+    @click="onLogout"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+    Выйти
+  </UiButton>
+
+  <div
+    v-else
+    :class="[$style.row, compact && $style.rowCompact]"
+  >
     <div v-if="!isStaff && $slots.default" :class="$style.leading">
       <slot />
     </div>
 
-    <div :class="[$style.trailing, isStaff && !headerNav && $style.trailingFull]">
+    <div :class="[$style.trailing, isStaff && $style.trailingFull]">
       <div
         v-if="isStaff"
-        :class="[$style.banner, compact && !headerNav && $style.compact, headerNav && $style.headerNav]"
+        :class="[$style.banner, compact && $style.compact]"
       >
-        <span v-if="!headerNav">{{ bannerText }}</span>
-        <button type="button" :class="headerNav ? $style.navLogout : $style.linkish" @click="onLogout">
-          <svg
-            v-if="headerNav"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
+        <span>{{ bannerText }}</span>
+        <button type="button" :class="$style.linkish" @click="onLogout">
           Выйти
         </button>
       </div>
@@ -102,7 +120,7 @@ const props = withDefaults(
     openLoginOnMount?: boolean
     /** Muted lock icon instead of labeled button (footer entry). */
     iconTrigger?: boolean
-    /** Borderless logout control for the site header nav. */
+    /** Logout control for the site header nav (UiButton). */
     headerNav?: boolean
     /** Navigate here after successful login. */
     afterLoginTo?: string
@@ -218,55 +236,6 @@ async function onLogout() {
 .compact .linkish {
   font-size: inherit;
   line-height: 1;
-}
-
-.headerNavRoot {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.25rem;
-}
-
-.headerNavRoot .trailing {
-  display: contents;
-}
-
-.headerNav.banner {
-  display: contents;
-  height: auto;
-  width: auto;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: var(--color-gold-soft);
-}
-
-.navLogout {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 2.25rem;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  color: color-mix(in srgb, var(--color-gold-soft) 88%, var(--color-muted));
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.9rem;
-  line-height: 1;
-  padding: 0;
-  white-space: nowrap;
-}
-
-.navLogout svg {
-  width: 1.05rem;
-  height: 1.05rem;
-  flex-shrink: 0;
-}
-
-.navLogout:hover,
-.navLogout:focus-visible {
-  color: var(--color-gold);
-  outline: none;
 }
 
 .triggerWide {

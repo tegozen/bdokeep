@@ -38,11 +38,15 @@
       <template v-else-if="headerClass" #filters>
         <GuideModePresetTabs :preset-fill="presetFill" />
       </template>
-      <template #actions="{ actionClass, badgeClass }">
-        <button
+      <template #actions="{ badgeClass }">
+        <UiButton
           v-if="online"
-          type="button"
-          :class="actionClass"
+          variant="ghost"
+          size="sm"
+          rounded
+          color="var(--color-gold-soft)"
+          icon-color="var(--color-gold-soft)"
+          hover-color="var(--color-gold)"
           :title="
             headerClass
               ? 'Анонимное сообщение админу по этому классу'
@@ -64,10 +68,14 @@
             <path d="M12 11v.01M8.5 11v.01M15.5 11v.01" />
           </svg>
           Обратная связь
-        </button>
-        <button
-          type="button"
-          :class="actionClass"
+        </UiButton>
+        <UiButton
+          variant="ghost"
+          size="sm"
+          rounded
+          color="var(--color-gold-soft)"
+          icon-color="var(--color-gold-soft)"
+          hover-color="var(--color-gold)"
           title="Как настроить макрос чата"
           @click="openChatMacroGuide"
         >
@@ -85,11 +93,16 @@
             <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
           </svg>
           Макрос чата
-        </button>
-        <NuxtLink
+        </UiButton>
+        <UiButton
           v-if="isStaff"
+          variant="ghost"
+          size="sm"
+          rounded
+          color="var(--color-gold-soft)"
+          icon-color="var(--color-gold-soft)"
+          hover-color="var(--color-gold)"
           to="/admin"
-          :class="actionClass"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -108,7 +121,7 @@
           <span v-if="pendingSummary.total > 0" :class="badgeClass">
             {{ pendingSummary.total }}
           </span>
-        </NuxtLink>
+        </UiButton>
         <!-- Logged-in chrome stays in the header; login entry lives in the footer. -->
         <component
           :is="SuperadminAuth"
@@ -206,6 +219,7 @@ import {
   usePendingSummary,
   useSuperadmin,
 } from '@/shared/lib'
+import { UiButton } from '@/shared/ui'
 import { SiteFooter } from '@/widgets/site-footer'
 import { SiteHeader } from '@/widgets/site-header'
 import GuideModePresetTabs from './GuideModePresetTabs.vue'
