@@ -2,9 +2,12 @@
  * Catalog / class icons are same-origin only (`/codex/…`, `/classes/…`).
  * Never hotlink bdocodex / other CDNs in the browser.
  *
- * Bump CODEX_ICON_CACHE_V when re-mirroring icons so browsers drop poisoned 404 caches.
+ * Bump these when replacing committed art so browsers/SW drop long-TTL caches
+ * (`/classes/**` and `/codex/**` are max-age=1y; same path otherwise sticks).
  */
 export const CODEX_ICON_CACHE_V = '4'
+/** Bump when regenerating class portrait-card webps under public/classes. */
+export const CLASS_PORTRAIT_CACHE_V = '5'
 
 /** Shared prefix stripped from guide JSON to shrink SSR payload (restored in codexIconSrc). */
 export const CODEX_ITEM_ICON_PREFIX = '/codex/items/new_icon/'
@@ -40,8 +43,8 @@ export function isLocalAppImageUrl(url: string): boolean {
 }
 
 /**
- * Normalize icon URL for <img src> / API payloads.
- * bdocodex CDN → /codex/…; other remotes → null; /codex/ gets cache-bust.
+ * Normalize icon/portrait URL for <img src> / API payloads.
+ * bdocodex CDN → /codex/…; other remotes → null; /codex/ and /classes/ get cache-bust.
  * Accepts compact guide-payload form (`03_etc/….webp` without the shared prefix).
  */
 export function codexIconSrc(url: string | null | undefined): string | null {
@@ -53,9 +56,10 @@ export function codexIconSrc(url: string | null | undefined): string | null {
     trimmed = `${CODEX_ITEM_ICON_PREFIX}${trimmed}`
   }
   if (!isLocalAppImageUrl(trimmed)) return null
-  if (!trimmed.startsWith('/codex/')) return trimmed
   const base = trimmed.split('?')[0]!
-  return `${base}?v=${CODEX_ICON_CACHE_V}`
+  if (base.startsWith('/codex/')) return `${base}?v=${CODEX_ICON_CACHE_V}`
+  if (base.startsWith('/classes/')) return `${base}?v=${CLASS_PORTRAIT_CACHE_V}`
+  return base
 }
 
 /** Strip query for DB storage; keep local path only. */

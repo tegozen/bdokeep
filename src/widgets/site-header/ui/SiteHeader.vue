@@ -56,13 +56,16 @@ withDefaults(
   position: sticky;
   top: 0;
   z-index: 20;
-  /* No gold radials — page bg (`/brand/page-bg.png`) stays visible. */
-  background: color-mix(in srgb, #050505 55%, transparent);
-  backdrop-filter: blur(12px);
+  /* Transparent — blur/fill only on `.headerBar` so the filters row
+     doesn’t paint a full-width plate behind the gold filter card. */
+  background: transparent;
 }
 
 .headerBar {
   border-bottom: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent);
+  /* No gold radials — page bg (`/brand/page-bg.png`) stays visible. */
+  background: color-mix(in srgb, #050505 55%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 /* Stable sticky row height on class pages (tabs + actions). */

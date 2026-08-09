@@ -53,10 +53,10 @@
           <div :class="$style.media">
             <img
               v-if="bdoClass.portrait_url"
-              :src="bdoClass.portrait_url"
+              :src="codexIconSrc(bdoClass.portrait_url) || undefined"
               :alt="bdoClass.name_ru"
-              width="360"
-              height="864"
+              width="480"
+              height="1152"
               loading="eager"
               :fetchpriority="index === lcpIndex ? 'high' : 'auto'"
               :decoding="index === lcpIndex ? 'sync' : 'async'"
@@ -98,6 +98,7 @@ import type { BdoClass } from '@/entities/class/model/types'
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
 import BorderSparkler from '@/features/superadmin-auth/ui/BorderSparkler.vue'
+import { codexIconSrc } from '@/shared/lib/codexIcon'
 import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
 import GuildRecruitBanner from '@/widgets/guild-banner/ui/GuildRecruitBanner.vue'
 import type { GuildBannerPublic } from '@/widgets/guild-banner/model/types'

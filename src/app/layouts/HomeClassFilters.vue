@@ -48,7 +48,8 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
   padding: 0.95rem 1.5rem;
   border: 0;
   border-radius: 1.35rem;
-  background: transparent;
+  background: color-mix(in srgb, #050505 72%, transparent);
+  backdrop-filter: blur(12px);
   box-shadow: none;
 }
 
