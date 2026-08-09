@@ -164,20 +164,20 @@ import {
   type ProposalPreviewItem,
   type ProposalPreviewPayload,
 } from '../lib/useProposalPreviewHydration'
+import type { GuideSpecMode } from '@domain'
 import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
   HARDENING_SLOTS,
-  isPlaceholderVideoTitle,
+  CrystalBoard,
+  MorphBoard,
+  RelicBoard,
   morphPresetFrom,
   type CrystalPresetId,
-  type GuideSpecMode,
-} from '@/shared/lib'
+} from '@/entities/catalog'
 import { ComboChain, VideoList } from '@/entities/class'
+import { isPlaceholderVideoTitle } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import { CrystalBoard } from '@/shared/ui/crystal-board'
-import { MorphBoard } from '@/shared/ui/morph-board'
-import { RelicBoard } from '@/shared/ui/relic-board'
 
 const UiMarkdownPreview = defineAsyncComponent(
   () => import('@/shared/ui/UiMarkdownPreview.vue'),

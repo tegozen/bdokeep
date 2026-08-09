@@ -1,6 +1,10 @@
+import {
+  CRYSTAL_PRESET_IDS,
+  isMorphPresetId,
+  morphGuidePreset,
+  type CrystalPresetId,
+} from '@/entities/catalog'
 import type { ClassGuideBundle } from '@/entities/class'
-import { CRYSTAL_PRESET_IDS, type CrystalPresetId } from './crystalPresets'
-import { isMorphPresetId, morphGuidePreset } from './morphPresets'
 
 export type PresetFillMap = Record<CrystalPresetId, boolean>
 

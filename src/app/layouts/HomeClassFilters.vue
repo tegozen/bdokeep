@@ -29,7 +29,7 @@ import { useSuperadmin } from '@/features/superadmin-auth'
 import {
   useHomeClassFilters,
   type HomeTierMin,
-} from '@/shared/lib'
+} from '@/pages/home'
 import UiPresetTabs from '@/shared/ui/UiPresetTabs.vue'
 import UiSwitch from '@/shared/ui/UiSwitch.vue'
 

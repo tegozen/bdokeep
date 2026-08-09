@@ -151,22 +151,23 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { fetchCrystals, type Item } from '@/entities/catalog'
-import type { GuideItemRow } from '@/entities/class'
 import {
   CRYSTAL_ALL_SLOTS,
   CRYSTAL_PRESETS,
   CRYSTAL_PRESET_IDS,
-  codexIconSrc,
+  CrystalBoard,
+  fetchCrystals,
   isCenterSlotId,
   isDawnCrystalName,
   isDawnSlotId,
   isSpiritCrystalName,
+  type CrystalFill,
   type CrystalPresetId,
-} from '@/shared/lib'
+  type Item,
+} from '@/entities/catalog'
+import type { GuideItemRow } from '@/entities/class'
+import { codexIconSrc } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import type { CrystalFill } from '@/shared/lib'
-import { CrystalBoard } from '@/shared/ui/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

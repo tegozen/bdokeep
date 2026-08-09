@@ -73,9 +73,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { codexIconSrc } from '@/shared/lib/codexIcon'
-import { HARDENING_SLOTS } from '@/shared/lib/hardeningSlots'
+import { HARDENING_SLOTS } from '../../../model/hardeningSlots'
 
-import type { HardeningFill } from '@/shared/lib/boardFills'
+import type { HardeningFill } from '../../../model/boardFills'
 
 export type { HardeningFill }
 

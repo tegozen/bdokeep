@@ -1,7 +1,9 @@
 import type { Buff, Item, SkillAddonEffect } from '@/entities/catalog'
-import type { SectionUpdateMeta } from '@/shared/lib/sectionUpdates'
 
-export type { SectionUpdateMeta }
+export type SectionUpdateMeta = {
+  updated_at: string
+  updated_by: string | null
+}
 
 export type BdoClass = {
   id: string

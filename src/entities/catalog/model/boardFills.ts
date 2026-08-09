@@ -1,6 +1,6 @@
 import type { MorphSlotLevel } from './morphPresets'
 
-/** Presentational fill for crystal / relic / hardening board slots. */
+/** Slot fill for crystal / relic / hardening boards. */
 export type BoardItemFill = {
   id: string
   name_ru: string

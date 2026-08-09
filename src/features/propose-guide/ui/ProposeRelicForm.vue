@@ -123,24 +123,22 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import {
+  CRYSTAL_PRESET_IDS,
+  CRYSTAL_PRESETS,
+  LIGHTSTONE_SLOT_IDS,
+  RelicBoard,
   fetchLightstoneSets,
   fetchRelics,
+  isLightstoneSlotId,
+  isRelicSlotId,
+  type CrystalPresetId,
   type Item,
   type LightstoneSet,
   type LightstoneSetStone,
+  type RelicFill,
 } from '@/entities/catalog'
 import type { GuideItemRow } from '@/entities/class'
-import {
-  CRYSTAL_PRESET_IDS,
-  CRYSTAL_PRESETS,
-  isLightstoneSlotId,
-  isRelicSlotId,
-  LIGHTSTONE_SLOT_IDS,
-  type CrystalPresetId,
-} from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import type { RelicFill } from '@/shared/lib'
-import { RelicBoard } from '@/shared/ui/relic-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

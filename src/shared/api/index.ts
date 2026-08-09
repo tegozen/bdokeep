@@ -1,1 +1,0 @@
-export { resolveCatalogIds } from './catalogResolve'

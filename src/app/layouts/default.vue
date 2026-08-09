@@ -218,13 +218,12 @@ import { usePendingSummary, useSuperadmin } from '@/features/superadmin-auth'
 import {
   computePresetFill,
   emptyPresetFill,
-  useConfirm,
   useGuidePreset,
   useGuideSpecMode,
   useHeaderClass,
   useHeaderPresetFill,
-  useOnlineStatus,
-} from '@/shared/lib'
+} from '@/pages/class-guide'
+import { useConfirm, useOnlineStatus } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 import { SiteFooter } from '@/widgets/site-footer'
 import { SiteHeader } from '@/widgets/site-header'

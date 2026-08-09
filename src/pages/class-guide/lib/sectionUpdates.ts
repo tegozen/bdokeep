@@ -1,9 +1,8 @@
 import { uiSectionFromProposal as mapProposalSection } from '@domain'
+import type { SectionUpdateMeta } from '@/entities/class'
+import { formatRuDate } from '@/shared/lib/dates'
 
-export type SectionUpdateMeta = {
-  updated_at: string
-  updated_by: string | null
-}
+export type { SectionUpdateMeta }
 
 export type SectionUpdatesMap = Record<string, SectionUpdateMeta>
 
@@ -41,37 +40,6 @@ export function displayAuthorLabel(raw: string | null | undefined): string | nul
   return t
 }
 
-/** Fixed zone so SSR (Docker UTC) and browser match — avoids hydration mismatches. */
-const DATE_FMT = new Intl.DateTimeFormat('ru-RU', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  timeZone: 'Europe/Moscow',
-})
-
-const DATE_TIME_FMT = new Intl.DateTimeFormat('ru-RU', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  timeZone: 'Europe/Moscow',
-})
-
-export function formatRuDate(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return DATE_FMT.format(d)
-}
-
-/** Date + time for admin queues (proposals, feedback). */
-export function formatRuDateTime(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return DATE_TIME_FMT.format(d)
-}
-
 export function formatSectionUpdated(
   meta: SectionUpdateMeta | null | undefined,
 ): string {
@@ -80,8 +48,9 @@ export function formatSectionUpdated(
   const d = new Date(meta.updated_at)
   if (Number.isNaN(d.getTime())) return `Обновлено ${dash} · ${dash}`
   const by = displayAuthorLabel(meta.updated_by) || dash
-  return `Обновлено ${DATE_FMT.format(d)} · ${by}`
+  return `Обновлено ${formatRuDate(meta.updated_at)} · ${by}`
 }
+
 
 export function parseSectionUpdates(raw: unknown): SectionUpdatesMap {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}

@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAdminProposalFilters } from '@/shared/lib'
+import { useAdminProposalFilters } from '@/features/superadmin-auth'
 import UiPresetTabs from '@/shared/ui/UiPresetTabs.vue'
 
 const { status, classFilter, clearClassFilter, statusTabs } = useAdminProposalFilters()

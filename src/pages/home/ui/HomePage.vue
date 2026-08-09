@@ -18,11 +18,9 @@
 import { computed, ref, watch } from 'vue'
 import { fetchPublishedClasses, type BdoClass } from '@/entities/class'
 import { usePendingSummary, useSuperadmin } from '@/features/superadmin-auth'
-import {
-  listCachedGuideSlugs,
-  useHomeClassFilters,
-  useOnlineStatus,
-} from '@/shared/lib'
+import { useOnlineStatus } from '@/shared/lib'
+import { listCachedGuideSlugs } from '../lib/listCachedGuideSlugs'
+import { useHomeClassFilters } from '../lib/useHomeClassFilters'
 import { ClassGrid } from '@/widgets/class-grid'
 import { GuildRecruitBanner, type GuildBannerPublic } from '@/widgets/guild-banner'
 

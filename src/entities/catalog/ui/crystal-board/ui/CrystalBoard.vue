@@ -89,9 +89,9 @@ import { codexIconSrc } from '@/shared/lib/codexIcon'
 import {
   CRYSTAL_BOARD_SLOTS,
   CRYSTAL_DAWN_SLOTS,
-} from '@/shared/lib/crystalSlots'
+} from '../../../model/crystalSlots'
 
-import type { CrystalFill } from '@/shared/lib/boardFills'
+import type { CrystalFill } from '../../../model/boardFills'
 
 export type { CrystalFill }
 

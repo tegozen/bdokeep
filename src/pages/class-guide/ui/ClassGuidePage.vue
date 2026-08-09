@@ -60,14 +60,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { fetchLightstoneSets } from '@/entities/catalog'
-import type { ClassGuideBundle } from '@/entities/class'
 import {
+  fetchLightstoneSets,
   formatLightstoneSetLabel,
   matchLightstoneSet,
-} from '@/shared/lib'
-import { ShowEmptyGuide } from '@/shared/ui'
+} from '@/entities/catalog'
+import type { ClassGuideBundle } from '@/entities/class'
 import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
+import ShowEmptyGuide from './ShowEmptyGuide.vue'
 import { useClassPendingDrafts } from '../lib/useClassPendingDrafts'
 import { useGuideActiveContent } from '../lib/useGuideActiveContent'
 import { useGuideBoardFills } from '../lib/useGuideBoardFills'

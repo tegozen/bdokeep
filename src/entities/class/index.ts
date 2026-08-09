@@ -8,6 +8,7 @@ export type {
   GuideBuffRow,
   GuideItemRow,
   GuideMorphRow,
+  SectionUpdateMeta,
   Skill,
 } from './model/types'
 export {

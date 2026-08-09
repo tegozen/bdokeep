@@ -50,9 +50,9 @@ import { computed, ref, watch } from 'vue'
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
-  useConfirm,
   type CrystalPresetId,
-} from '@/shared/lib'
+} from '@/entities/catalog'
+import { useConfirm } from '@/shared/lib'
 import { UiButton, UiModal, UiPresetTabs, type UiModalSize } from '@/shared/ui'
 
 const props = withDefaults(

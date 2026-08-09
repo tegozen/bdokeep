@@ -99,11 +99,8 @@ import {
   type BdoClass,
   type ClassGuideBundle,
 } from '@/entities/class'
-import {
-  CRYSTAL_PRESETS,
-  useConfirm,
-  type CrystalPresetId,
-} from '@/shared/lib'
+import { CRYSTAL_PRESETS, type CrystalPresetId } from '@/entities/catalog'
+import { useConfirm } from '@/shared/lib'
 import { UiButton, UiModal, UiPresetTabs, type UiModalSize } from '@/shared/ui'
 import {
   extractSectionFromBundle,

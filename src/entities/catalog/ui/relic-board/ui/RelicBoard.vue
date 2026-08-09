@@ -115,9 +115,9 @@ import {
   isLightstoneSlotId,
   LIGHTSTONE_SLOT_IDS,
   RELIC_BOARD_PANELS,
-} from '@/shared/lib/relicSlots'
+} from '../../../model/relicSlots'
 
-import type { RelicFill } from '@/shared/lib/boardFills'
+import type { RelicFill } from '../../../model/boardFills'
 
 export type { RelicFill }
 

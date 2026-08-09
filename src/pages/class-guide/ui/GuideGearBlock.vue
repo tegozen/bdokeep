@@ -210,15 +210,15 @@ import type { ClassGuideBundle, GuideBuffRow } from '@/entities/class'
 import { ProposeLazy } from '@/features/propose-guide'
 import { PendingSectionDrafts } from '@/features/superadmin-auth'
 import {
-  codexIconSrc,
+  CrystalBoard,
+  HardeningBoard,
+  RelicBoard,
   type CrystalFill,
-  type GuideUiSection,
   type HardeningFill,
   type RelicFill,
-} from '@/shared/lib'
-import { CrystalBoard } from '@/shared/ui/crystal-board'
-import { HardeningBoard } from '@/shared/ui/hardening-board'
-import { RelicBoard } from '@/shared/ui/relic-board'
+} from '@/entities/catalog'
+import { codexIconSrc } from '@/shared/lib'
+import type { GuideUiSection } from '../lib/sectionUpdates'
 import { GuideSection } from '@/widgets/guide-section'
 import type { GuideGearDrafts } from './guideDrafts'
 

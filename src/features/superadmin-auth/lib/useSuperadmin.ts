@@ -1,5 +1,5 @@
-import { clearAdminOfflineCaches } from '@/shared/lib/clearAdminOfflineCaches'
 import { useConfirm } from '@/shared/lib/useConfirm'
+import { clearAdminOfflineCaches } from './clearAdminOfflineCaches'
 
 export type AdminRole = 'superadmin' | 'admin'
 

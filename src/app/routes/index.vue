@@ -3,15 +3,17 @@
 </template>
 
 <script setup lang="ts">
+import {
+  emptyPresetFill,
+  useHeaderClass,
+  useHeaderPresetFill,
+} from '@/pages/class-guide'
 import { HomePage } from '@/pages/home'
 import {
   absoluteUrl,
-  emptyPresetFill,
   SITE_DESCRIPTION,
   SITE_OG_IMAGE_PATH,
   SITE_TITLE,
-  useHeaderClass,
-  useHeaderPresetFill,
 } from '@/shared/lib'
 
 const headerClass = useHeaderClass()

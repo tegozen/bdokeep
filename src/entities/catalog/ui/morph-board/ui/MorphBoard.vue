@@ -89,16 +89,16 @@
 </template>
 
 <script setup lang="ts">
+import { codexIconSrc } from '@/shared/lib'
 import {
   MORPH_SLOT_LEVELS,
-  codexIconSrc,
   morphEffectSlotId,
   morphSkillSlotId,
   parseMorphBoardSlot,
   type MorphSlotLevel,
-} from '@/shared/lib'
+} from '../../../model/morphPresets'
 
-import type { MorphSlotFill } from '@/shared/lib/boardFills'
+import type { MorphSlotFill } from '../../../model/boardFills'
 
 export type { MorphSlotFill }
 

@@ -26,14 +26,14 @@
 </template>
 
 <script setup lang="ts">
+import { CRYSTAL_PRESETS } from '@/entities/catalog'
 import {
-  CRYSTAL_PRESETS,
   emptyPresetFill,
   useGuidePreset,
   useGuideSpecMode,
   type GuideSpecMode,
   type PresetFillMap,
-} from '@/shared/lib'
+} from '@/pages/class-guide'
 import UiPresetTabs from '@/shared/ui/UiPresetTabs.vue'
 
 withDefaults(

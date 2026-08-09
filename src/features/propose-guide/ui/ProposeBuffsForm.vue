@@ -115,14 +115,16 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { fetchBuffs, type Buff, type Item } from '@/entities/catalog'
-import type { GuideBuffRow } from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
   CRYSTAL_PRESETS,
-  codexIconSrc,
+  fetchBuffs,
+  type Buff,
   type CrystalPresetId,
-} from '@/shared/lib'
+  type Item,
+} from '@/entities/catalog'
+import type { GuideBuffRow } from '@/entities/class'
+import { codexIconSrc } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemList, fullReplacedPresets } from '../lib/clonePresetData'

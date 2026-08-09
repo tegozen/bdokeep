@@ -8,13 +8,12 @@
 
 <script setup lang="ts">
 import { fetchClassGuideBySlug } from '@/entities/class'
-import { ClassGuidePage } from '@/pages/class-guide'
+import { ClassGuidePage, useHeaderClass } from '@/pages/class-guide'
 import {
   absoluteUrl,
   SITE_DESCRIPTION,
   SITE_OG_IMAGE_PATH,
   SITE_TITLE,
-  useHeaderClass,
 } from '@/shared/lib'
 
 const route = useRoute()

@@ -13,3 +13,12 @@ export {
 } from './api/pendingProposals'
 export { useSuperadmin, type AdminRole } from './lib/useSuperadmin'
 export { usePendingSummary } from './lib/usePendingSummary'
+export {
+  useAdminProposalFilters,
+  ADMIN_PROPOSAL_STATUS_TABS,
+  type AdminProposalStatus,
+} from './lib/useAdminProposalFilters'
+export {
+  clearAdminOfflineCaches,
+  ADMIN_OFFLINE_CACHE_NAMES,
+} from './lib/clearAdminOfflineCaches'

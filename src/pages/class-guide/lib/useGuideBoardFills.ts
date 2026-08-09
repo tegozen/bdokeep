@@ -1,5 +1,4 @@
 import { computed, type Ref } from 'vue'
-import type { ClassGuideBundle } from '@/entities/class'
 import {
   CRYSTAL_ALL_SLOTS,
   resolveAddonLabel,
@@ -9,7 +8,8 @@ import {
   type MorphPresetId,
   type MorphSlotFill,
   type RelicFill,
-} from '@/shared/lib'
+} from '@/entities/catalog'
+import type { ClassGuideBundle } from '@/entities/class'
 
 /** Map live guide bundle rows → board `filled` props for the active preset/mode. */
 export function useGuideBoardFills(

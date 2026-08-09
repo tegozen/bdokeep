@@ -1,9 +1,3 @@
-import type { Item } from '@/entities/catalog'
-import type {
-  ClassGuideBundle,
-  GuideBuffRow,
-  GuideItemRow,
-} from '@/entities/class'
 import {
   CRYSTAL_PRESET_IDS,
   isCrystalPresetId,
@@ -11,7 +5,13 @@ import {
   isLightstoneSlotId,
   isRelicSlotId,
   type CrystalPresetId,
-} from '@/shared/lib'
+  type Item,
+} from '@/entities/catalog'
+import type {
+  ClassGuideBundle,
+  GuideBuffRow,
+  GuideItemRow,
+} from '@/entities/class'
 
 export type CopyFromClassSection = 'crystals' | 'relics' | 'hardening' | 'buffs'
 

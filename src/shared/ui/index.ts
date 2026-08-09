@@ -1,6 +1,5 @@
 export { default as UiSkeleton } from './UiSkeleton.vue'
 export { default as UiEmptyState } from './UiEmptyState.vue'
-export { default as ShowEmptyGuide } from './ShowEmptyGuide.vue'
 export { default as BorderSparkler } from './BorderSparkler.vue'
 // UiConfirm is intentionally not barrel-exported — layout loads it on demand;
 // barrel re-export pulled its CSS onto every page that imports from this index.

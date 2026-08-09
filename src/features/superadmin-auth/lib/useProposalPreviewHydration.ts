@@ -1,10 +1,9 @@
 import { reactive, watch, type Ref } from 'vue'
-import type { Buff, SkillAddonEffect } from '@/entities/catalog'
-import type { Skill } from '@/entities/class'
-import { resolveCatalogIds } from '@/shared/api/catalogResolve'
 import {
   morphPresetFrom,
   resolveAddonLabel,
+  resolveCatalogIds,
+  type Buff,
   type CrystalFill,
   type CrystalPresetId,
   type HardeningFill,
@@ -12,7 +11,9 @@ import {
   type MorphSlotFill,
   type MorphSlotLevel,
   type RelicFill,
-} from '@/shared/lib'
+  type SkillAddonEffect,
+} from '@/entities/catalog'
+import type { Skill } from '@/entities/class'
 
 export type ProposalPreviewPayload = {
   text?: string

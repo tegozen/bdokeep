@@ -3,16 +3,16 @@ import {
   classSummaryFieldFromGuide,
   comboKindFromPreset,
 } from '@domain'
+import { morphPresetFrom } from '@/entities/catalog'
 import type { ClassGuideBundle } from '@/entities/class'
 import {
   formatSectionUpdated,
-  morphPresetFrom,
   parseSectionUpdates,
   sectionUpdateKey,
-  useGuidePreset,
-  useGuideSpecMode,
   type GuideUiSection,
-} from '@/shared/lib'
+} from './sectionUpdates'
+import { useGuidePreset } from './useGuidePreset'
+import { useGuideSpecMode } from './useGuideSpecMode'
 
 /** Spec/preset-scoped guide content for the class page. */
 export function useGuideActiveContent(bundle: Ref<ClassGuideBundle | null | undefined>) {

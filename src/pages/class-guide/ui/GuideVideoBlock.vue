@@ -43,7 +43,7 @@
 import type { ClassGuideBundle, ClassVideo } from '@/entities/class'
 import { ProposeLazy } from '@/features/propose-guide'
 import { PendingSectionDrafts } from '@/features/superadmin-auth'
-import type { GuideUiSection } from '@/shared/lib'
+import type { GuideUiSection } from '../lib/sectionUpdates'
 import { GuideSection } from '@/widgets/guide-section'
 import { VideoList } from '@/entities/class'
 import type { GuideVideoDrafts } from './guideDrafts'

@@ -38,7 +38,7 @@ const props = withDefaults(
     ariaLabel?: string
     disabled?: boolean
     size?: 'sm' | 'md'
-    /** Multi-column auto-fit grid (buff category tabs). */
+    /** Multi-column auto-fit grid. */
     autoFit?: boolean
   }>(),
   {
@@ -62,7 +62,7 @@ function onSelect(id: T) {
 </script>
 
 <style module>
-/* Segmented control — same as header GuideModePresetTabs. */
+/* Segmented control. */
 .tabs {
   display: inline-flex;
   flex-wrap: wrap;

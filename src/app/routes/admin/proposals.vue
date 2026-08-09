@@ -87,14 +87,11 @@ import { sectionLabel as domainSectionLabel } from '@domain'
 import {
   ProposalSectionPreview,
   ReviewSummaryModal,
+  useAdminProposalFilters,
   usePendingSummary,
   useSuperadmin,
 } from '@/features/superadmin-auth'
-import {
-  formatRuDateTime,
-  useAdminProposalFilters,
-  useConfirm,
-} from '@/shared/lib'
+import { formatRuDateTime, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 definePageMeta({ layout: 'admin' })
