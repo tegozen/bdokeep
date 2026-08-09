@@ -6,24 +6,25 @@
       :error="!!error"
       :pending-by-class="pendingByClass"
       :empty-message="emptyFilterMessage"
-      :guild-banner="guildBanner"
-    />
+    >
+      <template v-if="guildBanner?.enabled" #lead>
+        <GuildRecruitBanner :data="guildBanner" :span="3" />
+      </template>
+    </ClassGrid>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { fetchPublishedClasses } from '@/entities/class/api/classApi'
-import type { BdoClass } from '@/entities/class/model/types'
+import { fetchPublishedClasses, type BdoClass } from '@/entities/class'
+import { usePendingSummary, useSuperadmin } from '@/features/superadmin-auth'
 import {
   listCachedGuideSlugs,
   useHomeClassFilters,
   useOnlineStatus,
-  usePendingSummary,
-  useSuperadmin,
 } from '@/shared/lib'
 import { ClassGrid } from '@/widgets/class-grid'
-import type { GuildBannerPublic } from '@/widgets/guild-banner/model/types'
+import { GuildRecruitBanner, type GuildBannerPublic } from '@/widgets/guild-banner'
 
 const { data: classes, pending, error } = await useAsyncData('classes', () => fetchPublishedClasses(), {
   server: true,

@@ -75,11 +75,9 @@ import { computed } from 'vue'
 import { codexIconSrc } from '@/shared/lib/codexIcon'
 import { HARDENING_SLOTS } from '@/shared/lib/hardeningSlots'
 
-export type HardeningFill = {
-  id: string
-  name_ru: string
-  icon_url: string | null
-}
+import type { HardeningFill } from '@/shared/lib/boardFills'
+
+export type { HardeningFill }
 
 const props = withDefaults(
   defineProps<{

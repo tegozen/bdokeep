@@ -139,7 +139,8 @@ import {
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import { RelicBoard, type RelicFill } from '@/widgets/relic-board'
+import type { RelicFill } from '@/shared/lib'
+import { RelicBoard } from '@/widgets/relic-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

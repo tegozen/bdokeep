@@ -46,7 +46,8 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent, onMounted, ref, watch } from 'vue'
-import { useConfirm, useSuperadmin } from '@/shared/lib'
+import { useSuperadmin } from '@/features/superadmin-auth'
+import { formatRuDateTime, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 const UiMarkdownPreview = defineAsyncComponent(
@@ -76,21 +77,7 @@ const classFilter = ref(
   typeof route.query.class === 'string' ? route.query.class.trim().toLowerCase() : '',
 )
 
-function formatDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZone: 'Europe/Moscow',
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
+const formatDate = formatRuDateTime
 
 function syncQuery() {
   const query: Record<string, string> = {}

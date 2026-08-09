@@ -91,11 +91,9 @@ import {
   CRYSTAL_DAWN_SLOTS,
 } from '@/shared/lib/crystalSlots'
 
-export type CrystalFill = {
-  id: string
-  name_ru: string
-  icon_url: string | null
-}
+import type { CrystalFill } from '@/shared/lib/boardFills'
+
+export type { CrystalFill }
 
 const props = withDefaults(
   defineProps<{

@@ -213,8 +213,8 @@ import {
   updateClassTier,
   type ClassGuideBundle,
 } from '@/entities/class'
-import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
-import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
+import { ClassIcon, ClassTierStars } from '@/entities/class'
+import { usePendingSummary, useSuperadmin } from '@/features/superadmin-auth'
 import {
   computePresetFill,
   emptyPresetFill,
@@ -224,8 +224,6 @@ import {
   useHeaderClass,
   useHeaderPresetFill,
   useOnlineStatus,
-  usePendingSummary,
-  useSuperadmin,
 } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 import { SiteFooter } from '@/widgets/site-footer'

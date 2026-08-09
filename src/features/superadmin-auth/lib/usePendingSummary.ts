@@ -1,4 +1,4 @@
-import { fetchPendingSummary, type PendingSummary } from '@/features/superadmin-auth/api/pendingProposals'
+import { fetchPendingSummary, type PendingSummary } from '../api/pendingProposals'
 import { useSuperadmin } from './useSuperadmin'
 
 export function usePendingSummary() {

@@ -4,14 +4,14 @@ import { resolveCatalogIds } from '@/shared/api/catalogResolve'
 import {
   morphPresetFrom,
   resolveAddonLabel,
+  type CrystalFill,
   type CrystalPresetId,
+  type HardeningFill,
   type MorphPresetId,
+  type MorphSlotFill,
   type MorphSlotLevel,
+  type RelicFill,
 } from '@/shared/lib'
-import type { CrystalFill } from '@/widgets/crystal-board'
-import type { HardeningFill } from '@/widgets/hardening-board'
-import type { MorphSlotFill } from '@/widgets/morph-board'
-import type { RelicFill } from '@/widgets/relic-board'
 
 export type ProposalPreviewPayload = {
   text?: string

@@ -122,10 +122,10 @@ import {
   rejectProposal,
   type PendingProposal,
 } from '@/features/superadmin-auth'
-import BorderSparkler from './BorderSparkler.vue'
+import { BorderSparkler } from '@/shared/ui'
 import ProposalSectionPreview from './ProposalSectionPreview.vue'
 import ReviewSummaryModal from './ReviewSummaryModal.vue'
-import { formatRuDate, useConfirm } from '@/shared/lib'
+import { formatRuDateTime, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 const props = defineProps<{
@@ -205,21 +205,7 @@ function modeLabel(section: string) {
   return ''
 }
 
-function formatDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZone: 'Europe/Moscow',
-    }).format(new Date(iso))
-  } catch {
-    return formatRuDate(iso)
-  }
-}
+const formatDate = formatRuDateTime
 
 function startEdit(item: PendingProposal) {
   editingId.value = item.id

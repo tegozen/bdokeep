@@ -426,13 +426,14 @@ import {
   type ClassGuideBundle,
   fetchLightstoneSets,
 } from "@/entities/class";
-import ProposeLazy from "@/features/propose-guide/ui/ProposeLazy.vue";
+import { ProposeLazy } from "@/features/propose-guide";
 import {
+  PendingSectionDrafts,
   fetchPendingForClass,
+  usePendingSummary,
+  useSuperadmin,
   type PendingProposal,
-} from "@/features/superadmin-auth/api/pendingProposals";
-import PendingSectionDrafts from "@/features/superadmin-auth/ui/PendingSectionDrafts.vue";
-import { ShowEmptyGuide } from "@/features/show-empty-guide";
+} from "@/features/superadmin-auth";
 import {
   codexIconSrc,
   computePresetFill,
@@ -446,10 +447,9 @@ import {
   useGuidePreset,
   useGuideSpecMode,
   useHeaderPresetFill,
-  usePendingSummary,
-  useSuperadmin,
   type GuideUiSection,
 } from "@/shared/lib";
+import { ShowEmptyGuide } from "@/shared/ui";
 import UiMarkdownPreview from "@/shared/ui/UiMarkdownPreview.vue";
 import UiSkeleton from "@/shared/ui/UiSkeleton.vue";
 import { ComboChain } from "@/widgets/combo-chain";
@@ -459,8 +459,7 @@ import { HardeningBoard } from "@/widgets/hardening-board";
 import { MorphBoard } from "@/widgets/morph-board";
 import { RelicBoard } from "@/widgets/relic-board";
 import { VideoList } from "@/widgets/video-list";
-import GuildRecruitBanner from "@/widgets/guild-banner/ui/GuildRecruitBanner.vue";
-import type { GuildBannerPublic } from "@/widgets/guild-banner/model/types";
+import { GuildRecruitBanner, type GuildBannerPublic } from "@/widgets/guild-banner";
 import { useGuideBoardFills } from "../lib/useGuideBoardFills";
 
 const { data: guildBanner } = await useAsyncData(

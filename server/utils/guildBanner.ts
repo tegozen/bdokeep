@@ -128,7 +128,50 @@ export function parseGuildBannerIcon(input: {
     })
   }
 
-  return { clear: false, mime: dataUrl ? dataUrl[1].toLowerCase() : mime, bytes }
+  const declaredMime = dataUrl ? dataUrl[1].toLowerCase() : mime
+  const detected = detectImageMime(bytes)
+  if (!detected || detected !== declaredMime) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Иконка: содержимое не совпадает с типом файла',
+    })
+  }
+
+  return { clear: false, mime: detected, bytes }
+}
+
+function detectImageMime(bytes: Buffer): string | null {
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return 'image/png'
+  }
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return 'image/jpeg'
+  }
+  if (
+    bytes.length >= 12 &&
+    bytes.toString('ascii', 0, 4) === 'RIFF' &&
+    bytes.toString('ascii', 8, 12) === 'WEBP'
+  ) {
+    return 'image/webp'
+  }
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38 &&
+    (bytes[4] === 0x39 || bytes[4] === 0x37) &&
+    bytes[5] === 0x61
+  ) {
+    return 'image/gif'
+  }
+  return null
 }
 
 export function normalizeGuildBannerLinksFromDb(raw: unknown): GuildBannerLink[] {

@@ -25,9 +25,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useSuperadmin } from '@/features/superadmin-auth'
 import {
   useHomeClassFilters,
-  useSuperadmin,
   type HomeTierMin,
 } from '@/shared/lib'
 import UiPresetTabs from '@/shared/ui/UiPresetTabs.vue'

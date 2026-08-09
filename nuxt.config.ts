@@ -6,6 +6,11 @@ const rootDir = fileURLToPath(new URL('.', import.meta.url))
 const siteDescription =
   'Неофициальные гильдейские гайды по классам Black Desert Online — PvP и PvE'
 
+const connectSrc =
+  process.env.NODE_ENV === 'production'
+    ? "connect-src 'self'"
+    : "connect-src 'self' http://127.0.0.1:* http://localhost:*"
+
 /** Chunks that must not land on anonymous first paint (login, editors, guide-only). */
 const DEFER_MANIFEST_CHUNKS = [
   'SuperadminAuth',
@@ -361,7 +366,7 @@ export default defineNuxtConfig({
           "font-src 'self' data:",
           "img-src 'self' data: blob:",
           "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
-          "connect-src 'self' http://127.0.0.1:* http://localhost:*",
+          connectSrc,
           "worker-src 'self'",
           "manifest-src 'self'",
           "object-src 'none'",

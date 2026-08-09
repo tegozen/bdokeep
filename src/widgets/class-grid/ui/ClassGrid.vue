@@ -14,8 +14,8 @@
     </div>
 
     <div v-else-if="emptyMessage" :class="$style.fade">
-      <div v-if="guildBanner" :class="$style.grid">
-        <GuildRecruitBanner :data="guildBanner" :span="3" />
+      <div v-if="$slots.lead" :class="$style.grid">
+        <slot name="lead" />
       </div>
       <div :class="$style.empty">
         {{ emptyMessage }}
@@ -23,11 +23,7 @@
     </div>
 
     <div v-else :class="$style.grid">
-      <GuildRecruitBanner
-        v-if="guildBanner"
-        :data="guildBanner"
-        :span="3"
-      />
+      <slot name="lead" />
       <div
         v-for="(bdoClass, index) in classes"
         :key="bdoClass.id"
@@ -94,14 +90,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { BdoClass } from '@/entities/class/model/types'
-import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
-import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
-import BorderSparkler from '@/features/superadmin-auth/ui/BorderSparkler.vue'
+import { ClassIcon, ClassTierStars, type BdoClass } from '@/entities/class'
 import { codexIconSrc } from '@/shared/lib/codexIcon'
-import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
-import GuildRecruitBanner from '@/widgets/guild-banner/ui/GuildRecruitBanner.vue'
-import type { GuildBannerPublic } from '@/widgets/guild-banner/model/types'
+import { BorderSparkler, UiSkeleton } from '@/shared/ui'
 
 type TierRow = { key: string; label: string; tier: number }
 
@@ -160,12 +151,10 @@ const props = withDefaults(
     error: boolean
     pendingByClass?: Record<string, number>
     emptyMessage?: string | null
-    guildBanner?: GuildBannerPublic | null
   }>(),
   {
     pendingByClass: () => ({}),
     emptyMessage: null,
-    guildBanner: null,
   },
 )
 

@@ -471,31 +471,12 @@ export async function applyProposal(
         const rawKind = payload.kind == null ? 'pvp' : String(payload.kind)
         const kind = rawKind === 'pve' ? 'pve' : 'pvp'
         const mode = summaryModeFromSection(section)
-        if (kind === 'pve' && mode === 'succession') {
-          await tx`
-            update class_guides
-            set summary_pve_succession = ${text}
-            where id = ${guide.id}
-          `
-        } else if (kind === 'pve') {
-          await tx`
-            update class_guides
-            set summary_pve_awakening = ${text}
-            where id = ${guide.id}
-          `
-        } else if (mode === 'succession') {
-          await tx`
-            update class_guides
-            set summary_pvp_succession = ${text}
-            where id = ${guide.id}
-          `
-        } else {
-          await tx`
-            update class_guides
-            set summary_pvp_awakening = ${text}
-            where id = ${guide.id}
-          `
-        }
+        const summaryCol = classSummaryField(kind, mode)
+        await tx`
+          update class_guides
+          set ${tx(summaryCol)} = ${text}
+          where id = ${guide.id}
+        `
       } else {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
       }

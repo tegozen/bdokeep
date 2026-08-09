@@ -98,16 +98,9 @@ import {
   type MorphSlotLevel,
 } from '@/shared/lib'
 
-export type MorphSlotFill = {
-  skill?: {
-    id: string
-    name_ru: string
-    icon_url: string | null
-    addon_tier?: number | null
-  } | null
-  effect1Label?: string | null
-  effect2Label?: string | null
-}
+import type { MorphSlotFill } from '@/shared/lib/boardFills'
+
+export type { MorphSlotFill }
 
 const props = withDefaults(
   defineProps<{

@@ -127,7 +127,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import SuperadminAuth from '@/features/superadmin-auth/ui/SuperadminAuth.vue'
-import { usePendingSummary, useSuperadmin } from '@/shared/lib'
+import { usePendingSummary, useSuperadmin } from '@/features/superadmin-auth'
 import { UiButton } from '@/shared/ui'
 import { SiteFooter } from '@/widgets/site-footer'
 import { SiteHeader } from '@/widgets/site-header'

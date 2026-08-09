@@ -215,12 +215,30 @@ type JwtClaims = JWTPayload & {
   sub: string
   username: string
   role: AdminRole
+  /** Trailing slice of password_hash — invalidates JWT after password change. */
+  pf?: string
 }
 
-async function signJwt(user: AdminUser, expSec: number): Promise<string> {
+type VerifiedJwt = AdminSession & { pf: string }
+
+/** Fingerprint of password hash embedded in JWT (no migration needed). */
+function passwordFp(passwordHash: string): string {
+  return String(passwordHash || '').slice(-16)
+}
+
+function trustProxyEnabled(): boolean {
+  return (
+    process.env.TRUST_PROXY === '1' ||
+    process.env.TRUST_PROXY === 'true' ||
+    process.env.NUXT_TRUST_PROXY === '1'
+  )
+}
+
+async function signJwt(user: AdminUser, expSec: number, passwordHash: string): Promise<string> {
   return await new SignJWT({
     username: user.username,
     role: user.role,
+    pf: passwordFp(passwordHash),
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.id)
@@ -229,32 +247,40 @@ async function signJwt(user: AdminUser, expSec: number): Promise<string> {
     .sign(jwtKey())
 }
 
-async function verifyJwt(token: string): Promise<AdminSession | null> {
+async function verifyJwt(token: string): Promise<VerifiedJwt | null> {
   try {
     const { payload } = await jwtVerify(token, jwtKey(), { algorithms: ['HS256'] })
     const sub = String(payload.sub || '')
     const username = String((payload as JwtClaims).username || '')
     const role = (payload as JwtClaims).role
+    const pf = String((payload as JwtClaims).pf || '')
     const exp = payload.exp
-    if (!sub || !username || (role !== 'superadmin' && role !== 'admin')) return null
+    if (!sub || !username || !pf || (role !== 'superadmin' && role !== 'admin')) return null
     if (exp == null || exp * 1000 < Date.now()) return null
-    return { id: sub, username, role, expiresAt: exp * 1000 }
+    return { id: sub, username, role, expiresAt: exp * 1000, pf }
   } catch {
     return null
   }
 }
 
 function cookieSecure(event: H3Event): boolean {
-  const forwarded = getHeader(event, 'x-forwarded-proto')
-  if (forwarded) {
-    return forwarded.split(',')[0]!.trim().toLowerCase() === 'https'
+  // Only trust X-Forwarded-Proto behind a configured reverse proxy (same gate as clientIp).
+  if (trustProxyEnabled()) {
+    const forwarded = getHeader(event, 'x-forwarded-proto')
+    if (forwarded) {
+      return forwarded.split(',')[0]!.trim().toLowerCase() === 'https'
+    }
   }
   return getRequestURL(event).protocol === 'https:'
 }
 
 export async function setAdminSession(event: H3Event, user: AdminUser) {
+  const row = await findAdminById(user.id)
+  if (!row || row.disabled_at) {
+    throw createError({ statusCode: 401, statusMessage: 'Нет доступа' })
+  }
   const expSec = Math.floor(Date.now() / 1000) + MAX_AGE_SEC
-  const token = await signJwt(user, expSec)
+  const token = await signJwt(user, expSec, row.password_hash)
   setCookie(event, COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -274,24 +300,26 @@ async function readSession(event: H3Event): Promise<AdminSession | null> {
   return verifyJwt(token)
 }
 
+function sessionMatchesRow(session: VerifiedJwt, row: AdminRow): boolean {
+  if (row.disabled_at) return false
+  if (row.role !== 'superadmin' && row.role !== 'admin') return false
+  if (row.role !== session.role || row.username !== session.username) return false
+  if (session.pf !== passwordFp(row.password_hash)) return false
+  return true
+}
+
 /** Soft check (no CSRF). Returns session if cookie JWT is valid and user active. */
 export async function getAdminSession(event: H3Event): Promise<AdminSession | null> {
   const session = await readSession(event)
   if (!session) return null
   const row = await findAdminById(session.id)
-  if (!row || row.disabled_at) return null
-  if (row.role !== 'superadmin' && row.role !== 'admin') return null
+  if (!row || !sessionMatchesRow(session, row)) return null
   return {
     id: String(row.id),
     username: String(row.username),
-    role: row.role,
+    role: row.role as AdminRole,
     expiresAt: session.expiresAt,
   }
-}
-
-/** Soft boolean check for proposal auto-approve etc. */
-export async function isAdminSession(event: H3Event): Promise<boolean> {
-  return Boolean(await readSession(event))
 }
 
 export async function requireStaff(event: H3Event): Promise<AdminSession> {
@@ -301,14 +329,15 @@ export async function requireStaff(event: H3Event): Promise<AdminSession> {
     throw createError({ statusCode: 401, statusMessage: 'Нет доступа' })
   }
   const row = await findAdminById(session.id)
-  if (!row || row.disabled_at) {
+  if (!row || !sessionMatchesRow(session, row)) {
     throw createError({ statusCode: 401, statusMessage: 'Нет доступа' })
   }
-  if (row.role !== session.role || row.username !== session.username) {
-    // Stale JWT after role/username change
-    throw createError({ statusCode: 401, statusMessage: 'Нет доступа' })
+  return {
+    id: session.id,
+    username: row.username,
+    role: row.role as AdminRole,
+    expiresAt: session.expiresAt,
   }
-  return { ...session, role: row.role as AdminRole, username: row.username }
 }
 
 export async function requireSuperadmin(event: H3Event): Promise<AdminSession> {

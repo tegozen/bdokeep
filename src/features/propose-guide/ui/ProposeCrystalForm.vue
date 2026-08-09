@@ -164,7 +164,8 @@ import {
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import { CrystalBoard, type CrystalFill } from '@/widgets/crystal-board'
+import type { CrystalFill } from '@/shared/lib'
+import { CrystalBoard } from '@/widgets/crystal-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

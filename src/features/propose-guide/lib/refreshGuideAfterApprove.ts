@@ -1,4 +1,4 @@
-import { usePendingSummary } from '@/shared/lib'
+import { usePendingSummary } from '@/features/superadmin-auth'
 
 /** Refresh published guide data after an auto-approved proposal (no full app reload). */
 export async function refreshGuideAfterApprove(classSlug: string) {

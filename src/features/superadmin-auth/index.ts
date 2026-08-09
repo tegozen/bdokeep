@@ -11,3 +11,5 @@ export {
   type PendingProposal,
   type PendingSummary,
 } from './api/pendingProposals'
+export { useSuperadmin, type AdminRole } from './lib/useSuperadmin'
+export { usePendingSummary } from './lib/usePendingSummary'

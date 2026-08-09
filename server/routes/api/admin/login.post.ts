@@ -19,6 +19,18 @@ export default defineEventHandler(async (event) => {
   const username = String(body?.username || '')
   const password = String(body?.password || '')
 
+  const usernameKey = normalizeUsername(username)
+  if (usernameKey) {
+    const userLimit = checkRateLimit(`login-user:${usernameKey}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)
+    if (!userLimit.allowed) {
+      const wait = formatRetryAfterRu(userLimit.retryAfterMs)
+      throw createError({
+        statusCode: 429,
+        statusMessage: `Слишком много попыток входа. Подождите ${wait}.`,
+      })
+    }
+  }
+
   const user = await authenticateAdmin(username, password)
   if (!user) {
     await new Promise((r) => setTimeout(r, FAIL_DELAY_MS))

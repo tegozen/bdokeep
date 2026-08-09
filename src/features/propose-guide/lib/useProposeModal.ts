@@ -1,5 +1,6 @@
 import { computed, nextTick, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
-import { useOnlineStatus, useSuperadmin, useUnsavedGuard } from '@/shared/lib'
+import { useSuperadmin } from '@/features/superadmin-auth'
+import { useOnlineStatus, useUnsavedGuard } from '@/shared/lib'
 import { parseSubmitError } from './parseSubmitError'
 import { refreshGuideAfterApprove } from './refreshGuideAfterApprove'
 

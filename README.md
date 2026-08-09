@@ -97,7 +97,8 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - CSP без CDN для JS/CSS и иконок каталога (см. `AGENTS.md`)
 - `.npmrc`: `min-release-age=7` + `engine-strict` — не ставить пакеты моложе 7 дней; Node должен совпадать с `engines` (npm ≥ 11.10)
 - `web`: `no-new-privileges` + `cap_drop: ALL`
-- За reverse proxy — `TRUST_PROXY=1` для корректного rate limit по `X-Forwarded-For`
+- За reverse proxy — `TRUST_PROXY=1` для rate limit по `X-Forwarded-For` и Secure-флага cookie (без флага заголовки `X-Forwarded-*` не доверяются)
+- Смена пароля админа инвалидирует старые JWT-сессии; login rate limit — по IP и по логину
 
 ## Структура (кратко)
 

@@ -132,7 +132,8 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
-import { useConfirm, useSuperadmin } from '@/shared/lib'
+import { useSuperadmin } from '@/features/superadmin-auth'
+import { useConfirm } from '@/shared/lib'
 import { UiButton, UiModal } from '@/shared/ui'
 
 definePageMeta({ layout: 'admin' })

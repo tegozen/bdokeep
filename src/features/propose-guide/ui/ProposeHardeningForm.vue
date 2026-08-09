@@ -98,7 +98,8 @@ import {
   type CrystalPresetId,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import { HardeningBoard, type HardeningFill } from '@/widgets/hardening-board'
+import type { HardeningFill } from '@/shared/lib'
+import { HardeningBoard } from '@/widgets/hardening-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneItemBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import {

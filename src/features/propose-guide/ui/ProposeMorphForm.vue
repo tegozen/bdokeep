@@ -135,7 +135,8 @@ import {
   type MorphSlotLevel,
 } from '@/shared/lib'
 import { UiPresetTabs } from '@/shared/ui'
-import { MorphBoard, type MorphSlotFill } from '@/widgets/morph-board'
+import type { MorphSlotFill } from '@/shared/lib'
+import { MorphBoard } from '@/widgets/morph-board'
 import { submitGuideProposal } from '../api/submitProposal'
 import { cloneMorphBoard, fullReplacedPresets } from '../lib/clonePresetData'
 import { useProposeModal } from '../lib/useProposeModal'

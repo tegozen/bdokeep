@@ -1,9 +1,12 @@
+import { UUID_RE } from '@domain'
+
 export default defineEventHandler(async (event) => {
   const actor = await requireSuperadmin(event)
-  assertSameOrigin(event)
 
   const id = String(getRouterParam(event, 'id') || '')
-  if (!id) throw createError({ statusCode: 400, statusMessage: 'Нет id' })
+  if (!id || !UUID_RE.test(id)) {
+    throw createError({ statusCode: 400, statusMessage: 'Некорректный id' })
+  }
 
   const target = await findAdminById(id)
   if (!target) throw createError({ statusCode: 404, statusMessage: 'Пользователь не найден' })

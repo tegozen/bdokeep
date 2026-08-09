@@ -117,11 +117,9 @@ import {
   RELIC_BOARD_PANELS,
 } from '@/shared/lib/relicSlots'
 
-export type RelicFill = {
-  id: string
-  name_ru: string
-  icon_url: string | null
-}
+import type { RelicFill } from '@/shared/lib/boardFills'
+
+export type { RelicFill }
 
 const props = withDefaults(
   defineProps<{

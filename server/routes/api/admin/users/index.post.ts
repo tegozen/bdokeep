@@ -1,6 +1,5 @@
 export default defineEventHandler(async (event) => {
   await requireSuperadmin(event)
-  assertSameOrigin(event)
 
   const body = await readBody<{ username?: string; password?: string }>(event)
   const username = normalizeUsername(String(body?.username || ''))

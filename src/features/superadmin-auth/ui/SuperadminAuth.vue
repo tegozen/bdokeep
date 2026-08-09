@@ -110,7 +110,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useSuperadmin } from '@/shared/lib'
+import { useSuperadmin } from '../lib/useSuperadmin'
 import UiButton from '@/shared/ui/UiButton.vue'
 import UiModal from '@/shared/ui/UiModal.vue'
 import LoginFields from './LoginFields.vue'

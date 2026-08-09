@@ -1,3 +1,7 @@
+import type { SectionUpdateMeta } from '@/shared/lib/sectionUpdates'
+
+export type { SectionUpdateMeta }
+
 export type BdoClass = {
   id: string
   slug: string
@@ -18,11 +22,6 @@ export type BdoClass = {
   tier_pve_succession?: number | null
   /** Guide has any filled content (summary / sections / videos) */
   has_content?: boolean
-}
-
-export type SectionUpdateMeta = {
-  updated_at: string
-  updated_by: string | null
 }
 
 export type ClassGuide = {

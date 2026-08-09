@@ -84,12 +84,16 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { sectionLabel as domainSectionLabel } from '@domain'
-import { ProposalSectionPreview, ReviewSummaryModal } from '@/features/superadmin-auth'
 import {
-  useAdminProposalFilters,
-  useConfirm,
+  ProposalSectionPreview,
+  ReviewSummaryModal,
   usePendingSummary,
   useSuperadmin,
+} from '@/features/superadmin-auth'
+import {
+  formatRuDateTime,
+  useAdminProposalFilters,
+  useConfirm,
 } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
@@ -179,21 +183,7 @@ function textOf(item: Proposal) {
   return String(item.payload?.text || '')
 }
 
-function formatDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZone: 'Europe/Moscow',
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
-}
+const formatDate = formatRuDateTime
 
 async function load() {
   if (!isStaff.value) return

@@ -3,13 +3,13 @@ import type { ClassGuideBundle } from '@/entities/class'
 import {
   CRYSTAL_ALL_SLOTS,
   resolveAddonLabel,
+  type CrystalFill,
   type CrystalPresetId,
+  type HardeningFill,
   type MorphPresetId,
+  type MorphSlotFill,
+  type RelicFill,
 } from '@/shared/lib'
-import type { CrystalFill } from '@/widgets/crystal-board'
-import type { MorphSlotFill } from '@/widgets/morph-board'
-import type { HardeningFill } from '@/widgets/hardening-board'
-import type { RelicFill } from '@/widgets/relic-board'
 
 /** Map live guide bundle rows → board `filled` props for the active preset/mode. */
 export function useGuideBoardFills(

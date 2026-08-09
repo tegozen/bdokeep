@@ -40,6 +40,14 @@ export function checkRateLimit(
     }
   }
   bucket.hits.push(now)
+  // Drop idle keys so the Map does not grow without bound under diverse IPs.
+  if (buckets.size > 4096) {
+    for (const [k, b] of buckets) {
+      if (!b.hits.length || now - (b.hits[b.hits.length - 1] ?? 0) >= windowMs) {
+        buckets.delete(k)
+      }
+    }
+  }
   return { allowed: true, retryAfterMs: 0 }
 }
 
