@@ -86,7 +86,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 ### Ops / безопасность
 
-- Три сервиса: `web` (сайт + API), `migrate` (авто-SQL), `db` (Postgres)
+- Три сервиса: `web` (сайт + API), `migrate` (Drizzle + seed), `db` (Postgres)
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
 - Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
 - Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
@@ -103,7 +103,10 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 | `src/` | FSD: `app` → `pages` → `widgets` → `features` → `entities` → `shared` |
 | `domain/` | Общие лимиты/типы proposals, YouTube, комбо (клиент + сервер) |
 | `server/` | Nitro API + utils (db, auth, applyProposal, каталоги) |
-| `db/migrations/` | Схема и сиды (накат сервисом `migrate`) |
+| `db/schema/` | Drizzle schema по доменам (`index.ts` barrel) |
+| `drizzle/` | SQL-миграции схемы |
+| `db/seed/sql/` | Каталожные сиды (SQL fixtures + hash ledger) |
+| `db/migrate-entry.ts` | Entrypoint сервиса `migrate` |
 | `public/classes/`, `public/codex/` | Same-origin арт классов и иконки каталога |
 | `LICENSE`, `NOTICE`, `THIRD_PARTY.md` | MIT на код; игровой IP PA исключён; атрибуция deps |
 
@@ -112,7 +115,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 | Сервис | Зачем | Порт |
 |--------|--------|------|
 | `web` | сайт Nuxt + Nitro API | `HOST_PORT` (3000) |
-| `migrate` | накат `db/migrations` при up | — |
+| `migrate` | Drizzle migrate + catalog seed при up | — |
 | `db` | Postgres | нет (внутренняя сеть) |
 
 ## Быстрый старт
@@ -133,28 +136,30 @@ docker compose up -d --build
 
 Env только в корне: `.env` / `.env.example` (Compose сам подхватывает `.env`). Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля). В production для SEO ещё `NUXT_PUBLIC_SITE_URL` (напр. `https://example.com`).
 
-SQL к БД: `docker compose exec db psql -U postgres -d bdokeep` (порты на хосте не нужны).
+SQL к БД: `docker compose exec db psql -h 127.0.0.1 -U postgres -d bdokeep` (порты на хосте не нужны).
 
-Миграции накатываются **сами** сервисом `migrate` при каждом `docker compose up` (таблица `schema_migrations`). Новые файлы в `db/migrations/NNN_*.sql` / `.sh` подхватятся на следующем up — вручную `psql -f` не нужен.
+### Миграции и каталоги (Drizzle)
 
-Каталоги разделов (скиллы, реликвии/лайтстоуны, закалка, морф-эффекты, кристаллы, бафы) при каждом `up` **перезаливаются** из актуальных SQL-сидов (идемпотентный upsert; кристаллы/бафы ещё и prune). Старый volume на проде не останется с урезанным каталогом.
+- **Схема:** правишь [`db/schema/`](db/schema/) → `npm run db:generate` → коммит `drizzle/`. Единственная ручная db-команда.
+- **Накат (авто):** сервис `migrate` при `compose up` / rebuild: Drizzle migrate → seed (ledger `drizzle.__catalog_seeds`) → sync `bdokeep_app`.
+- **Сиды:** fixtures в [`db/seed/sql/`](db/seed/sql/); unchanged по sha256 скипаются. Переиграть всё: `FORCE_SEED=1` в `.env` и `compose up`. На существующем volume schema baseline только **stamp** (гайды/proposals не пересоздаются).
 
 Если БД уже была создана со старым общим паролем, достаточно поправить `BDOKEEP_APP_PASSWORD` в `.env` и снова `docker compose up -d` — `migrate` синхронизирует роль `bdokeep_app`.
 
 ## Данные и каталоги
 
-Миграции `db/migrations/` применяются сервисом `migrate` (не через `docker-entrypoint-initdb.d`):
+Схема — Drizzle (`db/schema` + `drizzle/`). Каталожные данные — [`db/seed/sql/`](db/seed/sql/):
 
-- классы + пустые гайды
-- сиды скиллов, бафов, кристаллов, реликвий/лайтстоунов, эффектов аддонов
-- схема proposals, пресеты, морфы, RLS
-- обновления каталогов (030+)
+- скиллы / морф-overlays / addon effects
+- реликвии, лайтстоуны, наборы, закалка
+- кристаллы / бафы (+ prune)
+- localize `/codex/` icon URLs
 
 Картинки классов: `public/classes/<slug>/{portrait-card-360.webp,icon.svg}` — © Pearl Abyss (см. `public/classes/README.md`).
 Портреты — opaque WebP на фоне `#07080c` (без alpha), уже пережаты под карточки главной.
-Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При `up` migrate сам переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
+Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При первом seed (или после смены `033_localize_…`) migrate переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
 
-На чистом сервере достаточно `docker compose up -d --build`: SQL-сиды и картинки уже в репо.
+На чистом сервере достаточно `docker compose up -d --build`: Drizzle baseline + seed каталогов и картинки уже в репо.
 
 
 ## Nginx (внешний)

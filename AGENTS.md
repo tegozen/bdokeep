@@ -1,5 +1,12 @@
 # Agent rules — BDO Keep
 
+## DB migrations — Drizzle
+
+- Schema source of truth: [`db/schema/`](db/schema/) (по доменам: `classes`, `catalog`, `guide-presets`, …; barrel [`index.ts`](db/schema/index.ts)). After schema edits run **only** `npm run db:generate`. Commit `drizzle/`.
+- Apply path is automatic: compose `migrate` → [`db/migrate-entry.ts`](db/migrate-entry.ts) (migrate → seed → app role). Do not add npm scripts for migrate/seed.
+- Existing volumes: baseline is **stamped**, not recreated. Do not add wipe/recreate flows.
+- Catalog data: [`db/seed/sql/`](db/seed/sql/). Applied by migrate image; ledger `drizzle.__catalog_seeds` (sha256 per file). `FORCE_SEED=1` to re-run all. Existing prod: schema baseline is stamped (no recreate); seeds touch catalogs only, not guide/proposal rows.
+
 ## Keep README features in sync (hard rule)
 
 **Любое продуктовое изменение → обновить [`README.md`](README.md) в том же PR/коммите.**
@@ -41,7 +48,7 @@
 **Never hotlink skill/buff/item icons from bdocodex, Garmoth, or other CDNs in the browser.**
 
 - DB `icon_url` and UI `<img src>` must be same-origin: `/codex/…` (catalog) or `/classes/…` (class art).
-- Icons live in committed `public/codex/` and `public/classes/`; seed SQL in `db/migrations/`. New catalog rows must use local `/codex/…` paths, never `https://…`.
+- Icons live in committed `public/codex/` and `public/classes/`; catalog seed SQL in `db/seed/sql/`. New catalog rows must use local `/codex/…` paths, never `https://…`.
 - CSP `img-src 'self' data: blob:` blocks accidental remote images. YouTube posters use same-origin `/api/youtube/thumb/…`.
 - Helper: [`codexIconSrc`](src/shared/lib/codexIcon.ts) — rejects remote URLs; cache-busts `/codex/`.
 

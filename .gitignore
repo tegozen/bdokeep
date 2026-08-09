@@ -25,3 +25,12 @@ logs
 
 # Caches
 .cache
+
+# Local scratch / one-off dumps (never commit)
+/tmp-*
+tmp-*.csv
+tmp-*.html
+tmp-*.json
+
+# Drizzle: commit `drizzle/` + `drizzle/meta/` (SQL + journal + snapshots).
+# Do NOT gitignore them — migrate image applies that folder.

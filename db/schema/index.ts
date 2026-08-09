@@ -1,0 +1,10 @@
+/** Barrel: domain table modules + relations for drizzle-kit. */
+export * from './enums.ts'
+export * from './classes.ts'
+export * from './catalog.ts'
+export * from './guide-presets.ts'
+export * from './guide-combos.ts'
+export * from './moderation.ts'
+export * from './site.ts'
+export * from './meta.ts'
+export * from './relations.ts'

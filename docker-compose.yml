@@ -1,6 +1,5 @@
 # BDO Keep — один compose, минимум сервисов
-# db (Postgres) + migrate (авто-SQL) + web (Nuxt / Nitro API)
-# Studio/Kong/Auth/Realtime/Storage/PostgREST НЕ нужны
+# db (Postgres) + migrate (Drizzle + seed) + web (Nuxt / Nitro API)
 
 name: bdokeep
 
@@ -12,7 +11,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
-      # Used by migrate → 022_bdokeep_app.sh (and available if someone execs into db).
       BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
     volumes:
       - db_data:/var/lib/postgresql/data
@@ -21,10 +19,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-    # Порты не публикуем: Nitro ходит на db:5432 по Docker-сети.
 
   migrate:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
     restart: 'no'
     # Share db network so we can use 127.0.0.1 trust (volume password may
     # differ from current .env POSTGRES_PASSWORD; TCP from other containers uses scram).
@@ -33,25 +32,19 @@ services:
       db:
         condition: service_healthy
     environment:
-      PGHOST: 127.0.0.1
-      POSTGRES_USER: postgres
-      # Unused for local trust; kept for psql scripts that export PGPASSWORD.
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
       BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
-      MIG_DIR: /migrations
-    volumes:
-      - ./db/migrations:/migrations:ro
-      - ./db/migrate.sh:/migrate.sh:ro
-    entrypoint: ['/bin/sh', '/migrate.sh']
+      # Superuser over localhost trust (no password). Do not use bdokeep_app here.
+      MIGRATE_DATABASE_URL: postgres://postgres@127.0.0.1:5432/${POSTGRES_DB:-bdokeep}
+      DATABASE_URL: postgres://postgres@127.0.0.1:5432/${POSTGRES_DB:-bdokeep}
+      # Set FORCE_SEED=1 to re-apply all catalog fixtures (ignore hash ledger).
+      FORCE_SEED: ${FORCE_SEED:-}
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        # Soft caps inside Node/esbuild (always applied on compose build).
-        # Defaults for ~4CPU/6G VPS with ~1 core + ~4G already used idle.
         BUILD_CPU_COUNT: ${BUILD_CPU_COUNT:-1}
         BUILD_NODE_MAX_OLD_SPACE: ${BUILD_NODE_MAX_OLD_SPACE:-768}
     restart: unless-stopped
@@ -64,12 +57,9 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       DATABASE_URL: postgres://bdokeep_app:${BDOKEEP_APP_PASSWORD}@db:5432/${POSTGRES_DB:-bdokeep}
-      # Required — no default. Refuse weak values in production (see adminAuth).
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?Set ADMIN_SESSION_SECRET in .env}
-      # Set to 1 only behind a reverse proxy that controls X-Forwarded-For
       TRUST_PROXY: ${TRUST_PROXY:-0}
-      # Public origin for SEO (canonical / OG / sitemap). Empty = skip absolute URLs.
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-}
     ports:
       - '${HOST_PORT:-3000}:3000'
@@ -77,7 +67,6 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # Runtime caps (running container, not the image build).
     mem_limit: ${WEB_MEM_LIMIT:-512m}
     cpus: ${WEB_CPUS:-1.0}
 
