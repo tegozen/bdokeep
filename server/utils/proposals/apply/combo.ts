@@ -1,11 +1,11 @@
 import { comboModeFromSection } from '@domain'
+import { comboKindFromPayload } from '../shared/comboKind'
 import type { ApplySectionContext } from './types'
 
 export async function applyCombo(ctx: ApplySectionContext): Promise<void> {
   const { tx, guide, section, payload } = ctx
   const mode = comboModeFromSection(section)
-  const rawKind = payload.kind == null ? 'pvp' : String(payload.kind)
-  const kind = rawKind === 'pve' ? 'pve' : 'pvp'
+  const kind = comboKindFromPayload(payload)
   type ComboEntry = { title?: unknown; notes?: unknown; skill_ids?: unknown }
   let rawCombos: ComboEntry[] = []
   if (Array.isArray(payload.combos)) {

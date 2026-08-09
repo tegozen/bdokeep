@@ -1,4 +1,5 @@
 /** Re-export shared proposal domain for Nitro auto-imports / local imports. */
+export { comboKindFromPayload } from './proposals/shared/comboKind'
 export {
   PROPOSAL_SECTIONS,
   UUID_RE,

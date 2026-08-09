@@ -73,12 +73,6 @@ function firstForwardedHop(xf: string | string[] | undefined): string | null {
  */
 export function clientIp(event: ReqLike): string {
   const socketIp = event.node.req.socket.remoteAddress || 'unknown'
-  const trustProxy =
-    process.env.TRUST_PROXY === '1' ||
-    process.env.TRUST_PROXY === 'true' ||
-    process.env.NUXT_TRUST_PROXY === '1'
-
-  if (!trustProxy) return socketIp
-
+  if (!trustProxyEnabled()) return socketIp
   return firstForwardedHop(event.node.req.headers['x-forwarded-for']) || socketIp
 }

@@ -267,8 +267,8 @@ watch(online, async (isOnline) => {
 async function openChatMacroGuide() {
   if (!ChatMacroGuideModal.value) {
     ChatMacroGuideModal.value = (
-      await import('@/features/chat-macro-guide/ui/ChatMacroGuideModal.vue')
-    ).default
+      await import('@/features/chat-macro-guide')
+    ).ChatMacroGuideModal
   }
   chatMacroGuideOpen.value = true
 }
@@ -277,8 +277,8 @@ async function openClassFeedback() {
   if (!online.value) return
   if (!ClassFeedbackModal.value) {
     ClassFeedbackModal.value = (
-      await import('@/features/class-feedback/ui/ClassFeedbackModal.vue')
-    ).default
+      await import('@/features/class-feedback')
+    ).ClassFeedbackModal
   }
   classFeedbackOpen.value = true
 }
@@ -355,8 +355,8 @@ watch(
 async function ensureAuthUi() {
   if (!SuperadminAuth.value) {
     SuperadminAuth.value = (
-      await import('@/features/superadmin-auth/ui/SuperadminAuth.vue')
-    ).default
+      await import('@/features/superadmin-auth')
+    ).SuperadminAuth
   }
   authUiReady.value = true
 }

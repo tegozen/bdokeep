@@ -45,7 +45,7 @@ import { ProposeLazy } from '@/features/propose-guide'
 import { PendingSectionDrafts } from '@/features/superadmin-auth'
 import type { GuideUiSection } from '@/shared/lib'
 import { GuideSection } from '@/widgets/guide-section'
-import { VideoList } from '@/widgets/video-list'
+import { VideoList } from '@/entities/class'
 import type { GuideVideoDrafts } from './guideDrafts'
 
 defineProps<{

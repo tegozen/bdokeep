@@ -83,8 +83,8 @@ import { defineAsyncComponent } from 'vue'
 import { useOnlineStatus } from '@/shared/lib'
 import { UiButton, UiModal, type UiModalSize } from '@/shared/ui'
 
-const SuperadminAuth = defineAsyncComponent(
-  () => import('@/features/superadmin-auth/ui/SuperadminAuth.vue'),
+const SuperadminAuth = defineAsyncComponent(() =>
+  import('@/features/superadmin-auth').then((m) => m.SuperadminAuth),
 )
 
 withDefaults(

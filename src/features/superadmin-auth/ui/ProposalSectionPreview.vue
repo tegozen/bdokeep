@@ -173,17 +173,14 @@ import {
   type CrystalPresetId,
   type GuideSpecMode,
 } from '@/shared/lib'
+import { ComboChain, VideoList } from '@/entities/class'
 import { UiPresetTabs } from '@/shared/ui'
-import { ComboChain } from '@/widgets/combo-chain'
 import { CrystalBoard } from '@/shared/ui/crystal-board'
 import { MorphBoard } from '@/shared/ui/morph-board'
 import { RelicBoard } from '@/shared/ui/relic-board'
 
 const UiMarkdownPreview = defineAsyncComponent(
   () => import('@/shared/ui/UiMarkdownPreview.vue'),
-)
-const VideoList = defineAsyncComponent(
-  () => import('@/widgets/video-list/ui/VideoList.vue'),
 )
 const props = withDefaults(
   defineProps<{

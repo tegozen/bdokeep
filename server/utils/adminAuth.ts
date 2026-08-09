@@ -226,14 +226,6 @@ function passwordFp(passwordHash: string): string {
   return String(passwordHash || '').slice(-16)
 }
 
-function trustProxyEnabled(): boolean {
-  return (
-    process.env.TRUST_PROXY === '1' ||
-    process.env.TRUST_PROXY === 'true' ||
-    process.env.NUXT_TRUST_PROXY === '1'
-  )
-}
-
 async function signJwt(user: AdminUser, expSec: number, passwordHash: string): Promise<string> {
   return await new SignJWT({
     username: user.username,
@@ -274,6 +266,15 @@ function cookieSecure(event: H3Event): boolean {
   return getRequestURL(event).protocol === 'https:'
 }
 
+function cookieBase(event: H3Event) {
+  return {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: cookieSecure(event),
+    path: '/',
+  }
+}
+
 export async function setAdminSession(event: H3Event, user: AdminUser) {
   const row = await findAdminById(user.id)
   if (!row || row.disabled_at) {
@@ -282,16 +283,14 @@ export async function setAdminSession(event: H3Event, user: AdminUser) {
   const expSec = Math.floor(Date.now() / 1000) + MAX_AGE_SEC
   const token = await signJwt(user, expSec, row.password_hash)
   setCookie(event, COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: cookieSecure(event),
-    path: '/',
+    ...cookieBase(event),
     maxAge: MAX_AGE_SEC,
   })
 }
 
 export function clearAdminSession(event: H3Event) {
-  deleteCookie(event, COOKIE_NAME, { path: '/' })
+  // Must match setCookie attributes or browsers keep the Secure cookie after logout.
+  deleteCookie(event, COOKIE_NAME, cookieBase(event))
 }
 
 async function readSession(event: H3Event): Promise<AdminSession | null> {

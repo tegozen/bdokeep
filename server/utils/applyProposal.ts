@@ -10,6 +10,7 @@ import {
 import type { ParsedGuideVideo } from './parseVideosPayload'
 import { dispatchApplySection } from './proposals/apply/registry'
 import type { ProposalRow } from './proposals/apply/types'
+import { comboKindFromPayload } from './proposals/shared/comboKind'
 
 /** Apply a proposal to live guide tables (one transaction). */
 export async function applyProposal(
@@ -134,9 +135,10 @@ export async function applyProposal(
 
       let metaKey = uiSectionFromProposal(section)
       if (isSummarySection(section)) {
-        const rawKind = payload.kind == null ? 'pvp' : String(payload.kind)
-        const kind = rawKind === 'pve' ? 'pve' : 'pvp'
-        metaKey = classSummaryField(kind, summaryModeFromSection(section))
+        metaKey = classSummaryField(
+          comboKindFromPayload(payload),
+          summaryModeFromSection(section),
+        )
       }
       if (!metaKey) {
         throw createError({ statusCode: 400, statusMessage: 'Неизвестная секция' })
