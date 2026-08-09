@@ -28,57 +28,65 @@
         :data="guildBanner"
         :span="3"
       />
-      <NuxtLink
+      <div
         v-for="(bdoClass, index) in classes"
         :key="bdoClass.id"
-        :to="`/class/${bdoClass.slug}`"
-        :prefetch="false"
-        :class="[$style.card, !bdoClass.has_content && $style.cardEmpty]"
+        :class="$style.cardWrap"
       >
-        <div :class="$style.media">
-          <img
-            v-if="bdoClass.portrait_url"
-            :src="bdoClass.portrait_url"
-            :alt="bdoClass.name_ru"
-            width="360"
-            height="480"
-            loading="eager"
-            :fetchpriority="index === lcpIndex ? 'high' : 'auto'"
-            :decoding="index === lcpIndex ? 'sync' : 'async'"
-            :class="$style.img"
-          >
-          <div :class="$style.veil" />
-          <span
-            v-if="pendingByClass[bdoClass.slug]"
-            :class="$style.pendingBadge"
-            :aria-label="`${pendingByClass[bdoClass.slug]} заявок`"
-          >
-            {{ pendingByClass[bdoClass.slug] }}
-          </span>
-          <div
-            v-if="hasAnyTier(bdoClass)"
-            :class="$style.tiers"
-          >
-            <div
-              v-for="row in tierRows(bdoClass)"
-              :key="row.key"
-              :class="$style.tierRow"
+        <BorderSparkler v-if="pendingByClass[bdoClass.slug]" />
+        <NuxtLink
+          :to="`/class/${bdoClass.slug}`"
+          :prefetch="false"
+          :class="[$style.card, !bdoClass.has_content && $style.cardEmpty]"
+        >
+          <div :class="$style.media">
+            <img
+              v-if="bdoClass.portrait_url"
+              :src="bdoClass.portrait_url"
+              :alt="bdoClass.name_ru"
+              width="360"
+              height="480"
+              loading="eager"
+              :fetchpriority="index === lcpIndex ? 'high' : 'auto'"
+              :decoding="index === lcpIndex ? 'sync' : 'async'"
+              :class="$style.img"
             >
-              <span :class="$style.tierLabel">{{ row.label }}</span>
-              <ClassTierStars :tier="row.tier" size="xs" compact />
+            <div :class="$style.veil" />
+            <span
+              v-if="pendingByClass[bdoClass.slug]"
+              :class="$style.pendingBadge"
+              :aria-label="`${pendingByClass[bdoClass.slug]} заявок`"
+            >
+              {{ pendingByClass[bdoClass.slug] }}
+            </span>
+            <div
+              v-if="hasAnyTier(bdoClass)"
+              :class="[
+                $style.tiers,
+                pendingByClass[bdoClass.slug] && $style.tiersWithBadge,
+              ]"
+            >
+              <div
+                v-for="row in tierRows(bdoClass)"
+                :key="row.key"
+                :class="$style.tierRow"
+              >
+                <span :class="$style.tierLabel">{{ row.label }}</span>
+                <ClassTierStars :tier="row.tier" size="xs" compact />
+              </div>
             </div>
           </div>
-        </div>
-        <div :class="$style.meta">
-          <ClassIcon
-            :slug="bdoClass.slug"
-            :icon-url="bdoClass.icon_url"
-            :label="bdoClass.name_ru"
-            size="sm"
-          />
-          <h2 :class="$style.name">{{ bdoClass.name_ru }}</h2>
-        </div>
-      </NuxtLink>
+          <div :class="$style.meta">
+            <ClassIcon
+              :slug="bdoClass.slug"
+              :icon-url="bdoClass.icon_url"
+              :label="bdoClass.name_ru"
+              size="sm"
+            />
+            <h2 :class="$style.name">{{ bdoClass.name_ru }}</h2>
+          </div>
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>
@@ -88,6 +96,7 @@ import { computed } from 'vue'
 import type { BdoClass } from '@/entities/class/model/types'
 import ClassIcon from '@/entities/class/ui/ClassIcon.vue'
 import ClassTierStars from '@/entities/class/ui/ClassTierStars.vue'
+import BorderSparkler from '@/features/superadmin-auth/ui/BorderSparkler.vue'
 import UiSkeleton from '@/shared/ui/UiSkeleton.vue'
 import GuildRecruitBanner from '@/widgets/guild-banner/ui/GuildRecruitBanner.vue'
 import type { GuildBannerPublic } from '@/widgets/guild-banner/model/types'
@@ -184,10 +193,16 @@ const lcpIndex = computed(() => {
   animation: fade-in 320ms ease;
 }
 
+.cardWrap {
+  position: relative;
+  align-self: start;
+  /* Must stay visible so BorderSparkler can bleed past the card. */
+  overflow: visible;
+}
+
 .card {
   position: relative;
   display: block;
-  align-self: start;
   overflow: hidden;
   border: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
@@ -237,7 +252,7 @@ const lcpIndex = computed(() => {
   position: absolute;
   top: 0.45rem;
   right: 0.45rem;
-  z-index: 12;
+  z-index: 13;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -265,6 +280,10 @@ const lcpIndex = computed(() => {
   flex-direction: column;
   gap: 0.14rem;
   align-items: stretch;
+}
+
+.tiersWithBadge {
+  right: 2rem;
 }
 
 .tierRow {

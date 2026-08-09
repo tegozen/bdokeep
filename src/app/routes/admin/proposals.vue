@@ -59,7 +59,7 @@
       <ul v-else :class="$style.list">
         <li v-for="item in items" :key="item.id" :class="$style.card">
           <div :class="$style.cardHead">
-            <strong>{{ item.class_slug }}</strong>
+            <strong>{{ item.class_name_ru || item.class_slug }}</strong>
             <span :class="$style.badge">{{ sectionLabel(item) }}</span>
             <span v-if="item.author_label" :class="$style.muted">· {{ item.author_label }}</span>
             <span :class="$style.status">{{ statusLabel(item.status) }}</span>
@@ -148,6 +148,7 @@ type Proposal = {
   id: string
   class_id: string
   class_slug: string
+  class_name_ru?: string | null
   section: string
   payload: {
     text?: string

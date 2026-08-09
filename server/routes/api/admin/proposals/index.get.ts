@@ -36,52 +36,58 @@ export default defineEventHandler(async (event) => {
     if (status && status !== 'all' && classSlug && /^[a-z0-9-]+$/.test(classSlug)) {
       if (byReview) {
         return sql`
-          select *
-          from guide_proposals
-          where status = ${status} and class_slug = ${classSlug}
-          order by reviewed_at desc nulls last, created_at desc
+          select gp.*, c.name_ru as class_name_ru
+          from guide_proposals gp
+          left join classes c on c.id = gp.class_id
+          where gp.status = ${status} and gp.class_slug = ${classSlug}
+          order by gp.reviewed_at desc nulls last, gp.created_at desc
           limit 100
         `
       }
       return sql`
-        select *
-        from guide_proposals
-        where status = ${status} and class_slug = ${classSlug}
-        order by created_at desc
+        select gp.*, c.name_ru as class_name_ru
+        from guide_proposals gp
+        left join classes c on c.id = gp.class_id
+        where gp.status = ${status} and gp.class_slug = ${classSlug}
+        order by gp.created_at desc
         limit 100
       `
     }
     if (status && status !== 'all') {
       if (byReview) {
         return sql`
-          select *
-          from guide_proposals
-          where status = ${status}
-          order by reviewed_at desc nulls last, created_at desc
+          select gp.*, c.name_ru as class_name_ru
+          from guide_proposals gp
+          left join classes c on c.id = gp.class_id
+          where gp.status = ${status}
+          order by gp.reviewed_at desc nulls last, gp.created_at desc
           limit 100
         `
       }
       return sql`
-        select *
-        from guide_proposals
-        where status = ${status}
-        order by created_at desc
+        select gp.*, c.name_ru as class_name_ru
+        from guide_proposals gp
+        left join classes c on c.id = gp.class_id
+        where gp.status = ${status}
+        order by gp.created_at desc
         limit 100
       `
     }
     if (classSlug && /^[a-z0-9-]+$/.test(classSlug)) {
       return sql`
-        select *
-        from guide_proposals
-        where class_slug = ${classSlug}
-        order by coalesce(reviewed_at, created_at) desc, created_at desc
+        select gp.*, c.name_ru as class_name_ru
+        from guide_proposals gp
+        left join classes c on c.id = gp.class_id
+        where gp.class_slug = ${classSlug}
+        order by coalesce(gp.reviewed_at, gp.created_at) desc, gp.created_at desc
         limit 100
       `
     }
     return sql`
-      select *
-      from guide_proposals
-      order by coalesce(reviewed_at, created_at) desc, created_at desc
+      select gp.*, c.name_ru as class_name_ru
+      from guide_proposals gp
+      left join classes c on c.id = gp.class_id
+      order by coalesce(gp.reviewed_at, gp.created_at) desc, gp.created_at desc
       limit 100
     `
   })
