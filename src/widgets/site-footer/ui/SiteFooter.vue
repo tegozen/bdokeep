@@ -101,11 +101,10 @@
   padding: 1px;
   background: linear-gradient(
     145deg,
-    rgba(196, 148, 88, 0.72) 0%,
-    rgba(140, 100, 55, 0.42) 18%,
-    rgba(70, 50, 30, 0.28) 42%,
-    rgba(30, 22, 14, 0.35) 68%,
-    rgba(18, 14, 10, 0.55) 100%
+    rgba(196, 148, 88, 0.78) 0%,
+    rgba(160, 118, 68, 0.55) 28%,
+    rgba(130, 96, 52, 0.48) 62%,
+    rgba(110, 80, 44, 0.5) 100%
   );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,

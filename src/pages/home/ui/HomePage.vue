@@ -40,7 +40,7 @@ const { data: guildBanner } = await useAsyncData(
 
 const { isStaff } = useSuperadmin()
 const { summary, refresh: refreshPending } = usePendingSummary()
-const { tierMin, hideEmpty } = useHomeClassFilters()
+const { tierMin, hideEmpty, showProposals } = useHomeClassFilters()
 const { online } = useOnlineStatus()
 
 const cachedGuideSlugs = ref<Set<string>>(new Set())
@@ -80,6 +80,13 @@ const filteredClasses = computed(() => {
   return list.filter((bdoClass) => {
     if (hideEmpty.value && !bdoClass.has_content) return false
     if (tierMin.value !== 0 && classTierMax(bdoClass) < tierMin.value) return false
+    if (
+      isStaff.value &&
+      showProposals.value &&
+      !(summary.value.byClass[bdoClass.slug] > 0)
+    ) {
+      return false
+    }
     if (!online.value && !cachedGuideSlugs.value.has(bdoClass.slug)) return false
     return true
   })
@@ -90,6 +97,7 @@ const emptyFilterMessage = computed(() => {
   if ((classes.value?.length ?? 0) === 0) return null
   if (filteredClasses.value.length > 0) return null
   if (!online.value) return 'Нет сохранённых классов для просмотра офлайн'
+  if (isStaff.value && showProposals.value) return 'Нет классов с предложениями'
   return 'Нет классов по выбранному фильтру'
 })
 

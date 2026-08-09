@@ -32,11 +32,11 @@
           @change="onHeaderTierChange"
         />
       </template>
-      <template v-if="headerClass" #modes>
-        <GuideModePresetTabs :preset-fill="presetFill" />
-      </template>
       <template v-if="showHomeFilters" #filters>
         <HomeClassFilters />
+      </template>
+      <template v-else-if="headerClass" #filters>
+        <GuideModePresetTabs :preset-fill="presetFill" />
       </template>
       <template #actions="{ actionClass, badgeClass }">
         <button

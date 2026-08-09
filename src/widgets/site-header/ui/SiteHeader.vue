@@ -17,10 +17,6 @@
           <slot name="class" />
         </div>
 
-        <div v-if="$slots.modes" :class="$style.guideModes">
-          <slot name="modes" />
-        </div>
-
         <div :class="$style.actions">
           <slot
             name="actions"
@@ -114,16 +110,6 @@ withDefaults(
   align-items: center;
   gap: 0.45rem 0.65rem;
   min-width: 0;
-}
-
-.guideModes {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-}
-
-.guideModes :global([class*='modeFilters']) {
-  height: auto;
 }
 
 .actions {
@@ -246,11 +232,6 @@ withDefaults(
     flex: 1 1 100%;
   }
 
-  .guideModes {
-    order: 4;
-    flex: 1 1 100%;
-  }
-
   .action {
     font-size: 0.82rem;
   }
@@ -285,10 +266,6 @@ withDefaults(
     order: 3;
   }
 
-  .guideModes {
-    order: 4;
-  }
-
   .filtersBar {
     padding-top: 0.7rem;
     padding-bottom: 0.85rem;
@@ -311,17 +288,8 @@ withDefaults(
     flex: 1 1 auto;
   }
 
-  .guideModes {
-    order: 3;
-    flex: 0 1 auto;
-  }
-
-  .guideModes :global([class*='modeFilters']) {
-    height: 2rem;
-  }
-
   .actions {
-    order: 4;
+    order: 3;
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: center;
