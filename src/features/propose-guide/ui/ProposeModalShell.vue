@@ -228,8 +228,8 @@ const { online } = useOnlineStatus()
   flex-shrink: 0;
   justify-content: flex-end;
   gap: 0.5rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
   padding: 0.85rem 1rem;
-  background: var(--color-bg-elevated);
+  background: transparent;
 }
 </style>

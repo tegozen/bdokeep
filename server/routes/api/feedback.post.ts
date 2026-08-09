@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const text = String(body.body || '').trim()
+  const text = sanitizeMarkdown(String(body.body || '').trim())
   if (!text) {
     throw createError({ statusCode: 400, statusMessage: 'Введите сообщение' })
   }

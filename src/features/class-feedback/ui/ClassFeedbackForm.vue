@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { UiButton } from '@/shared/ui'
 import { submitFeedback } from '../api/submitFeedback'
+
+const UiMarkdownEditor = defineAsyncComponent(
+  () => import('@/shared/ui/UiMarkdownEditor.vue'),
+)
 
 const MAX_BODY = 2000
 
@@ -19,8 +23,8 @@ const remaining = computed(() => MAX_BODY - body.value.length)
 
 const placeholder = computed(() =>
   props.classSlug
-    ? 'Ошибка в гайде, идея, вопрос…'
-    : 'Идея по сайту, ошибка, вопрос…',
+    ? 'Ошибка в гайде, идея, вопрос… (Markdown)'
+    : 'Идея по сайту, ошибка, вопрос… (Markdown)',
 )
 
 async function onSubmit() {
@@ -88,17 +92,27 @@ function writeAgain() {
         aria-hidden="true"
       >
 
-      <label :class="$style.label">
-        <span>Сообщение админу (анонимно)</span>
-        <textarea
-          v-model="body"
-          :class="$style.textarea"
-          rows="8"
-          :maxlength="MAX_BODY"
-          :placeholder="placeholder"
-          required
-        />
-      </label>
+      <div :class="[$style.label, $style.editorBlock]">
+        <span>Markdown · анонимно</span>
+        <ClientOnly>
+          <UiMarkdownEditor
+            id="class-feedback-editor"
+            v-model="body"
+            :placeholder="placeholder"
+            height="280px"
+          />
+          <template #fallback>
+            <textarea
+              v-model="body"
+              :class="$style.textarea"
+              rows="8"
+              :maxlength="MAX_BODY"
+              :placeholder="placeholder"
+              required
+            />
+          </template>
+        </ClientOnly>
+      </div>
 
       <div :class="$style.row">
         <span :class="$style.hint">Осталось {{ remaining }} символов</span>
@@ -138,6 +152,10 @@ function writeAgain() {
   color: var(--color-muted);
 }
 
+.editorBlock {
+  min-width: 0;
+}
+
 .textarea {
   box-sizing: border-box;
   width: 100%;
@@ -145,7 +163,7 @@ function writeAgain() {
   height: 14rem;
   resize: none;
   border: 1px solid var(--color-border);
-  background: var(--color-bg);
+  background: #000;
   color: var(--color-ink);
   font: inherit;
   line-height: 1.45;

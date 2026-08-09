@@ -34,7 +34,9 @@
           <span v-else :class="$style.siteTag">Сайт</span>
           <span :class="$style.meta">{{ formatDate(item.created_at) }}</span>
         </div>
-        <p :class="$style.text">{{ item.body }}</p>
+        <div :class="$style.text">
+          <UiMarkdownPreview :model-value="item.body" />
+        </div>
         <div :class="$style.actions">
           <UiButton
             variant="danger"
@@ -51,9 +53,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useConfirm, useSuperadmin } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
+
+const UiMarkdownPreview = defineAsyncComponent(
+  () => import('@/shared/ui/UiMarkdownPreview.vue'),
+)
 
 definePageMeta({ layout: 'admin' })
 useHead({ title: 'Админ — обратная связь | BDO Keep' })
@@ -253,12 +259,10 @@ onMounted(async () => {
 
 .text {
   margin: 0;
-  white-space: pre-wrap;
+  min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
-  font: inherit;
   color: var(--color-ink);
-  line-height: 1.45;
 }
 
 .actions {

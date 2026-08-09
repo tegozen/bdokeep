@@ -173,9 +173,10 @@ function onBackdropClick(e: MouseEvent) {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  /* Match site shell (#050505 + page-bg), not flat black. */
+  background: color-mix(in srgb, #050505 55%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: filter 160ms ease;
 }
 
@@ -191,18 +192,66 @@ function onBackdropClick(e: MouseEvent) {
 }
 
 .modal {
+  position: relative;
   display: flex;
   flex-direction: column;
   max-height: min(94vh, 56rem);
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-elevated);
-  box-shadow: var(--shadow-glow);
+  border: 0;
+  border-radius: 0.75rem;
+  /* Same plate as footer / home filters — warm #050505, not cool slate panel. */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-gold) 7%, #050505) 0%,
+      #050505 42%,
+      #050608 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-gold) 18%, transparent),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
-.borderStrong {
-  border-color: var(--color-border-strong);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+/* Gold gradient rim — shared with HomeClassFilters / SiteFooter. */
+.modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(196, 148, 88, 0.78) 0%,
+    rgba(160, 118, 68, 0.55) 28%,
+    rgba(130, 96, 52, 0.48) 62%,
+    rgba(110, 80, 44, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.modal > :global(*) {
+  position: relative;
+  z-index: 1;
+}
+
+.borderStrong::before {
+  background: linear-gradient(
+    145deg,
+    rgba(212, 175, 98, 0.92) 0%,
+    rgba(196, 148, 88, 0.7) 30%,
+    rgba(160, 118, 68, 0.58) 65%,
+    rgba(130, 96, 52, 0.62) 100%
+  );
 }
 
 .sm {
@@ -246,7 +295,7 @@ function onBackdropClick(e: MouseEvent) {
   align-items: center;
   justify-content: flex-start;
   gap: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
   padding: 0.85rem 1rem;
   flex-wrap: wrap;
 }

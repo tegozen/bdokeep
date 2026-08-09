@@ -2,10 +2,10 @@
 
 @theme {
   /* Theme tokens consumed by utilities / CSS vars. */
-  --color-bg-deep: #07080c;
-  --color-bg: #0e1016;
-  --color-bg-elevated: #161922;
-  --color-bg-panel: rgba(18, 20, 28, 0.88);
+  --color-bg-deep: #050505;
+  --color-bg: #0a0a0a;
+  --color-bg-elevated: #101010;
+  --color-bg-panel: rgba(10, 10, 10, 0.88);
   --color-border: rgba(201, 162, 86, 0.28);
   --color-border-strong: rgba(212, 175, 98, 0.55);
   --color-gold: #d4af62;
