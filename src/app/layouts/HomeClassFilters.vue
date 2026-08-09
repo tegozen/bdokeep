@@ -18,7 +18,7 @@
     </div>
     <UiSwitch
       v-model="hideEmpty"
-      size="sm"
+      size="md"
       label-placement="start"
       label="Скрыть пустые"
       :class="$style.switch"
@@ -41,17 +41,18 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.65rem 1.35rem;
+  gap: 0.75rem 1.75rem;
   width: 100%;
   min-width: 0;
-  padding: 0.7rem 1.35rem;
+  min-height: 4.25rem;
+  padding: 0.95rem 1.5rem;
   border: 0;
-  border-radius: 1.15rem;
-  background:
-    radial-gradient(ellipse 55% 140% at 8% 0%, rgba(140, 95, 45, 0.28), transparent 58%),
-    radial-gradient(ellipse 40% 100% at 42% 110%, rgba(60, 40, 22, 0.22), transparent 55%),
-    radial-gradient(ellipse 30% 80% at 90% 20%, rgba(80, 55, 30, 0.1), transparent 50%),
-    linear-gradient(180deg, #12100d 0%, #090807 48%, #050403 100%);
+  border-radius: 1.35rem;
+  background-color: #0a0908;
+  background-image: url("/brand/filters-bg.png");
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   box-shadow:
     inset 0 1px 0 rgba(196, 150, 90, 0.14),
     inset 0 -1px 0 rgba(0, 0, 0, 0.45);
@@ -94,23 +95,24 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.65rem;
   min-width: 0;
 }
 
 .chip {
   box-sizing: border-box;
   flex-shrink: 0;
-  height: 2.05rem;
+  height: 2.6rem;
+  min-width: 4.5rem;
   border: 1px solid rgba(120, 100, 75, 0.28);
   border-radius: 999px;
   background: rgba(10, 9, 8, 0.55);
   color: #c9b59a;
   cursor: pointer;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.98rem;
   line-height: 1;
-  padding: 0 1.1rem;
+  padding: 0 1.45rem;
   white-space: nowrap;
   transition:
     background 140ms ease,
@@ -143,19 +145,22 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
 .switch {
   flex-shrink: 0;
   color: #c9b59a;
+  font-size: 0.95rem;
 }
 
 @media (max-width: 640px) {
   .root {
-    border-radius: 1rem;
-    padding: 0.7rem 0.95rem;
-    gap: 0.55rem 1rem;
+    min-height: 0;
+    border-radius: 1.15rem;
+    padding: 0.8rem 1.05rem;
+    gap: 0.6rem 1.15rem;
   }
 
   .chip {
-    height: 1.9rem;
-    font-size: 0.8rem;
-    padding: 0 0.85rem;
+    height: 2.35rem;
+    min-width: 0;
+    font-size: 0.9rem;
+    padding: 0 1.15rem;
   }
 }
 </style>

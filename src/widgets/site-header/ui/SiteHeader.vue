@@ -56,11 +56,9 @@ withDefaults(
   position: sticky;
   top: 0;
   z-index: 20;
-  background:
-    radial-gradient(ellipse 38% 110% at 6% 35%, rgba(212, 175, 98, 0.12), transparent 58%),
-    radial-gradient(ellipse 30% 80% at 88% 10%, rgba(212, 175, 98, 0.05), transparent 52%),
-    linear-gradient(180deg, rgba(5, 6, 9, 0.98), rgba(7, 8, 12, 0.9));
-  backdrop-filter: blur(14px);
+  /* No gold radials — page bg (`/brand/page-bg.png`) stays visible. */
+  background: color-mix(in srgb, #050505 55%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 .headerBar {
@@ -80,7 +78,7 @@ withDefaults(
   gap: 0.65rem 1.25rem;
   width: var(--page-width);
   margin-inline: auto;
-  padding-block: 1.15rem;
+  padding-block: 1rem;
 }
 
 .brand {
@@ -100,8 +98,8 @@ withDefaults(
 .brandLogo {
   display: block;
   width: auto;
-  height: 2.65rem;
-  max-width: min(14.5rem, 52vw);
+  height: 3.75rem;
+  max-width: min(20rem, 70vw);
   object-fit: contain;
   filter: drop-shadow(0 0 8px rgba(212, 175, 98, 0.22));
   transition: filter 140ms ease;
@@ -257,7 +255,7 @@ withDefaults(
 
 @media (max-width: 640px) {
   .brandLogo {
-    height: 2.2rem;
+    height: 2.85rem;
   }
 
   .actions {
@@ -297,7 +295,7 @@ withDefaults(
 @media (min-width: 1100px) {
   .headerInner {
     align-items: center;
-    padding-block: 1.25rem;
+    padding-block: 1.1rem;
     gap: 0.85rem 1.5rem;
   }
 
