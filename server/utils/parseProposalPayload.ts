@@ -8,13 +8,6 @@ import type {
   ParsedProposalPayload,
 } from './proposals/parse/types'
 
-export type {
-  CatalogIdsExist,
-  ParseProposalContext,
-  ParseVideosFn,
-  ParsedProposalPayload,
-}
-
 function assertSection(section: string): asserts section is ProposalSection {
   if (!(PROPOSAL_SECTIONS as readonly string[]).includes(section)) {
     throw createError({ statusCode: 400, statusMessage: 'Некорректный раздел' })

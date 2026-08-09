@@ -3,10 +3,8 @@ import { describe, it } from 'node:test'
 import { createError } from 'h3'
 import { CRYSTAL_PRESET_IDS, MAX_COMBOS_PER_MODE } from '../../domain/index.ts'
 import type { Sql } from './db.ts'
-import {
-  parseAndValidatePayload,
-  type CatalogIdsExist,
-} from './parseProposalPayload.ts'
+import { parseAndValidatePayload } from './parseProposalPayload.ts'
+import type { CatalogIdsExist } from './proposals/parse/types.ts'
 import { formatApplyRejectNote } from './applyPendingOrReject.ts'
 
 const SKILL_A = '11111111-1111-4111-8111-111111111111'
