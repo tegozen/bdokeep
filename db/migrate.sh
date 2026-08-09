@@ -148,6 +148,7 @@ refresh_catalog 015_seed_relics_lightstones.sql
 refresh_catalog 029_seed_hardening.sql
 refresh_catalog 030_refresh_skill_addon_effects.sql
 refresh_catalog 032_refresh_morph_skills.sql
+refresh_catalog 045_refresh_morph_skills_bdocodex.sql
 refresh_catalog 034_refresh_garmoth_crystals_buffs.sql
 refresh_catalog 035_seed_lightstone_sets.sql
 
