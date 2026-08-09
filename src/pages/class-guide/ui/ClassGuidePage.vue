@@ -139,7 +139,7 @@
           </GuideSection>
         </div>
 
-        <template v-if="isSuperadmin && topDraftsVisible">
+        <template v-if="isStaff && topDraftsVisible">
           <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
             <PendingSectionDrafts
               :proposals="summaryPending"
@@ -333,7 +333,7 @@
           </GuideSection>
         </div>
 
-        <template v-if="isSuperadmin && gearDraftsVisible">
+        <template v-if="isStaff && gearDraftsVisible">
           <div :class="[$style.gearCell, $style.gearDraft]">
             <PendingSectionDrafts
               v-if="sectionCount('crystals')"
@@ -400,7 +400,7 @@
           </GuideSection>
         </div>
 
-        <template v-if="isSuperadmin && videoDraftsVisible">
+        <template v-if="isStaff && videoDraftsVisible">
           <div :class="[$style.videoCell, $style.videoDraft]">
             <PendingSectionDrafts
               :proposals="videosPending"
@@ -487,7 +487,7 @@ const props = defineProps<{
   error?: boolean;
 }>();
 
-const { isSuperadmin } = useSuperadmin();
+const { isStaff } = useSuperadmin();
 const headerPresetFill = useHeaderPresetFill();
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } =
   usePendingSummary();
@@ -515,7 +515,7 @@ watch(
 );
 
 async function loadClassPending() {
-  if (!isSuperadmin.value || !props.bundle?.class.slug) {
+  if (!isStaff.value || !props.bundle?.class.slug) {
     classPending.value = [];
     return;
   }
@@ -601,12 +601,12 @@ async function onDraftChanged(action: "approve" | "reject") {
 
 // Session is resolved in plugins/superadmin-session.ts before this page runs.
 // Await pending drafts on first paint so huge draft cards don't insert mid-scroll.
-if (isSuperadmin.value && props.bundle?.class.slug) {
+if (isStaff.value && props.bundle?.class.slug) {
   await loadClassPending();
 }
 
 watch(
-  [isSuperadmin, () => props.bundle?.class.slug],
+  [isStaff, () => props.bundle?.class.slug],
   () => {
     void loadClassPending();
   },

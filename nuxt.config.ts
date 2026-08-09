@@ -218,11 +218,20 @@ export default defineNuxtConfig({
           },
         },
         {
-          // Cookie gate: only serve/cache admin HTML while bdo_admin exp is in the future.
+          // Cookie gate: only serve/cache admin HTML while bdo_admin JWT exp is in the future.
           urlPattern: ({ request, url }) => {
             if (request.mode !== 'navigate') return false
             const p = url.pathname
-            if (p !== '/admin/proposals' && p !== '/admin/feedback') return false
+            if (
+              p !== '/admin' &&
+              p !== '/admin/' &&
+              !p.startsWith('/admin/proposals') &&
+              !p.startsWith('/admin/feedback') &&
+              !p.startsWith('/admin/users') &&
+              !p.startsWith('/admin/banner')
+            ) {
+              return false
+            }
             const raw = request.headers.get('cookie') || ''
             const m = raw.match(/(?:^|;\s*)bdo_admin=([^;]+)/)
             if (!m) return false
@@ -233,9 +242,16 @@ export default defineNuxtConfig({
               /* keep raw */
             }
             const parts = token.split('.')
-            if (parts.length !== 3 || parts[0] !== 'admin') return false
-            const exp = Number(parts[1])
-            return Number.isFinite(exp) && exp > Date.now()
+            if (parts.length !== 3) return false
+            try {
+              const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+              const json = atob(b64)
+              const payload = JSON.parse(json) as { exp?: number }
+              const exp = Number(payload.exp)
+              return Number.isFinite(exp) && exp * 1000 > Date.now()
+            } catch {
+              return false
+            }
           },
           handler: 'NetworkFirst',
           options: {
@@ -252,7 +268,8 @@ export default defineNuxtConfig({
             if (
               p !== '/api/admin/proposals' &&
               p !== '/api/admin/feedback' &&
-              p !== '/api/admin/guild-banner'
+              p !== '/api/admin/guild-banner' &&
+              p !== '/api/admin/users'
             ) {
               return false
             }
@@ -266,9 +283,16 @@ export default defineNuxtConfig({
               /* keep raw */
             }
             const parts = token.split('.')
-            if (parts.length !== 3 || parts[0] !== 'admin') return false
-            const exp = Number(parts[1])
-            return Number.isFinite(exp) && exp > Date.now()
+            if (parts.length !== 3) return false
+            try {
+              const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+              const json = atob(b64)
+              const payload = JSON.parse(json) as { exp?: number }
+              const exp = Number(payload.exp)
+              return Number.isFinite(exp) && exp * 1000 > Date.now()
+            } catch {
+              return false
+            }
           },
           handler: 'NetworkFirst',
           options: {

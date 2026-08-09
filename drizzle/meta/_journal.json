@@ -8,6 +8,13 @@
       "when": 1786280453319,
       "tag": "0000_daily_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786282193067,
+      "tag": "0001_many_quasar",
+      "breakpoints": true
     }
   ]
 }

@@ -1,12 +1,12 @@
 <template>
   <div :class="[$style.row, compact && $style.rowCompact]">
-    <div v-if="!isSuperadmin && $slots.default" :class="$style.leading">
+    <div v-if="!isStaff && $slots.default" :class="$style.leading">
       <slot />
     </div>
 
-    <div :class="[$style.trailing, isSuperadmin && $style.trailingFull]">
-      <div v-if="isSuperadmin" :class="[$style.banner, compact && $style.compact]">
-        <span>{{ compact ? 'Суперадмин' : 'Суперадмин — правка опубликуется сразу' }}</span>
+    <div :class="[$style.trailing, isStaff && $style.trailingFull]">
+      <div v-if="isStaff" :class="[$style.banner, compact && $style.compact]">
+        <span>{{ bannerText }}</span>
         <button type="button" :class="$style.linkish" @click="onLogout">Выйти</button>
       </div>
 
@@ -15,8 +15,8 @@
           v-if="iconTrigger"
           type="button"
           :class="$style.iconTrigger"
-          aria-label="Войти как суперадмин"
-          title="Войти как суперадмин"
+          aria-label="Войти как админ"
+          title="Войти как админ"
           @click="openLogin = true"
         >
           <svg
@@ -43,19 +43,20 @@
           :class="!$slots.default && !compact && $style.triggerWide"
           @click="openLogin = true"
         >
-          Войти как суперадмин
+          Войти как админ
         </UiButton>
 
         <UiModal
           :open="openLogin"
-          title="Войти как суперадмин"
-          aria-label="Вход суперадмина"
+          title="Вход в админку"
+          aria-label="Вход администратора"
           size="sm"
           :z-index="90"
           @close="closeLogin"
         >
           <div :class="$style.modalBody">
             <LoginFields
+              v-model:username="username"
               v-model:password="password"
               :busy="busy"
               :error="error"
@@ -69,6 +70,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useSuperadmin } from '@/shared/lib'
 import UiButton from '@/shared/ui/UiButton.vue'
 import UiModal from '@/shared/ui/UiModal.vue'
@@ -80,19 +82,29 @@ const props = withDefaults(
     openLoginOnMount?: boolean
     /** Muted lock icon instead of labeled button (footer entry). */
     iconTrigger?: boolean
+    /** Navigate here after successful login. */
+    afterLoginTo?: string
   }>(),
   {
     compact: false,
     openLoginOnMount: false,
     iconTrigger: false,
+    afterLoginTo: '',
   },
 )
 
-const { isSuperadmin, refresh, login, logout } = useSuperadmin()
+const { isStaff, username: sessionUser, refresh, login, logout } = useSuperadmin()
+const username = ref('')
 const password = ref('')
 const busy = ref(false)
 const error = ref('')
 const openLogin = ref(props.openLoginOnMount)
+
+const bannerText = computed(() => {
+  const who = sessionUser.value || 'админ'
+  if (props.compact) return who
+  return `${who} — правка опубликуется сразу`
+})
 
 onMounted(() => {
   void refresh()
@@ -100,6 +112,7 @@ onMounted(() => {
 
 function closeLogin() {
   openLogin.value = false
+  username.value = ''
   password.value = ''
   error.value = ''
 }
@@ -108,11 +121,15 @@ async function onLogin() {
   error.value = ''
   busy.value = true
   try {
-    await login(password.value)
+    await login({ username: username.value, password: password.value })
+    username.value = ''
     password.value = ''
     openLogin.value = false
+    if (props.afterLoginTo) {
+      await navigateTo(props.afterLoginTo)
+    }
   } catch {
-    error.value = 'Неверный пароль'
+    error.value = 'Неверный логин или пароль'
   } finally {
     busy.value = false
   }

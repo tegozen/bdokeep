@@ -1,66 +1,43 @@
 <template>
   <div :class="$style.page">
     <header :class="$style.header">
-      <h1 :class="$style.h1">Предложения гайдов</h1>
-      <NuxtLink v-if="authed" to="/admin/feedback" :class="$style.link">
-        Обратная связь
-      </NuxtLink>
+      <h1 :class="$style.h1">Заявки</h1>
     </header>
 
-    <form v-if="!authed" :class="$style.login" @submit.prevent="login">
-      <!-- Username field for password-manager / a11y heuristics (password-only admin auth). -->
-      <input
-        type="text"
-        name="username"
-        autocomplete="username"
-        value="admin"
-        tabindex="-1"
-        aria-hidden="true"
-        :class="$style.username"
+    <p :class="$style.modNote">
+      Отклоняйте заявки с копипастом чужих гайдов целиком без разрешения автора.
+    </p>
+    <div :class="$style.filters">
+      <button
+        v-for="opt in statusOpts"
+        :key="opt.value"
+        type="button"
+        :class="[$style.chip, status === opt.value && $style.chipOn]"
+        @click="setStatus(opt.value)"
       >
-      <label :class="$style.label">
-        Пароль админа
-        <input v-model="password" type="password" :class="$style.input" required autocomplete="current-password">
-      </label>
-      <p v-if="loginError" :class="$style.error">{{ loginError }}</p>
-      <UiButton type="submit" :disabled="busy">Войти</UiButton>
-    </form>
+        {{ opt.label }}
+      </button>
+      <button
+        v-if="classFilter"
+        type="button"
+        :class="[$style.chip, $style.chipOn]"
+        @click="clearClassFilter"
+      >
+        Класс: {{ classFilter }} ×
+      </button>
+      <UiButton variant="ghost" type="button" :disabled="loading" @click="load">
+        Обновить
+      </UiButton>
+    </div>
 
-    <template v-else>
-      <p :class="$style.modNote">
-        Отклоняйте заявки с копипастом чужих гайдов целиком без разрешения автора.
-      </p>
-      <div :class="$style.filters">
-        <button
-          v-for="opt in statusOpts"
-          :key="opt.value"
-          type="button"
-          :class="[$style.chip, status === opt.value && $style.chipOn]"
-          @click="setStatus(opt.value)"
-        >
-          {{ opt.label }}
-        </button>
-        <button
-          v-if="classFilter"
-          type="button"
-          :class="[$style.chip, $style.chipOn]"
-          @click="clearClassFilter"
-        >
-          Класс: {{ classFilter }} ×
-        </button>
-        <UiButton variant="ghost" type="button" :disabled="loading" @click="load">
-          Обновить
-        </UiButton>
-      </div>
+    <p v-if="loading" :class="$style.muted">Загрузка…</p>
+    <p v-else-if="!items.length" :class="$style.muted">Нет предложений.</p>
 
-      <p v-if="loading" :class="$style.muted">Загрузка…</p>
-      <p v-else-if="!items.length" :class="$style.muted">Нет предложений.</p>
-
-      <ul v-else :class="$style.list">
-        <li v-for="item in items" :key="item.id" :class="$style.card">
-          <div :class="$style.cardHead">
-            <strong>{{ item.class_name_ru || item.class_slug }}</strong>
-            <span :class="$style.badge">{{ sectionLabel(item) }}</span>
+    <ul v-else :class="$style.list">
+      <li v-for="item in items" :key="item.id" :class="$style.card">
+        <div :class="$style.cardHead">
+          <strong>{{ item.class_name_ru || item.class_slug }}</strong>
+          <span :class="$style.badge">{{ sectionLabel(item) }}</span>
             <span v-if="item.author_label" :class="$style.muted">· {{ item.author_label }}</span>
             <span :class="$style.status">{{ statusLabel(item.status) }}</span>
           </div>
@@ -131,7 +108,6 @@
         @close="cancelEdit"
         @approved="onEditedApproved"
       />
-    </template>
   </div>
 </template>
 
@@ -142,7 +118,8 @@ import { ProposalSectionPreview, ReviewSummaryModal } from '@/features/superadmi
 import { useConfirm, usePendingSummary, useSuperadmin } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
-useHead({ title: 'Админ — предложения | BDO Keep' })
+definePageMeta({ layout: 'admin' })
+useHead({ title: 'Админ — заявки | BDO Keep' })
 
 type Proposal = {
   id: string
@@ -183,14 +160,10 @@ type Proposal = {
 
 const route = useRoute()
 const router = useRouter()
-const { isSuperadmin, refresh, loseSession } = useSuperadmin()
+const { isStaff, refresh, loseSession } = useSuperadmin()
 const { alert, confirm } = useConfirm()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
 
-const authed = ref(false)
-const password = ref('')
-const loginError = ref('')
-const busy = ref(false)
 const loading = ref(false)
 const items = ref<Proposal[]>([])
 const status = ref(
@@ -236,7 +209,7 @@ function syncQuery() {
 function clearClassFilter() {
   classFilter.value = ''
   syncQuery()
-  if (authed.value) void load()
+  if (isStaff.value) void load()
 }
 
 function sectionLabel(item: Proposal) {
@@ -277,29 +250,8 @@ function formatDate(iso: string) {
   }
 }
 
-async function checkMe() {
-  await refresh()
-  authed.value = isSuperadmin.value
-}
-
-async function login() {
-  loginError.value = ''
-  busy.value = true
-  try {
-    await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
-    password.value = ''
-    await refresh()
-    authed.value = isSuperadmin.value
-    await refreshPendingSummary()
-    await load()
-  } catch {
-    loginError.value = 'Неверный пароль'
-  } finally {
-    busy.value = false
-  }
-}
-
 async function load() {
+  if (!isStaff.value) return
   loading.value = true
   try {
     const query: Record<string, string> = { status: status.value }
@@ -314,7 +266,6 @@ async function load() {
         ? Number((e as { statusCode?: number }).statusCode)
         : 0
     if (code === 401) {
-      authed.value = false
       await loseSession()
     }
     items.value = []
@@ -441,12 +392,21 @@ async function reject(id: string) {
 }
 
 watch(status, () => {
-  if (authed.value) load()
+  if (isStaff.value) void load()
+})
+
+watch(isStaff, (ok) => {
+  if (ok) {
+    void refreshPendingSummary()
+    void load()
+  } else {
+    items.value = []
+  }
 })
 
 onMounted(async () => {
-  await checkMe()
-  if (authed.value) {
+  await refresh()
+  if (isStaff.value) {
     await refreshPendingSummary()
     await load()
   }
@@ -455,9 +415,8 @@ onMounted(async () => {
 
 <style module>
 .page {
-  width: min(calc(100% - 2rem), 960px);
-  margin-inline: auto;
-  padding: 2rem 0 4rem;
+  display: grid;
+  gap: 1rem;
 }
 
 .header {
@@ -465,72 +424,21 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 .h1 {
   margin: 0;
-  font-size: 1.6rem;
-}
-
-.link {
-  color: var(--color-gold);
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-.login {
-  display: grid;
-  gap: 0.85rem;
-  max-width: 22rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-panel);
-  padding: 1.25rem;
-}
-
-.username {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.label {
-  display: grid;
-  gap: 0.35rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.input {
-  box-sizing: border-box;
-  min-height: 2rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font: inherit;
-  line-height: 1;
-  padding: 0 0.65rem;
+  font-size: 1.35rem;
 }
 
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1.25rem;
 }
 
 .modNote {
-  margin: 0 0 1rem;
+  margin: 0;
   font-size: 0.875rem;
   line-height: 1.4;
   color: var(--color-muted);

@@ -38,7 +38,7 @@ const { data: guildBanner } = await useAsyncData(
   },
 )
 
-const { isSuperadmin } = useSuperadmin()
+const { isStaff } = useSuperadmin()
 const { summary, refresh: refreshPending } = usePendingSummary()
 const { tierMin, hideEmpty } = useHomeClassFilters()
 const { online } = useOnlineStatus()
@@ -62,7 +62,7 @@ watch(
 )
 
 const pendingByClass = computed(() =>
-  isSuperadmin.value ? summary.value.byClass : {},
+  isStaff.value ? summary.value.byClass : {},
 )
 
 function classTierMax(bdoClass: BdoClass) {
@@ -94,7 +94,7 @@ const emptyFilterMessage = computed(() => {
 })
 
 watch(
-  isSuperadmin,
+  isStaff,
   (ok) => {
     if (ok) void refreshPending()
   },

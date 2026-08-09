@@ -1,7 +1,7 @@
 import { UUID_RE, type ProposalSection } from '@domain'
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  await requireAdmin(event)
   const id = getRouterParam(event, 'id')
   if (!id || !UUID_RE.test(id)) {
     throw createError({ statusCode: 400, statusMessage: 'Некорректный id' })

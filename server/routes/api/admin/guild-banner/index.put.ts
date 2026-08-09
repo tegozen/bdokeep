@@ -8,7 +8,7 @@ type Body = {
 }
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  await requireAdmin(event)
   assertSameOrigin(event)
 
   const input = (await readBody(event)) as Body

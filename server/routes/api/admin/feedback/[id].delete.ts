@@ -1,7 +1,7 @@
 import { UUID_RE } from '@domain'
 
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  await requireAdmin(event)
 
   const id = String(getRouterParam(event, 'id') || '').trim()
   if (!id || !UUID_RE.test(id)) {

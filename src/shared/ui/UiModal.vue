@@ -11,6 +11,7 @@
       @click="onBackdropClick"
     >
       <div
+        ref="panelRef"
         :class="[
           $style.modal,
           $style[size],
@@ -91,6 +92,63 @@ const emit = defineEmits<{
 
 const openRef = toRef(props, 'open')
 const { obscured: stackObscured } = useModalEscape(openRef, () => emit('close'))
+
+const panelRef = ref<HTMLElement | null>(null)
+let focusObserver: MutationObserver | null = null
+let focusTimer: ReturnType<typeof setTimeout> | null = null
+
+const FOCUSABLE_INPUT =
+  'input:not([type="hidden"]):not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"])'
+
+function stopFocusWatch() {
+  focusObserver?.disconnect()
+  focusObserver = null
+  if (focusTimer != null) {
+    clearTimeout(focusTimer)
+    focusTimer = null
+  }
+}
+
+function tryFocusFirstInput(): boolean {
+  const root = panelRef.value
+  if (!root || stackObscured.value) return false
+  const el = root.querySelector<HTMLElement>(FOCUSABLE_INPUT)
+  if (!el) return false
+  el.focus({ preventScroll: true })
+  return true
+}
+
+function scheduleFocusFirstInput() {
+  stopFocusWatch()
+  void nextTick(() => {
+    requestAnimationFrame(() => {
+      if (tryFocusFirstInput()) return
+      const root = panelRef.value
+      if (!root || !props.open) return
+      // Lazy/async slot content (e.g. propose forms) may mount after open.
+      focusObserver = new MutationObserver(() => {
+        if (tryFocusFirstInput()) stopFocusWatch()
+      })
+      focusObserver.observe(root, { childList: true, subtree: true })
+      focusTimer = setTimeout(stopFocusWatch, 1500)
+    })
+  })
+}
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (!import.meta.client) return
+    if (!isOpen) {
+      stopFocusWatch()
+      return
+    }
+    scheduleFocusFirstInput()
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(stopFocusWatch)
 
 /** Close only if press started on backdrop — not drag-from-dialog release. */
 const backdropPress = ref(false)

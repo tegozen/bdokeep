@@ -1,23 +1,29 @@
 <template>
   <div :class="$style.login">
-    <!-- Username field for password-manager / a11y heuristics (password-only admin auth). -->
-    <input
-      type="text"
-      name="username"
-      autocomplete="username"
-      value="admin"
-      tabindex="-1"
-      aria-hidden="true"
-      :class="$style.username"
-    >
+    <label :class="$style.label">
+      Логин
+      <input
+        :value="username"
+        type="text"
+        name="username"
+        :class="$style.input"
+        autocomplete="username"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        @input="onUsername"
+        @keydown.enter.prevent="$emit('login')"
+      >
+    </label>
     <label :class="$style.label">
       Пароль
       <input
         :value="password"
         type="password"
+        name="password"
         :class="$style.input"
         autocomplete="current-password"
-        @input="onInput"
+        @input="onPassword"
         @keydown.enter.prevent="$emit('login')"
       >
     </label>
@@ -32,17 +38,23 @@
 import { UiButton } from '@/shared/ui'
 
 defineProps<{
+  username: string
   password: string
   busy: boolean
   error: string
 }>()
 
 const emit = defineEmits<{
+  'update:username': [value: string]
   'update:password': [value: string]
   login: []
 }>()
 
-function onInput(e: Event) {
+function onUsername(e: Event) {
+  emit('update:username', (e.target as HTMLInputElement).value)
+}
+
+function onPassword(e: Event) {
   emit('update:password', (e.target as HTMLInputElement).value)
 }
 </script>
@@ -51,18 +63,6 @@ function onInput(e: Event) {
 .login {
   display: grid;
   gap: 0.5rem;
-}
-
-.username {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .label {

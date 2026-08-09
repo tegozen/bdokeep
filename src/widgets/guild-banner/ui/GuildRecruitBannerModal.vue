@@ -1,12 +1,6 @@
 <template>
-  <UiModal
-    :open="open"
-    title="Баннер набора"
-    aria-label="Редактирование баннера набора"
-    size="lg"
-    @close="onClose"
-  >
-    <form :class="$style.form" @submit.prevent="save">
+  <component :is="embedded ? 'div' : UiModal" v-bind="shellProps" v-on="shellListeners">
+    <form :class="[$style.form, embedded && $style.formEmbedded]" @submit.prevent="save">
       <UiSwitch v-model="enabled" label="Показывать на главной и страницах классов" />
 
       <label :class="$style.label">
@@ -95,21 +89,28 @@
       </div>
 
       <p v-if="saveError" :class="$style.error">{{ saveError }}</p>
+      <p v-if="saveOk" :class="$style.ok">Сохранено</p>
 
       <div :class="$style.actions">
         <UiButton type="submit" :disabled="saving || loading">
           {{ saving ? 'Сохранение…' : 'Сохранить' }}
         </UiButton>
-        <UiButton variant="ghost" type="button" :disabled="saving" @click="onClose">
+        <UiButton
+          v-if="!embedded"
+          variant="ghost"
+          type="button"
+          :disabled="saving"
+          @click="onClose"
+        >
           Отмена
         </UiButton>
       </div>
     </form>
-  </UiModal>
+  </component>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiModal, UiSwitch } from '@/shared/ui'
 import type { GuildBannerLink, GuildBannerPublic } from '../model/types'
 
@@ -121,18 +122,42 @@ type BannerAdmin = {
   updated_at: string | null
 }
 
-const props = defineProps<{
-  open: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    open?: boolean
+    /** Inline form for admin page (no modal chrome). */
+    embedded?: boolean
+  }>(),
+  {
+    open: false,
+    embedded: false,
+  },
+)
 
 const emit = defineEmits<{
   close: []
   saved: [GuildBannerPublic]
 }>()
 
+const shellProps = computed(() => {
+  if (props.embedded) return {}
+  return {
+    open: props.open,
+    title: 'Баннер набора',
+    'aria-label': 'Редактирование баннера набора',
+    size: 'lg' as const,
+  }
+})
+
+const shellListeners = computed(() => {
+  if (props.embedded) return {}
+  return { close: onClose }
+})
+
 const loading = ref(false)
 const saving = ref(false)
 const saveError = ref('')
+const saveOk = ref(false)
 const iconError = ref('')
 const enabled = ref(true)
 const body = ref('')
@@ -191,6 +216,7 @@ function toPublic(res: BannerAdmin): GuildBannerPublic {
 async function load() {
   loading.value = true
   saveError.value = ''
+  saveOk.value = false
   iconError.value = ''
   try {
     const res = await $fetch<BannerAdmin>('/api/admin/guild-banner')
@@ -255,6 +281,7 @@ async function onIconPick(ev: Event) {
 
 async function save() {
   saveError.value = ''
+  saveOk.value = false
   saving.value = true
   try {
     const payload: Record<string, unknown> = {
@@ -275,7 +302,11 @@ async function save() {
     })
     applyAdmin(res)
     emit('saved', toPublic(res))
-    emit('close')
+    if (props.embedded) {
+      saveOk.value = true
+    } else {
+      emit('close')
+    }
   } catch (e: unknown) {
     const msg =
       e && typeof e === 'object' && 'data' in e
@@ -290,15 +321,21 @@ async function save() {
 watch(
   () => props.open,
   (isOpen) => {
+    if (props.embedded) return
     if (isOpen) void load()
     else {
       saveError.value = ''
+      saveOk.value = false
       iconError.value = ''
       resetPending()
     }
   },
   { immediate: true },
 )
+
+onMounted(() => {
+  if (props.embedded) void load()
+})
 
 onBeforeUnmount(() => {
   revokePreview()
@@ -310,6 +347,11 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 1rem;
   padding: 1rem 1.1rem 1.25rem;
+}
+
+.formEmbedded {
+  padding: 0;
+  max-width: 40rem;
 }
 
 .label {
@@ -437,6 +479,12 @@ onBeforeUnmount(() => {
 .error {
   margin: 0;
   color: var(--color-danger);
+  font-size: 0.9rem;
+}
+
+.ok {
+  margin: 0;
+  color: var(--color-gold-soft, var(--color-gold));
   font-size: 0.9rem;
 }
 

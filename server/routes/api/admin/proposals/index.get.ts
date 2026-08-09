@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  await requireAdmin(event)
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
   const query = getQuery(event)
   const status = typeof query.status === 'string' ? query.status : 'pending'

@@ -16,9 +16,9 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 - Сетка классов на главной → страница `/class/[slug]`
 - Разделы: **Заметки**, **Комба**, **Морфы**, **Инкрустация**, **Реликвии**, **Закалки**, **Забаф**, **Видео**, **Обратная связь**
-- Sticky-хедер: класс, переключатели режима/пресета, тир ★, вход суперадмина
+- Sticky-хедер: класс, переключатели режима/пресета, тир ★, вход админа
 - Пустые секции явно помечены («Пока пусто»), а не выглядят сломанными
-- **Тир 1–5 ★** для сочетаний **ПВП/ПВЕ × Пробуждение/Наследие** (в хедере — по текущим табам; всё кроме пресета ПВЕ пишет в ПВП); видят все, ставит только суперадмин
+- **Тир 1–5 ★** для сочетаний **ПВП/ПВЕ × Пробуждение/Наследие** (в хедере — по текущим табам; всё кроме пресета ПВЕ пишет в ПВП); видят все, ставит админ
 - На главной: фильтр по тиру / «Скрыть пустые»; заполненные классы сортируются от большего тира
 - У каждого раздела: «Обновлено ДД.ММ.ГГГГ · ник/админ»; точки у пресетов с данными в хедере
 
@@ -44,7 +44,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - **Видео** — до 3 ссылок YouTube; название подтягивается с YouTube (oEmbed), постеры через same-origin `/api/youtube/thumb/…`; пока ролик без превью — «обрабатывается», раз в час Nitro task помечает ready и добирает заголовки у «Видео N»; через 48ч без превью слот снимается approved-заявкой от `cron`
 - **Забаф** — каталог бафов с иконками, группами и заметками (до 20 на пресет)
 - **Обратная связь** — кнопка в хедере (слева от макроса): анонимное сообщение админу в модалке; на странице класса привязывается к нему, с главной — общее (не публикуется на сайте)
-- **Набор в гильдию** — на главной баннер в сетке (~3 карточки); на `/class/*` — колонка слева от «Заметок»; суперадмин правит в модалке («Баннер» в хедере)
+- **Набор в гильдию** — на главной баннер в сетке (~3 карточки); на `/class/*` — колонка слева от «Заметок»; правится в админке `/admin/banner`
 - **Макрос чата** — модалка в хедере: готовая строка + пошаговая настройка с скриншотами
 
 ### Краудсорс правок
@@ -59,19 +59,22 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 ### Модерация
 
-- Очередь заявок `/admin/proposals` (пароль `ADMIN_PASSWORD`)
-- Одобрить / отклонить / **переприменить** одобренную заявку; превью секции; правка summary перед approve
+- JWT-вход по логину/паролю (httpOnly cookie `bdo_admin`); bootstrap-суперадмин `admin` + `ADMIN_PASSWORD`
+- Раздел `/admin` со своим меню: заявки, ОС, баннер, пользователи (только суперадмин)
+- Роли: **admin** — заявки, ОС, баннер, тиры, auto-approve; **superadmin** — то же + управление пользователями
+- Очередь заявок `/admin/proposals` — одобрить / отклонить / **переприменить**; превью секции; правка summary перед approve
 - Инбокс ОС `/admin/feedback` — список и удаление
-- **Суперадмин** (тот же пароль, cookie-сессия): auto-approve при отправке — правка сразу в живой гайд; баннер набора — модалка («Баннер» в хедере)
-- На главной у суперadmin: счётчик pending-заявок на карточках классов и огонёк по периметру (как у inline-черновиков)
-- На странице класса: бейджи «на модерации», inline-черновики у секций, счётчики заявок/ОС в хедере
+- Баннер набора `/admin/banner` — текст, иконка, ссылки, вкл/выкл
+- Пользователи `/admin/users` (только суперадмин) — создать админа, сменить пароль, отключить/удалить
+- На главной у админов: счётчик pending-заявок на карточках классов и огонёк по периметру (как у inline-черновиков)
+- На странице класса: бейджи «на модерации», inline-черновики у секций, счётчики заявок в хедере
 - Автоснятие «залипших» видео без превью (>48ч) — approved-заявка с автором `cron`
 - Отклонять заявки с копипастом чужих гайдов целиком
 
 ### PWA / оболочка / перф
 
 - Установка как приложение (`@vite-pwa/nuxt`); баннер при новой версии SW
-- Offline-чтение уже посещённых `/`, `/class/:slug`, `/admin/proposals`, `/admin/feedback` (HTML/API — NetworkFirst; иконки `/classes`/`/codex`/превью YT — CacheFirst)
+- Offline-чтение уже посещённых `/`, `/class/:slug`, `/admin/*` (HTML/API — NetworkFirst; иконки `/classes`/`/codex`/превью YT — CacheFirst)
 - На главной офлайн видны только классы с закэшированным гайдом; «Предложить» и «Обратная связь» скрыты; тост при смене сети
 - Админ-кэш заявок/ОС сбрасывается при logout и истечении cookie `bdo_admin`
 - Один CSS-бандл (stylesheet); gzip HTML/JSON в Nitro (`NITRO_COMPRESS=0`, если уже жмёт nginx)
@@ -89,8 +92,8 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Три сервиса: `web` (сайт + API), `migrate` (Drizzle + seed), `db` (Postgres)
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
 - Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
-- Same-origin / cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
-- CSRF: same-origin на `POST /api/proposals` и `POST /api/feedback` (гости и админ)
+- Same-origin / JWT cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
+- CSRF: same-origin на login/logout и `POST /api/proposals` / `POST /api/feedback`
 - CSP без CDN для JS/CSS и иконок каталога (см. `AGENTS.md`)
 - `.npmrc`: `min-release-age=7` + `engine-strict` — не ставить пакеты моложе 7 дней; Node должен совпадать с `engines` (npm ≥ 11.10)
 - `web`: `no-new-privileges` + `cap_drop: ALL`
@@ -134,7 +137,7 @@ docker compose up -d --build
 На VPS ~4 CPU / 6G (idle уже ~1 ядро + ~4G) билд Nuxt иначе упирается в потолок. Дефолт: `BUILD_CPU_COUNT=1`, heap `768` МБ; runtime `web`: `WEB_CPUS=1` / `WEB_MEM_LIMIT=512m` (см. `.env.example`).
 
 
-Env только в корне: `.env` / `.env.example` (Compose сам подхватывает `.env`). Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля). В production для SEO ещё `NUXT_PUBLIC_SITE_URL` (напр. `https://example.com`).
+Env только в корне: `.env` / `.env.example` (Compose сам подхватывает `.env`). Нужны `DATABASE_URL` (роль `bdokeep_app`), `BDOKEEP_APP_PASSWORD` (≠ `POSTGRES_PASSWORD`), `ADMIN_PASSWORD` и `ADMIN_SESSION_SECRET` (≥32 символа, ≠ пароля). Bootstrap-логин суперадмина всегда `admin`. В production для SEO ещё `NUXT_PUBLIC_SITE_URL` (напр. `https://example.com`).
 
 SQL к БД: `docker compose exec db psql -h 127.0.0.1 -U postgres -d bdokeep` (порты на хосте не нужны).
 

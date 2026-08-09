@@ -15,12 +15,16 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody<{ password?: string }>(event)
+  const body = await readBody<{ username?: string; password?: string }>(event)
+  const username = String(body?.username || '')
   const password = String(body?.password || '')
-  if (!password || !verifyAdminPassword(password)) {
+
+  const user = await authenticateAdmin(username, password)
+  if (!user) {
     await new Promise((r) => setTimeout(r, FAIL_DELAY_MS))
-    throw createError({ statusCode: 401, statusMessage: 'Неверный пароль' })
+    throw createError({ statusCode: 401, statusMessage: 'Неверный логин или пароль' })
   }
-  setAdminSession(event)
-  return { ok: true }
+
+  await setAdminSession(event, user)
+  return { ok: true, username: user.username, role: user.role }
 })

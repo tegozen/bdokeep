@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  requireAdmin(event)
+  await requireAdmin(event)
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
 
   const sql = useDb()

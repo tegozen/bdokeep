@@ -16,14 +16,15 @@ export default defineEventHandler(async (event) => {
   assertSameOrigin(event)
 
   const body = (await readBody(event)) as Body
-  const asSuperadmin = isAdminSession(event)
+  const session = await getAdminSession(event)
+  const asStaff = Boolean(session)
 
   if (body.website) {
     return { ok: true }
   }
 
   const ip = clientIp(event)
-  if (!asSuperadmin) {
+  if (!asStaff) {
     const limit = checkRateLimit(`proposal:${ip}`)
     if (!limit.allowed) {
       const wait = formatRetryAfterRu(limit.retryAfterMs)
@@ -73,12 +74,12 @@ export default defineEventHandler(async (event) => {
   if (body.author_label != null && String(body.author_label).trim()) {
     authorLabel = String(body.author_label).trim().slice(0, MAX_AUTHOR_LEN)
   }
-  if (!asSuperadmin) {
+  if (!asStaff) {
     if (!authorLabel) {
       throw createError({ statusCode: 400, statusMessage: 'Укажите игровой ник' })
     }
   } else if (!authorLabel) {
-    authorLabel = 'superadmin'
+    authorLabel = session!.username
   }
 
   const inserted = await withDbError(async () => {
@@ -97,7 +98,7 @@ export default defineEventHandler(async (event) => {
     return rows[0]!
   })
 
-  if (asSuperadmin) {
+  if (asStaff) {
     await applyPendingOrReject(
       {
         id: String(inserted.id),
@@ -108,7 +109,7 @@ export default defineEventHandler(async (event) => {
         status: String(inserted.status),
         author_label: inserted.author_label == null ? null : String(inserted.author_label),
       },
-      { reviewNote: 'auto-approved (superadmin)' },
+      { reviewNote: `auto-approved (${session!.username})` },
     )
     return { ok: true, id: inserted.id, autoApproved: true }
   }

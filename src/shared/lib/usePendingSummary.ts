@@ -2,7 +2,7 @@ import { fetchPendingSummary, type PendingSummary } from '@/features/superadmin-
 import { useSuperadmin } from './useSuperadmin'
 
 export function usePendingSummary() {
-  const { isSuperadmin } = useSuperadmin()
+  const { isStaff } = useSuperadmin()
   const summary = useState<PendingSummary>('pendingSummary', () => ({
     total: 0,
     byClass: {},
@@ -10,7 +10,7 @@ export function usePendingSummary() {
   const loading = useState('pendingSummaryLoading', () => false)
 
   async function refresh() {
-    if (!isSuperadmin.value) {
+    if (!isStaff.value) {
       summary.value = { total: 0, byClass: {} }
       return
     }

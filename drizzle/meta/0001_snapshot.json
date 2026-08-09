@@ -1,0 +1,2805 @@
+{
+  "id": "f0a721cb-be18-4b3b-98e9-580f6ce23f25",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.class_guides": {
+      "name": "class_guides",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "class_id": {
+          "name": "class_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "section_updates": {
+          "name": "section_updates",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "combo_awakening": {
+          "name": "combo_awakening",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "combo_succession": {
+          "name": "combo_succession",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "summary_pvp_awakening": {
+          "name": "summary_pvp_awakening",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "summary_pvp_succession": {
+          "name": "summary_pvp_succession",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "summary_pve_awakening": {
+          "name": "summary_pve_awakening",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "summary_pve_succession": {
+          "name": "summary_pve_succession",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "class_guides_class_id_fkey": {
+          "name": "class_guides_class_id_fkey",
+          "tableFrom": "class_guides",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "class_guides_class_id_key": {
+          "name": "class_guides_class_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "class_id"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guides of published classes": {
+          "name": "Public read guides of published classes",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.class_videos": {
+      "name": "class_videos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "class_id": {
+          "name": "class_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "youtube_url": {
+          "name": "youtube_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "mode": {
+          "name": "mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'awakening'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ready'"
+        },
+        "status_since": {
+          "name": "status_since",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "class_videos_class_idx": {
+          "name": "class_videos_class_idx",
+          "columns": [
+            {
+              "expression": "class_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "class_videos_processing_idx": {
+          "name": "class_videos_processing_idx",
+          "columns": [
+            {
+              "expression": "status_since",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "timestamptz_ops"
+            }
+          ],
+          "isUnique": false,
+          "where": "(status = 'processing'::text)",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "class_videos_class_id_fkey": {
+          "name": "class_videos_class_id_fkey",
+          "tableFrom": "class_videos",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read videos of published classes": {
+          "name": "Public read videos of published classes",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "class_videos_mode_check": {
+          "name": "class_videos_mode_check",
+          "value": "mode = ANY (ARRAY['awakening'::text, 'succession'::text])"
+        },
+        "class_videos_status_check": {
+          "name": "class_videos_status_check",
+          "value": "status = ANY (ARRAY['ready'::text, 'processing'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.classes": {
+      "name": "classes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_ru": {
+          "name": "name_ru",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_url": {
+          "name": "icon_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "portrait_url": {
+          "name": "portrait_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "awakening_name": {
+          "name": "awakening_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "succession_name": {
+          "name": "succession_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "published": {
+          "name": "published",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "tier_pvp_awakening": {
+          "name": "tier_pvp_awakening",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tier_pvp_succession": {
+          "name": "tier_pvp_succession",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tier_pve_awakening": {
+          "name": "tier_pve_awakening",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tier_pve_succession": {
+          "name": "tier_pve_succession",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "classes_published_sort_idx": {
+          "name": "classes_published_sort_idx",
+          "columns": [
+            {
+              "expression": "published",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "classes_slug_key": {
+          "name": "classes_slug_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read published classes": {
+          "name": "Public read published classes",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "classes_tier_pvp_awakening_check": {
+          "name": "classes_tier_pvp_awakening_check",
+          "value": "(tier_pvp_awakening IS NULL) OR ((tier_pvp_awakening >= 1) AND (tier_pvp_awakening <= 5))"
+        },
+        "classes_tier_pvp_succession_check": {
+          "name": "classes_tier_pvp_succession_check",
+          "value": "(tier_pvp_succession IS NULL) OR ((tier_pvp_succession >= 1) AND (tier_pvp_succession <= 5))"
+        },
+        "classes_tier_pve_awakening_check": {
+          "name": "classes_tier_pve_awakening_check",
+          "value": "(tier_pve_awakening IS NULL) OR ((tier_pve_awakening >= 1) AND (tier_pve_awakening <= 5))"
+        },
+        "classes_tier_pve_succession_check": {
+          "name": "classes_tier_pve_succession_check",
+          "value": "(tier_pve_succession IS NULL) OR ((tier_pve_succession >= 1) AND (tier_pve_succession <= 5))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.buffs": {
+      "name": "buffs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "codex_id": {
+          "name": "codex_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_ru": {
+          "name": "name_ru",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_url": {
+          "name": "icon_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw": {
+          "name": "raw",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "buffs_codex_id_key": {
+          "name": "buffs_codex_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codex_id"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read buffs": {
+          "name": "Public read buffs",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.items": {
+      "name": "items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "codex_id": {
+          "name": "codex_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_ru": {
+          "name": "name_ru",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_url": {
+          "name": "icon_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "item_type": {
+          "name": "item_type",
+          "type": "item_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'other'"
+        },
+        "raw": {
+          "name": "raw",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "items_type_idx": {
+          "name": "items_type_idx",
+          "columns": [
+            {
+              "expression": "item_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "enum_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "items_codex_id_key": {
+          "name": "items_codex_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codex_id"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read items": {
+          "name": "Public read items",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.lightstone_sets": {
+      "name": "lightstone_sets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name_ru": {
+          "name": "name_ru",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_en": {
+          "name": "name_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bonuses": {
+          "name": "bonuses",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "normal_codex_ids": {
+          "name": "normal_codex_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "enhanced_codex_ids": {
+          "name": "enhanced_codex_ids",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "lightstone_sets_category_check": {
+          "name": "lightstone_sets_category_check",
+          "value": "category = ANY (ARRAY['combat'::text, 'lifeskill'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.skill_addon_effects": {
+      "name": "skill_addon_effects",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name_ru": {
+          "name": "name_ru",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effect_group": {
+          "name": "effect_group",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tier_labels": {
+          "name": "tier_labels",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "skill_addon_effects_sort_idx": {
+          "name": "skill_addon_effects_sort_idx",
+          "columns": [
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "name_ru",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "skill_addon_effects_key_key": {
+          "name": "skill_addon_effects_key_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "key"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read skill_addon_effects": {
+          "name": "Public read skill_addon_effects",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.skills": {
+      "name": "skills",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "codex_id": {
+          "name": "codex_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name_ru": {
+          "name": "name_ru",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_url": {
+          "name": "icon_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "class_slug": {
+          "name": "class_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skill_type": {
+          "name": "skill_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level_req": {
+          "name": "level_req",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw": {
+          "name": "raw",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "supports_addon": {
+          "name": "supports_addon",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "addon_tier": {
+          "name": "addon_tier",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 2
+        },
+        "addon_effect_keys": {
+          "name": "addon_effect_keys",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"\"}'"
+        }
+      },
+      "indexes": {
+        "skills_class_slug_idx": {
+          "name": "skills_class_slug_idx",
+          "columns": [
+            {
+              "expression": "class_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "skills_codex_id_key": {
+          "name": "skills_codex_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codex_id"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read skills": {
+          "name": "Public read skills",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "skills_addon_tier_check": {
+          "name": "skills_addon_tier_check",
+          "value": "addon_tier = ANY (ARRAY[1, 2, 3])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_buffs": {
+      "name": "guide_buffs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "buff_id": {
+          "name": "buff_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slot": {
+          "name": "slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "group_name": {
+          "name": "group_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "preset": {
+          "name": "preset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'t1'"
+        }
+      },
+      "indexes": {
+        "guide_buffs_guide_idx": {
+          "name": "guide_buffs_guide_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_buffs_guide_preset_idx": {
+          "name": "guide_buffs_guide_preset_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "preset",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_buffs_guide_id_fkey": {
+          "name": "guide_buffs_guide_id_fkey",
+          "tableFrom": "guide_buffs",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guide_buffs_buff_id_fkey": {
+          "name": "guide_buffs_buff_id_fkey",
+          "tableFrom": "guide_buffs",
+          "tableTo": "buffs",
+          "columnsFrom": [
+            "buff_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_buffs": {
+          "name": "Public read guide_buffs",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "guide_buffs_preset_check": {
+          "name": "guide_buffs_preset_check",
+          "value": "preset = ANY (ARRAY['t1'::text, 't2'::text, 'besp'::text, 'sub'::text, 'pve'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_crystals": {
+      "name": "guide_crystals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slot": {
+          "name": "slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "preset": {
+          "name": "preset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'t1'"
+        }
+      },
+      "indexes": {
+        "guide_crystals_guide_idx": {
+          "name": "guide_crystals_guide_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_crystals_guide_preset_idx": {
+          "name": "guide_crystals_guide_preset_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "preset",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_crystals_guide_id_fkey": {
+          "name": "guide_crystals_guide_id_fkey",
+          "tableFrom": "guide_crystals",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guide_crystals_item_id_fkey": {
+          "name": "guide_crystals_item_id_fkey",
+          "tableFrom": "guide_crystals",
+          "tableTo": "items",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_crystals": {
+          "name": "Public read guide_crystals",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "guide_crystals_preset_check": {
+          "name": "guide_crystals_preset_check",
+          "value": "preset = ANY (ARRAY['t1'::text, 't2'::text, 'besp'::text, 'sub'::text, 'pve'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_essence": {
+      "name": "guide_essence",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slot": {
+          "name": "slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "preset": {
+          "name": "preset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'t1'"
+        }
+      },
+      "indexes": {
+        "guide_essence_guide_idx": {
+          "name": "guide_essence_guide_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_essence_guide_preset_idx": {
+          "name": "guide_essence_guide_preset_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            },
+            {
+              "expression": "preset",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_essence_guide_id_fkey": {
+          "name": "guide_essence_guide_id_fkey",
+          "tableFrom": "guide_essence",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guide_essence_item_id_fkey": {
+          "name": "guide_essence_item_id_fkey",
+          "tableFrom": "guide_essence",
+          "tableTo": "items",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "guide_essence_guide_preset_slot_key": {
+          "name": "guide_essence_guide_preset_slot_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "guide_id",
+            "slot",
+            "preset"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_essence": {
+          "name": "Public read guide_essence",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "guide_essence_preset_check": {
+          "name": "guide_essence_preset_check",
+          "value": "preset = ANY (ARRAY['t1'::text, 't2'::text, 'besp'::text, 'sub'::text, 'pve'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_lightstones": {
+      "name": "guide_lightstones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slot": {
+          "name": "slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "preset": {
+          "name": "preset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'t1'"
+        }
+      },
+      "indexes": {
+        "guide_lightstones_guide_idx": {
+          "name": "guide_lightstones_guide_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_lightstones_guide_preset_idx": {
+          "name": "guide_lightstones_guide_preset_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "preset",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_lightstones_guide_id_fkey": {
+          "name": "guide_lightstones_guide_id_fkey",
+          "tableFrom": "guide_lightstones",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guide_lightstones_item_id_fkey": {
+          "name": "guide_lightstones_item_id_fkey",
+          "tableFrom": "guide_lightstones",
+          "tableTo": "items",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_lightstones": {
+          "name": "Public read guide_lightstones",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "guide_lightstones_preset_check": {
+          "name": "guide_lightstones_preset_check",
+          "value": "preset = ANY (ARRAY['t1'::text, 't2'::text, 'besp'::text, 'sub'::text, 'pve'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_morphs": {
+      "name": "guide_morphs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preset": {
+          "name": "preset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slot_level": {
+          "name": "slot_level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effect_id_1": {
+          "name": "effect_id_1",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effect_id_2": {
+          "name": "effect_id_2",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "guide_morphs_guide_preset_idx": {
+          "name": "guide_morphs_guide_preset_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            },
+            {
+              "expression": "preset",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "slot_level",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_morphs_guide_id_fkey": {
+          "name": "guide_morphs_guide_id_fkey",
+          "tableFrom": "guide_morphs",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guide_morphs_skill_id_fkey": {
+          "name": "guide_morphs_skill_id_fkey",
+          "tableFrom": "guide_morphs",
+          "tableTo": "skills",
+          "columnsFrom": [
+            "skill_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guide_morphs_effect_id_1_fkey": {
+          "name": "guide_morphs_effect_id_1_fkey",
+          "tableFrom": "guide_morphs",
+          "tableTo": "skill_addon_effects",
+          "columnsFrom": [
+            "effect_id_1"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "guide_morphs_effect_id_2_fkey": {
+          "name": "guide_morphs_effect_id_2_fkey",
+          "tableFrom": "guide_morphs",
+          "tableTo": "skill_addon_effects",
+          "columnsFrom": [
+            "effect_id_2"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "guide_morphs_guide_id_preset_slot_level_key": {
+          "name": "guide_morphs_guide_id_preset_slot_level_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "guide_id",
+            "preset",
+            "slot_level"
+          ]
+        }
+      },
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_morphs": {
+          "name": "Public read guide_morphs",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "guide_morphs_slot_level_check": {
+          "name": "guide_morphs_slot_level_check",
+          "value": "slot_level = ANY (ARRAY[50, 52, 54, 56, 58, 60])"
+        },
+        "guide_morphs_preset_check": {
+          "name": "guide_morphs_preset_check",
+          "value": "preset = ANY (ARRAY['aw_t1'::text, 'aw_t2'::text, 'aw_besp'::text, 'aw_sub'::text, 'aw_pve'::text, 'succ_t1'::text, 'succ_t2'::text, 'succ_besp'::text, 'succ_sub'::text, 'succ_pve'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_relics": {
+      "name": "guide_relics",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slot": {
+          "name": "slot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "preset": {
+          "name": "preset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'t1'"
+        }
+      },
+      "indexes": {
+        "guide_relics_guide_idx": {
+          "name": "guide_relics_guide_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_relics_guide_preset_idx": {
+          "name": "guide_relics_guide_preset_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "preset",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_relics_guide_id_fkey": {
+          "name": "guide_relics_guide_id_fkey",
+          "tableFrom": "guide_relics",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guide_relics_item_id_fkey": {
+          "name": "guide_relics_item_id_fkey",
+          "tableFrom": "guide_relics",
+          "tableTo": "items",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_relics": {
+          "name": "Public read guide_relics",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "guide_relics_preset_check": {
+          "name": "guide_relics_preset_check",
+          "value": "preset = ANY (ARRAY['t1'::text, 't2'::text, 'besp'::text, 'sub'::text, 'pve'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_combo_steps": {
+      "name": "guide_combo_steps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "combo_id": {
+          "name": "combo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "guide_combo_steps_combo_idx": {
+          "name": "guide_combo_steps_combo_idx",
+          "columns": [
+            {
+              "expression": "combo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_combo_steps_guide_idx": {
+          "name": "guide_combo_steps_guide_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_combo_steps_guide_id_fkey": {
+          "name": "guide_combo_steps_guide_id_fkey",
+          "tableFrom": "guide_combo_steps",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guide_combo_steps_skill_id_fkey": {
+          "name": "guide_combo_steps_skill_id_fkey",
+          "tableFrom": "guide_combo_steps",
+          "tableTo": "skills",
+          "columnsFrom": [
+            "skill_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guide_combo_steps_combo_id_fkey": {
+          "name": "guide_combo_steps_combo_id_fkey",
+          "tableFrom": "guide_combo_steps",
+          "tableTo": "guide_combos",
+          "columnsFrom": [
+            "combo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_combo_steps": {
+          "name": "Public read guide_combo_steps",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.guide_combos": {
+      "name": "guide_combos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "guide_id": {
+          "name": "guide_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mode": {
+          "name": "mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pvp'"
+        }
+      },
+      "indexes": {
+        "guide_combos_guide_mode_kind_idx": {
+          "name": "guide_combos_guide_mode_kind_idx",
+          "columns": [
+            {
+              "expression": "guide_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            },
+            {
+              "expression": "mode",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "kind",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_combos_guide_id_fkey": {
+          "name": "guide_combos_guide_id_fkey",
+          "tableFrom": "guide_combos",
+          "tableTo": "class_guides",
+          "columnsFrom": [
+            "guide_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        },
+        "Public read guide_combos": {
+          "name": "Public read guide_combos",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ]
+        }
+      },
+      "checkConstraints": {
+        "guide_combos_mode_check": {
+          "name": "guide_combos_mode_check",
+          "value": "mode = ANY (ARRAY['awakening'::text, 'succession'::text])"
+        },
+        "guide_combos_title_len": {
+          "name": "guide_combos_title_len",
+          "value": "(title IS NULL) OR (char_length(title) <= 60)"
+        },
+        "guide_combos_notes_len": {
+          "name": "guide_combos_notes_len",
+          "value": "(notes IS NULL) OR (char_length(notes) <= 500)"
+        },
+        "guide_combos_kind_check": {
+          "name": "guide_combos_kind_check",
+          "value": "kind = ANY (ARRAY['pvp'::text, 'pve'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_feedback": {
+      "name": "guide_feedback",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "class_id": {
+          "name": "class_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "class_slug": {
+          "name": "class_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guide_feedback_class_idx": {
+          "name": "guide_feedback_class_idx",
+          "columns": [
+            {
+              "expression": "class_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first",
+              "opclass": "text_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_feedback_created_idx": {
+          "name": "guide_feedback_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first",
+              "opclass": "timestamptz_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_feedback_class_id_fkey": {
+          "name": "guide_feedback_class_id_fkey",
+          "tableFrom": "guide_feedback",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        }
+      },
+      "checkConstraints": {
+        "guide_feedback_body_len": {
+          "name": "guide_feedback_body_len",
+          "value": "(char_length(body) >= 1) AND (char_length(body) <= 2000)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guide_proposals": {
+      "name": "guide_proposals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "class_id": {
+          "name": "class_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "class_slug": {
+          "name": "class_slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "author_label": {
+          "name": "author_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_note": {
+          "name": "review_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "guide_proposals_class_idx": {
+          "name": "guide_proposals_class_idx",
+          "columns": [
+            {
+              "expression": "class_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "timestamptz_ops"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first",
+              "opclass": "uuid_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guide_proposals_status_idx": {
+          "name": "guide_proposals_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "timestamptz_ops"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first",
+              "opclass": "timestamptz_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guide_proposals_class_id_fkey": {
+          "name": "guide_proposals_class_id_fkey",
+          "tableFrom": "guide_proposals",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        }
+      },
+      "checkConstraints": {
+        "guide_proposals_status_check": {
+          "name": "guide_proposals_status_check",
+          "value": "status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])"
+        },
+        "guide_proposals_section_check": {
+          "name": "guide_proposals_section_check",
+          "value": "section = ANY (ARRAY['summary_awakening'::text, 'summary_succession'::text, 'buffs'::text, 'combo_awakening'::text, 'combo_succession'::text, 'crystals'::text, 'relics'::text, 'hardening'::text, 'videos_awakening'::text, 'videos_succession'::text, 'morphs'::text])"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guild_recruit_banner": {
+      "name": "guild_recruit_banner",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "boolean",
+          "primaryKey": true,
+          "notNull": true,
+          "default": true
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "icon_mime": {
+          "name": "icon_mime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_bytes": {
+          "name": "icon_bytes",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "links": {
+          "name": "links",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        }
+      },
+      "checkConstraints": {
+        "guild_recruit_banner_id_check": {
+          "name": "guild_recruit_banner_id_check",
+          "value": "id"
+        },
+        "guild_recruit_banner_body_len": {
+          "name": "guild_recruit_banner_body_len",
+          "value": "(char_length(body) >= 0) AND (char_length(body) <= 280)"
+        },
+        "guild_recruit_banner_links_array": {
+          "name": "guild_recruit_banner_links_array",
+          "value": "jsonb_typeof(links) = 'array'::text"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.admin_users": {
+      "name": "admin_users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "disabled_at": {
+          "name": "disabled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "admin_users_username_lower_uidx": {
+          "name": "admin_users_username_lower_uidx",
+          "columns": [
+            {
+              "expression": "lower(\"username\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "admin_users_role_idx": {
+          "name": "admin_users_role_idx",
+          "columns": [
+            {
+              "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "bdokeep_app_all": {
+          "name": "bdokeep_app_all",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "bdokeep_app"
+          ],
+          "using": "true",
+          "withCheck": "true"
+        }
+      },
+      "checkConstraints": {
+        "admin_users_role_check": {
+          "name": "admin_users_role_check",
+          "value": "role = ANY (ARRAY['superadmin'::text, 'admin'::text])"
+        },
+        "admin_users_username_len": {
+          "name": "admin_users_username_len",
+          "value": "(char_length(username) >= 2) AND (char_length(username) <= 64)"
+        },
+        "admin_users_password_hash_len": {
+          "name": "admin_users_password_hash_len",
+          "value": "char_length(password_hash) >= 20"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.schema_migrations": {
+      "name": "schema_migrations",
+      "schema": "",
+      "columns": {
+        "filename": {
+          "name": "filename",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "applied_at": {
+          "name": "applied_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.item_type": {
+      "name": "item_type",
+      "schema": "public",
+      "values": [
+        "relic",
+        "lightstone",
+        "crystal",
+        "essence",
+        "other"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

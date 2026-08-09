@@ -23,7 +23,7 @@ export function useProposeModal(opts: {
   const formError = ref('')
   const baseline = ref('')
 
-  const { isSuperadmin, refresh: refreshAdmin } = useSuperadmin()
+  const { isStaff, refresh: refreshAdmin } = useSuperadmin()
   const { online } = useOnlineStatus()
 
   function fullSerialize() {
@@ -82,7 +82,7 @@ export function useProposeModal(opts: {
       formError.value = 'Нет сети — отправка недоступна'
       return
     }
-    if (!isSuperadmin.value && !author.value.trim()) {
+    if (!isStaff.value && !author.value.trim()) {
       formError.value = 'Укажите игровой ник'
       return
     }
@@ -112,7 +112,7 @@ export function useProposeModal(opts: {
     submitting,
     formError,
     requestClose,
-    isSuperadmin,
+    isSuperadmin: isStaff,
     close,
     openModal,
     runSubmit,

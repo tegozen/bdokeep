@@ -2,89 +2,60 @@
   <div :class="$style.page">
     <header :class="$style.header">
       <h1 :class="$style.h1">Обратная связь</h1>
-      <NuxtLink v-if="authed" to="/admin/proposals?status=pending" :class="$style.link">
-        К заявкам
-      </NuxtLink>
     </header>
 
-    <form v-if="!authed" :class="$style.login" @submit.prevent="login">
-      <!-- Username field for password-manager / a11y heuristics (password-only admin auth). -->
-      <input
-        type="text"
-        name="username"
-        autocomplete="username"
-        value="admin"
-        tabindex="-1"
-        aria-hidden="true"
-        :class="$style.username"
+    <div :class="$style.filters">
+      <button
+        v-if="classFilter"
+        type="button"
+        :class="[$style.chip, $style.chipOn]"
+        @click="clearClassFilter"
       >
-      <label :class="$style.label">
-        Пароль админа
-        <input
-          v-model="password"
-          type="password"
-          :class="$style.input"
-          required
-          autocomplete="current-password"
-        >
-      </label>
-      <p v-if="loginError" :class="$style.error">{{ loginError }}</p>
-      <UiButton type="submit" :disabled="busy">Войти</UiButton>
-    </form>
+        Класс: {{ classFilter }} ×
+      </button>
+      <UiButton variant="ghost" type="button" :disabled="loading" @click="load">
+        Обновить
+      </UiButton>
+    </div>
 
-    <template v-else>
-      <div :class="$style.filters">
-        <button
-          v-if="classFilter"
-          type="button"
-          :class="[$style.chip, $style.chipOn]"
-          @click="clearClassFilter"
-        >
-          Класс: {{ classFilter }} ×
-        </button>
-        <UiButton variant="ghost" type="button" :disabled="loading" @click="load">
-          Обновить
-        </UiButton>
-      </div>
+    <p v-if="loading" :class="$style.muted">Загрузка…</p>
+    <p v-else-if="!items.length" :class="$style.muted">Нет сообщений.</p>
 
-      <p v-if="loading" :class="$style.muted">Загрузка…</p>
-      <p v-else-if="!items.length" :class="$style.muted">Нет сообщений.</p>
-
-      <ul v-else :class="$style.list">
-        <li v-for="item in items" :key="item.id" :class="$style.card">
-          <div :class="$style.cardHead">
-            <NuxtLink
-              v-if="item.class_slug"
-              :to="`/class/${item.class_slug}`"
-              :class="$style.classLink"
-            >
-              {{ item.class_slug }}
-            </NuxtLink>
-            <span v-else :class="$style.siteTag">Сайт</span>
-            <span :class="$style.meta">{{ formatDate(item.created_at) }}</span>
-          </div>
-          <p :class="$style.text">{{ item.body }}</p>
-          <div :class="$style.actions">
-            <UiButton
-              variant="danger"
-              type="button"
-              :disabled="acting === item.id"
-              @click="remove(item)"
-            >
-              Удалить
-            </UiButton>
-          </div>
-        </li>
-      </ul>
-    </template>
+    <ul v-else :class="$style.list">
+      <li v-for="item in items" :key="item.id" :class="$style.card">
+        <div :class="$style.cardHead">
+          <NuxtLink
+            v-if="item.class_slug"
+            :to="`/class/${item.class_slug}`"
+            :class="$style.classLink"
+          >
+            {{ item.class_slug }}
+          </NuxtLink>
+          <span v-else :class="$style.siteTag">Сайт</span>
+          <span :class="$style.meta">{{ formatDate(item.created_at) }}</span>
+        </div>
+        <p :class="$style.text">{{ item.body }}</p>
+        <div :class="$style.actions">
+          <UiButton
+            variant="danger"
+            type="button"
+            :disabled="acting === item.id"
+            @click="remove(item)"
+          >
+            Удалить
+          </UiButton>
+        </div>
+      </li>
+    </ul>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useConfirm, useSuperadmin } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
+definePageMeta({ layout: 'admin' })
 useHead({ title: 'Админ — обратная связь | BDO Keep' })
 
 type FeedbackItem = {
@@ -97,13 +68,9 @@ type FeedbackItem = {
 
 const route = useRoute()
 const router = useRouter()
-const { isSuperadmin, refresh, loseSession } = useSuperadmin()
+const { isStaff, refresh, loseSession } = useSuperadmin()
 const { alert, confirm } = useConfirm()
 
-const authed = ref(false)
-const password = ref('')
-const loginError = ref('')
-const busy = ref(false)
 const loading = ref(false)
 const items = ref<FeedbackItem[]>([])
 const acting = ref<string | null>(null)
@@ -136,31 +103,11 @@ function syncQuery() {
 function clearClassFilter() {
   classFilter.value = ''
   syncQuery()
-  if (authed.value) void load()
-}
-
-async function checkMe() {
-  await refresh()
-  authed.value = isSuperadmin.value
-}
-
-async function login() {
-  loginError.value = ''
-  busy.value = true
-  try {
-    await $fetch('/api/admin/login', { method: 'POST', body: { password: password.value } })
-    password.value = ''
-    await refresh()
-    authed.value = isSuperadmin.value
-    await load()
-  } catch {
-    loginError.value = 'Неверный пароль'
-  } finally {
-    busy.value = false
-  }
+  if (isStaff.value) void load()
 }
 
 async function load() {
+  if (!isStaff.value) return
   loading.value = true
   try {
     const query: Record<string, string> = {}
@@ -175,7 +122,6 @@ async function load() {
         ? Number((e as { statusCode?: number }).statusCode)
         : 0
     if (code === 401) {
-      authed.value = false
       await loseSession()
     }
     items.value = []
@@ -211,17 +157,21 @@ async function remove(item: FeedbackItem) {
   }
 }
 
+watch(isStaff, (ok) => {
+  if (ok) void load()
+  else items.value = []
+})
+
 onMounted(async () => {
-  await checkMe()
-  if (authed.value) await load()
+  await refresh()
+  if (isStaff.value) await load()
 })
 </script>
 
 <style module>
 .page {
-  width: min(calc(100% - 2rem), 960px);
-  margin-inline: auto;
-  padding: 2rem 0 4rem;
+  display: grid;
+  gap: 1rem;
 }
 
 .header {
@@ -229,68 +179,17 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 .h1 {
   margin: 0;
-  font-size: 1.6rem;
-}
-
-.link {
-  color: var(--color-gold);
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-.login {
-  display: grid;
-  gap: 0.85rem;
-  max-width: 22rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-panel);
-  padding: 1.25rem;
-}
-
-.username {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.label {
-  display: grid;
-  gap: 0.35rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.input {
-  box-sizing: border-box;
-  min-height: 2rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font: inherit;
-  line-height: 1;
-  padding: 0 0.65rem;
+  font-size: 1.35rem;
 }
 
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1.25rem;
 }
 
 .chip {
@@ -371,12 +270,6 @@ onMounted(async () => {
 .muted {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.9rem;
-}
-
-.error {
-  margin: 0;
-  color: var(--color-danger);
   font-size: 0.9rem;
 }
 </style>
