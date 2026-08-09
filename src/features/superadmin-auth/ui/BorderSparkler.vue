@@ -1,170 +1,108 @@
 <template>
-  <canvas ref="canvasEl" :class="$style.canvas" aria-hidden="true" />
+  <div :class="$style.root" aria-hidden="true">
+    <div :class="$style.aura" />
+    <span v-for="n in 14" :key="n" :class="$style.spark" />
+  </div>
 </template>
 
-<script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
-
-/** Bleed outside the card so sparks aren't clipped. Page uses overflow-x: clip. */
-const PAD_X = 36
-const PAD_Y = 36
-
-const canvasEl = ref<HTMLCanvasElement | null>(null)
-
-type Spark = {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  life: number
-  maxLife: number
-  size: number
-}
-
-let raf = 0
-let resizeObs: ResizeObserver | null = null
-let reduced = false
-let boxW = 0
-let boxH = 0
-let canvasW = 0
-let canvasH = 0
-let dpr = 1
-let t0 = 0
-const sparks: Spark[] = []
-
-function perimeterPoint(progress: number, width: number, height: number) {
-  const perim = 2 * (width + height)
-  let d = (((progress % 1) + 1) % 1) * perim
-  if (d <= width) return { x: d, y: 0, tx: 1, ty: 0 }
-  d -= width
-  if (d <= height) return { x: width, y: d, tx: 0, ty: 1 }
-  d -= height
-  if (d <= width) return { x: width - d, y: height, tx: -1, ty: 0 }
-  d -= width
-  return { x: 0, y: height - d, tx: 0, ty: -1 }
-}
-
-function resize() {
-  const canvas = canvasEl.value
-  if (!canvas?.parentElement) return
-  const rect = canvas.parentElement.getBoundingClientRect()
-  boxW = Math.max(1, Math.round(rect.width))
-  boxH = Math.max(1, Math.round(rect.height))
-  canvasW = boxW + PAD_X * 2
-  canvasH = boxH + PAD_Y * 2
-  dpr = Math.min(window.devicePixelRatio || 1, 2)
-  canvas.width = Math.round(canvasW * dpr)
-  canvas.height = Math.round(canvasH * dpr)
-  canvas.style.width = `${canvasW}px`
-  canvas.style.height = `${canvasH}px`
-  const ctx = canvas.getContext('2d')
-  if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-}
-
-function spawn(x: number, y: number, tx: number, ty: number) {
-  const ax = -tx
-  const ay = -ty
-  const px = -ty
-  const py = tx
-  const count = 3 + Math.floor(Math.random() * 4)
-  for (let i = 0; i < count; i++) {
-    const along = 1.2 + Math.random() * 2.4
-    const side = (Math.random() - 0.5) * 2.8
-    sparks.push({
-      x,
-      y,
-      vx: ax * along + px * side,
-      vy: ay * along + py * side,
-      life: 1,
-      maxLife: 0.4 + Math.random() * 0.55,
-      size: 0.8 + Math.random() * 1.8,
-    })
-  }
-}
-
-function frame(now: number) {
-  const canvas = canvasEl.value
-  if (!canvas || reduced) return
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-
-  if (!t0) t0 = now
-  const progress = (((now - t0) / 1000) * 0.12) % 1
-  const ember = perimeterPoint(progress, boxW, boxH)
-  const ex = ember.x + PAD_X
-  const ey = ember.y + PAD_Y
-
-  ctx.clearRect(0, 0, canvasW, canvasH)
-
-  if (Math.random() < 0.85) spawn(ex, ey, ember.tx, ember.ty)
-
-  for (let i = sparks.length - 1; i >= 0; i--) {
-    const s = sparks[i]!
-    s.vy += 0.055
-    s.vx *= 0.988
-    s.vy *= 0.988
-    s.x += s.vx
-    s.y += s.vy
-    s.life -= 1 / 60 / s.maxLife
-    if (s.life <= 0) {
-      sparks.splice(i, 1)
-      continue
-    }
-    const a = Math.max(0, s.life)
-    ctx.beginPath()
-    ctx.fillStyle = `rgba(255, 220, 140, ${0.15 + a * 0.85})`
-    ctx.shadowColor = `rgba(212, 175, 98, ${0.35 + a * 0.55})`
-    ctx.shadowBlur = 6
-    ctx.arc(s.x, s.y, s.size * (0.5 + a * 0.7), 0, Math.PI * 2)
-    ctx.fill()
-  }
-
-  const g = ctx.createRadialGradient(ex, ey, 0, ex, ey, 10)
-  g.addColorStop(0, 'rgba(255, 244, 204, 0.95)')
-  g.addColorStop(0.35, 'rgba(212, 175, 98, 0.85)')
-  g.addColorStop(1, 'rgba(212, 175, 98, 0)')
-  ctx.shadowBlur = 0
-  ctx.fillStyle = g
-  ctx.beginPath()
-  ctx.arc(ex, ey, 10, 0, Math.PI * 2)
-  ctx.fill()
-
-  ctx.beginPath()
-  ctx.fillStyle = '#fff6d5'
-  ctx.shadowColor = 'rgba(212, 175, 98, 0.9)'
-  ctx.shadowBlur = 12
-  ctx.arc(ex, ey, 2.4, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.shadowBlur = 0
-
-  if (sparks.length > 180) sparks.splice(0, sparks.length - 180)
-
-  raf = requestAnimationFrame(frame)
-}
-
-onMounted(() => {
-  reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (reduced) return
-  resize()
-  resizeObs = new ResizeObserver(() => resize())
-  if (canvasEl.value?.parentElement) resizeObs.observe(canvasEl.value.parentElement)
-  raf = requestAnimationFrame(frame)
-})
-
-onBeforeUnmount(() => {
-  cancelAnimationFrame(raf)
-  resizeObs?.disconnect()
-  sparks.length = 0
-})
-</script>
-
 <style module>
-.canvas {
+.root {
   position: absolute;
-  /* Bleed outside the card — ancestors must not clip; page clips overflow-x */
-  inset: -36px;
+  /* Exact same box as the card/frame — glow bleeds via box-shadow */
+  inset: 0;
   z-index: 2;
   pointer-events: none;
-  display: block;
+  overflow: visible;
+}
+
+.aura {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  box-shadow:
+    0 0 0 1px rgba(255, 220, 140, 0.35),
+    0 0 14px 2px rgba(212, 175, 98, 0.35),
+    0 0 28px 6px rgba(212, 175, 98, 0.18);
+  animation: aura-pulse 1.8s ease-in-out infinite;
+}
+
+.spark {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 236, 180, 0.95);
+  box-shadow:
+    0 0 4px 1px rgba(212, 175, 98, 0.85),
+    0 0 8px 2px rgba(212, 175, 98, 0.35);
+  opacity: 0;
+  animation: spark-fall 2.2s linear infinite;
+}
+
+/* aura is :nth-child(1); sparks follow */
+.spark:nth-child(2) { left: 6%; width: 2px; height: 2px; animation-duration: 2.1s; animation-delay: 0s; --drift: -4px; }
+.spark:nth-child(3) { left: 14%; width: 3px; height: 3px; animation-duration: 2.6s; animation-delay: 0.35s; --drift: 3px; }
+.spark:nth-child(4) { left: 22%; width: 2px; height: 2px; animation-duration: 1.9s; animation-delay: 0.8s; --drift: -2px; }
+.spark:nth-child(5) { left: 31%; width: 4px; height: 4px; animation-duration: 2.4s; animation-delay: 0.15s; --drift: 5px; }
+.spark:nth-child(6) { left: 40%; width: 2px; height: 2px; animation-duration: 2.8s; animation-delay: 1.1s; --drift: -3px; }
+.spark:nth-child(7) { left: 48%; width: 3px; height: 3px; animation-duration: 2.2s; animation-delay: 0.55s; --drift: 2px; }
+.spark:nth-child(8) { left: 56%; width: 2px; height: 2px; animation-duration: 2.5s; animation-delay: 1.4s; --drift: -5px; }
+.spark:nth-child(9) { left: 65%; width: 3px; height: 3px; animation-duration: 2s; animation-delay: 0.25s; --drift: 4px; }
+.spark:nth-child(10) { left: 73%; width: 2px; height: 2px; animation-duration: 2.7s; animation-delay: 0.9s; --drift: -2px; }
+.spark:nth-child(11) { left: 82%; width: 4px; height: 4px; animation-duration: 2.3s; animation-delay: 1.65s; --drift: 3px; }
+.spark:nth-child(12) { left: 90%; width: 2px; height: 2px; animation-duration: 2.1s; animation-delay: 0.45s; --drift: -4px; }
+.spark:nth-child(13) { left: 4%; width: 3px; height: 3px; animation-duration: 2.9s; animation-delay: 1.85s; --drift: 2px; }
+.spark:nth-child(14) { left: 50%; width: 2px; height: 2px; animation-duration: 1.85s; animation-delay: 2.05s; --drift: -1px; }
+.spark:nth-child(15) { left: 96%; width: 3px; height: 3px; animation-duration: 2.45s; animation-delay: 1.2s; --drift: -3px; }
+
+@keyframes aura-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 220, 140, 0.22),
+      0 0 10px 1px rgba(212, 175, 98, 0.22),
+      0 0 20px 4px rgba(212, 175, 98, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 236, 180, 0.55),
+      0 0 18px 4px rgba(212, 175, 98, 0.5),
+      0 0 36px 10px rgba(212, 175, 98, 0.28);
+  }
+}
+
+@keyframes spark-fall {
+  0% {
+    opacity: 0;
+    top: 0;
+    transform: translateX(0) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+    transform: translateX(calc(var(--drift, 0px) * 0.25)) scale(1);
+  }
+  70% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    top: 100%;
+    transform: translateX(var(--drift, 0px)) scale(0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura {
+    animation: none;
+    box-shadow:
+      0 0 0 1px rgba(255, 220, 140, 0.35),
+      0 0 14px 2px rgba(212, 175, 98, 0.3);
+  }
+
+  .spark {
+    animation: none;
+    display: none;
+  }
 }
 </style>

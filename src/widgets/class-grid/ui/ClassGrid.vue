@@ -34,6 +34,14 @@
         :class="$style.cardWrap"
       >
         <BorderSparkler v-if="pendingByClass[bdoClass.slug]" />
+        <!-- Outside .card overflow so it can hang off the top-right corner. -->
+        <span
+          v-if="pendingByClass[bdoClass.slug]"
+          :class="$style.pendingBadge"
+          :aria-label="`${pendingByClass[bdoClass.slug]} заявок`"
+        >
+          {{ pendingByClass[bdoClass.slug] }}
+        </span>
         <NuxtLink
           :to="`/class/${bdoClass.slug}`"
           :prefetch="false"
@@ -52,19 +60,9 @@
               :class="$style.img"
             >
             <div :class="$style.veil" />
-            <span
-              v-if="pendingByClass[bdoClass.slug]"
-              :class="$style.pendingBadge"
-              :aria-label="`${pendingByClass[bdoClass.slug]} заявок`"
-            >
-              {{ pendingByClass[bdoClass.slug] }}
-            </span>
             <div
               v-if="hasAnyTier(bdoClass)"
-              :class="[
-                $style.tiers,
-                pendingByClass[bdoClass.slug] && $style.tiersWithBadge,
-              ]"
+              :class="$style.tiers"
             >
               <div
                 v-for="row in tierRows(bdoClass)"
@@ -250,16 +248,16 @@ const lcpIndex = computed(() => {
 
 .pendingBadge {
   position: absolute;
-  top: 0.45rem;
-  right: 0.45rem;
-  z-index: 13;
+  top: -0.4rem;
+  right: -0.4rem;
+  z-index: 14;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 1.35rem;
   border: 1px solid color-mix(in srgb, var(--color-gold) 55%, transparent);
   border-radius: 999px;
-  background: rgba(10, 11, 16, 0.85);
+  background: rgba(10, 11, 16, 0.92);
   color: var(--color-gold);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
@@ -268,6 +266,7 @@ const lcpIndex = computed(() => {
   text-align: center;
   pointer-events: none;
   user-select: none;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
 }
 
 .tiers {
@@ -280,10 +279,6 @@ const lcpIndex = computed(() => {
   flex-direction: column;
   gap: 0.14rem;
   align-items: stretch;
-}
-
-.tiersWithBadge {
-  right: 2rem;
 }
 
 .tierRow {
