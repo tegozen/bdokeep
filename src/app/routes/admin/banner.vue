@@ -1,8 +1,5 @@
 <template>
   <div :class="$style.page">
-    <header :class="$style.header">
-      <h1 :class="$style.h1">Баннер набора</h1>
-    </header>
     <GuildRecruitBannerModal embedded />
   </div>
 </template>
@@ -18,16 +15,5 @@ useHead({ title: 'Админ — баннер | BDO Keep' })
 .page {
   display: grid;
   gap: 1rem;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.h1 {
-  margin: 0;
-  font-size: 1.35rem;
 }
 </style>

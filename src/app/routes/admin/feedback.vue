@@ -1,21 +1,13 @@
 <template>
   <div :class="$style.page">
-    <header :class="$style.header">
-      <h1 :class="$style.h1">Обратная связь</h1>
-    </header>
-
-    <div :class="$style.filters">
+    <div v-if="classFilter" :class="$style.filters">
       <button
-        v-if="classFilter"
         type="button"
         :class="[$style.chip, $style.chipOn]"
         @click="clearClassFilter"
       >
         Класс: {{ classFilter }} ×
       </button>
-      <UiButton variant="ghost" type="button" :disabled="loading" @click="load">
-        Обновить
-      </UiButton>
     </div>
 
     <p v-if="loading" :class="$style.muted">Загрузка…</p>
@@ -178,18 +170,6 @@ onMounted(async () => {
 .page {
   display: grid;
   gap: 1rem;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.h1 {
-  margin: 0;
-  font-size: 1.35rem;
 }
 
 .filters {

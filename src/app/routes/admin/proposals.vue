@@ -1,35 +1,5 @@
 <template>
   <div :class="$style.page">
-    <header :class="$style.header">
-      <h1 :class="$style.h1">Заявки</h1>
-    </header>
-
-    <p :class="$style.modNote">
-      Отклоняйте заявки с копипастом чужих гайдов целиком без разрешения автора.
-    </p>
-    <div :class="$style.filters">
-      <button
-        v-for="opt in statusOpts"
-        :key="opt.value"
-        type="button"
-        :class="[$style.chip, status === opt.value && $style.chipOn]"
-        @click="setStatus(opt.value)"
-      >
-        {{ opt.label }}
-      </button>
-      <button
-        v-if="classFilter"
-        type="button"
-        :class="[$style.chip, $style.chipOn]"
-        @click="clearClassFilter"
-      >
-        Класс: {{ classFilter }} ×
-      </button>
-      <UiButton variant="ghost" type="button" :disabled="loading" @click="load">
-        Обновить
-      </UiButton>
-    </div>
-
     <p v-if="loading" :class="$style.muted">Загрузка…</p>
     <p v-else-if="!items.length" :class="$style.muted">Нет предложений.</p>
 
@@ -115,7 +85,12 @@
 import { onMounted, ref, watch } from 'vue'
 import { sectionLabel as domainSectionLabel } from '@domain'
 import { ProposalSectionPreview, ReviewSummaryModal } from '@/features/superadmin-auth'
-import { useConfirm, usePendingSummary, useSuperadmin } from '@/shared/lib'
+import {
+  useAdminProposalFilters,
+  useConfirm,
+  usePendingSummary,
+  useSuperadmin,
+} from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
 
 definePageMeta({ layout: 'admin' })
@@ -158,32 +133,16 @@ type Proposal = {
   review_note: string | null
 }
 
-const route = useRoute()
-const router = useRouter()
 const { isStaff, refresh, loseSession } = useSuperadmin()
 const { alert, confirm } = useConfirm()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
+const { status, classFilter } = useAdminProposalFilters()
 
 const loading = ref(false)
 const items = ref<Proposal[]>([])
-const status = ref(
-  typeof route.query.status === 'string' && route.query.status
-    ? route.query.status
-    : 'pending',
-)
-const classFilter = ref(
-  typeof route.query.class === 'string' ? route.query.class.trim().toLowerCase() : '',
-)
 const acting = ref<string | null>(null)
 const editingId = ref<string | null>(null)
 const editText = ref('')
-
-const statusOpts = [
-  { value: 'pending', label: 'Ожидает' },
-  { value: 'approved', label: 'Одобрено' },
-  { value: 'rejected', label: 'Отклонено' },
-  { value: 'all', label: 'Все' },
-]
 
 function statusLabel(value: string) {
   switch (value) {
@@ -196,20 +155,6 @@ function statusLabel(value: string) {
     default:
       return value
   }
-}
-
-function syncQuery() {
-  const query: Record<string, string> = {}
-  if (status.value && status.value !== 'pending') query.status = status.value
-  else if (status.value === 'pending') query.status = 'pending'
-  if (classFilter.value) query.class = classFilter.value
-  void router.replace({ query })
-}
-
-function clearClassFilter() {
-  classFilter.value = ''
-  syncQuery()
-  if (isStaff.value) void load()
 }
 
 function sectionLabel(item: Proposal) {
@@ -272,11 +217,6 @@ async function load() {
   } finally {
     loading.value = false
   }
-}
-
-function setStatus(value: string) {
-  status.value = value
-  syncQuery()
 }
 
 function startEdit(item: Proposal) {
@@ -391,7 +331,7 @@ async function reject(id: string) {
   }
 }
 
-watch(status, () => {
+watch([status, classFilter], () => {
   if (isStaff.value) void load()
 })
 
@@ -417,46 +357,6 @@ onMounted(async () => {
 .page {
   display: grid;
   gap: 1rem;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.h1 {
-  margin: 0;
-  font-size: 1.35rem;
-}
-
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.modNote {
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.4;
-  color: var(--color-muted);
-}
-
-.chip {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-ink);
-  cursor: pointer;
-  font: inherit;
-  padding: 0.4rem 0.75rem;
-}
-
-.chipOn {
-  border-color: var(--color-border-strong);
-  background: var(--color-gold-dim);
-  color: var(--color-gold);
 }
 
 .list {

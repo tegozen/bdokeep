@@ -23,6 +23,11 @@ export {
   type HomeTierMin,
 } from './useHomeClassFilters'
 export {
+  useAdminProposalFilters,
+  ADMIN_PROPOSAL_STATUS_TABS,
+  type AdminProposalStatus,
+} from './useAdminProposalFilters'
+export {
   displayAuthorLabel,
   formatRuDate,
   formatSectionUpdated,

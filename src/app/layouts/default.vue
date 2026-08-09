@@ -11,7 +11,7 @@
       </button>
     </div>
 
-    <SiteHeader :stable-height="!!headerClass">
+    <SiteHeader :stable-height="!!headerClass" :brand-end="isStaff">
       <template v-if="headerClass" #class>
         <div :class="$style.classMeta">
           <ClassIcon
@@ -37,6 +37,14 @@
       </template>
       <template v-else-if="headerClass" #filters>
         <GuideModePresetTabs :preset-fill="presetFill" />
+      </template>
+      <template #trailing>
+        <component
+          :is="SuperadminAuth"
+          v-if="isStaff && SuperadminAuth && authUiReady"
+          compact
+          header-nav
+        />
       </template>
       <template #actions="{ badgeClass }">
         <UiButton

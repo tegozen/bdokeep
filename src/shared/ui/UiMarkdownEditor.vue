@@ -8,8 +8,9 @@
     language="ru"
     preview-theme="github"
     code-theme="github"
-    :toolbars="toolbars"
-    :footers="footers"
+    :toolbars="resolvedToolbars"
+    :footers="resolvedFooters"
+    :preview="preview"
     :no-upload-img="true"
     no-katex
     no-mermaid
@@ -30,22 +31,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, shallowRef, type Component } from 'vue'
+import { computed, onMounted, shallowRef, type Component } from 'vue'
 import type { Footers, ToolbarNames } from 'md-editor-v3'
 import { MAX_TEXT_LEN } from '@domain'
 
 const text = defineModel<string>({ default: '' })
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     id?: string
     placeholder?: string
     height?: string
+    /** Built-in split preview pane + toolbar buttons. */
+    preview?: boolean
   }>(),
   {
     id: 'summary-md-editor',
     placeholder: 'Markdown…',
     height: '360px',
+    preview: true,
   },
 )
 
@@ -59,7 +63,7 @@ onMounted(async () => {
   Editor.value = mod.MdEditor
 })
 
-const toolbars: ToolbarNames[] = [
+const baseToolbars: ToolbarNames[] = [
   'bold',
   'underline',
   'italic',
@@ -85,7 +89,37 @@ const toolbars: ToolbarNames[] = [
   'fullscreen',
 ]
 
-const footers: Footers[] = ['markdownTotal', '=', 'scrollSwitch']
+const editOnlyToolbars: ToolbarNames[] = [
+  'bold',
+  'underline',
+  'italic',
+  'strikeThrough',
+  '-',
+  'title',
+  'quote',
+  'unorderedList',
+  'orderedList',
+  'task',
+  '-',
+  'codeRow',
+  'code',
+  'link',
+  'table',
+  '-',
+  'revoke',
+  'next',
+  '=',
+  'pageFullscreen',
+  'fullscreen',
+]
+
+const resolvedToolbars = computed(() =>
+  props.preview ? baseToolbars : editOnlyToolbars,
+)
+
+const resolvedFooters = computed((): Footers[] =>
+  props.preview ? ['markdownTotal', '=', 'scrollSwitch'] : ['markdownTotal'],
+)
 </script>
 
 <style module>

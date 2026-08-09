@@ -10,6 +10,7 @@
     hover-color="var(--color-gold)"
     title="Выйти"
     aria-label="Выйти"
+    data-header-logout
     @click="onLogout"
   >
     <svg

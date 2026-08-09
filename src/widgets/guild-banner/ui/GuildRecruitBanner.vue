@@ -14,9 +14,9 @@
       aria-hidden="true"
     >
 
-    <div v-if="data?.enabled && data.has_icon" :class="$style.iconWrap">
+    <div v-if="resolvedIconSrc" :class="$style.iconWrap">
       <img
-        :src="iconSrc"
+        :src="resolvedIconSrc"
         alt=""
         width="72"
         height="72"
@@ -26,8 +26,8 @@
     </div>
 
     <div :class="$style.copy">
-      <div v-if="data?.enabled && data.body" :class="$style.body">
-        <UiMarkdownPreview :model-value="data.body" />
+      <div v-if="bodyText" :class="$style.body">
+        <UiMarkdownPreview :model-value="bodyText" />
       </div>
       <ul v-if="links.length" :class="$style.links">
         <li v-for="(link, i) in links" :key="`${link.url}-${i}`">
@@ -60,23 +60,42 @@ const props = withDefaults(
     data: GuildBannerPublic | null
     /** На главной: 3 колонки; высота по пропорции рамки, не растягиваем. */
     span?: 1 | 3
+    /**
+     * Override icon URL (admin live draft). `undefined` → API icon from `data`;
+     * `null` / `''` → no icon.
+     */
+    iconSrc?: string | null
+    /** Show card from draft even when `data.enabled` is false (admin preview). */
+    forceVisible?: boolean
   }>(),
-  { span: 1 },
+  { span: 1, iconSrc: undefined, forceVisible: false },
+)
+
+const active = computed(
+  () => props.forceVisible || props.data?.enabled === true,
 )
 
 const links = computed(() =>
-  props.data?.enabled === true && Array.isArray(props.data.links) ? props.data.links : [],
+  active.value && props.data && Array.isArray(props.data.links) ? props.data.links : [],
 )
 
-const publicVisible = computed(() => {
-  if (!props.data || props.data.enabled !== true) return false
-  return Boolean(props.data.body) || props.data.has_icon || links.value.length > 0
-})
+const bodyText = computed(() =>
+  active.value && props.data?.body ? props.data.body : '',
+)
 
-const iconSrc = computed(() => {
-  if (!props.data || props.data.enabled !== true || !props.data.has_icon) return ''
+const resolvedIconSrc = computed(() => {
+  if (props.iconSrc !== undefined) return props.iconSrc || ''
+  if (!props.data || !props.data.has_icon) return ''
+  if (!active.value) return ''
   const v = encodeURIComponent(props.data.updated_at || '')
   return `/api/guild-banner/icon?v=${v}`
+})
+
+const publicVisible = computed(() => {
+  if (!props.data) return false
+  if (props.forceVisible) return true
+  if (!active.value) return false
+  return Boolean(bodyText.value) || Boolean(resolvedIconSrc.value) || links.value.length > 0
 })
 </script>
 

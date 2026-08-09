@@ -1,9 +1,5 @@
 <template>
   <div :class="$style.page">
-    <header :class="$style.header">
-      <h1 :class="$style.h1">Пользователи</h1>
-    </header>
-
     <p v-if="!isSuperadmin" :class="$style.error">
       Раздел только для суперадмина.
     </p>
@@ -315,18 +311,6 @@ onMounted(async () => {
 .page {
   display: grid;
   gap: 1rem;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.h1 {
-  margin: 0;
-  font-size: 1.35rem;
 }
 
 .h2 {

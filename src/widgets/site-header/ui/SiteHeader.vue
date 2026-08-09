@@ -4,20 +4,26 @@
       $style.header,
       stableHeight && $style.headerStable,
       $slots.filters && $style.hasFilters,
+      hideClassOnMobile && $style.hideClassOnMobile,
     ]"
   >
     <div :class="$style.headerBar">
       <div :class="$style.headerInner">
-        <NuxtLink to="/" :class="$style.brand" aria-label="BDO Keep — на главную">
-          <img
-            src="/brand/bdo-keep-logo.png"
-            alt="BDO KEEP"
-            width="282"
-            height="92"
-            :class="$style.brandLogo"
-            decoding="async"
-          >
-        </NuxtLink>
+        <div :class="[$style.brandRow, brandEnd && $style.brandRowEnd]">
+          <NuxtLink to="/" :class="$style.brand" aria-label="BDO Keep — на главную">
+            <img
+              src="/brand/bdo-keep-logo.png"
+              alt="BDO KEEP"
+              width="282"
+              height="92"
+              :class="$style.brandLogo"
+              decoding="async"
+            >
+          </NuxtLink>
+          <div v-if="brandEnd && $slots.trailing" :class="$style.mobileLogout">
+            <slot name="trailing" />
+          </div>
+        </div>
 
         <div v-if="$slots.class" :class="$style.classBlock">
           <slot name="class" />
@@ -45,9 +51,15 @@ withDefaults(
   defineProps<{
     /** Keep sticky row height stable (class guide pages with tabs). */
     stableHeight?: boolean
+    /** Mobile: logo left, logout right. Guest keeps logo centered. */
+    brandEnd?: boolean
+    /** Drop #class from the mobile stack (e.g. admin title hidden). */
+    hideClassOnMobile?: boolean
   }>(),
   {
     stableHeight: false,
+    brandEnd: false,
+    hideClassOnMobile: false,
   },
 )
 </script>
@@ -72,14 +84,26 @@ withDefaults(
 }
 
 .headerInner {
+  --header-stack-gap: 0.65rem;
   box-sizing: border-box;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.65rem 1.25rem;
+  gap: var(--header-stack-gap) 1.25rem;
   width: var(--page-width);
   margin-inline: auto;
   padding-block: 1rem;
+}
+
+.brandRow {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* Phone-only logout; desktop keeps logout in #actions. */
+.mobileLogout {
+  display: none;
 }
 
 .brand {
@@ -153,7 +177,7 @@ withDefaults(
   order: 4;
   width: 100%;
   min-width: 0;
-  padding-top: 1rem;
+  padding-top: var(--header-stack-gap);
   padding-bottom: 0.15rem;
 }
 
@@ -163,12 +187,11 @@ withDefaults(
 @media (max-width: 1099px) {
   .headerInner {
     align-items: flex-start;
-    padding-block: 0.95rem;
+    padding-block: 1rem;
   }
 
-  .brand {
+  .brandRow {
     order: 1;
-    min-height: 2.25rem;
   }
 
   .actions {
@@ -190,15 +213,33 @@ withDefaults(
   .headerInner {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.65rem;
-    padding-block: 0.75rem 0.85rem;
+    gap: var(--header-stack-gap);
+    padding-block: 0.75rem;
   }
 
-  .brand {
+  .brandRow {
     order: 1;
-    justify-content: center;
     width: 100%;
-    min-height: 0;
+    justify-content: center;
+  }
+
+  /* Auth phone: fixed two columns — logo | logout. */
+  .brandRowEnd {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.5rem;
+    justify-content: stretch;
+  }
+
+  .brandRowEnd .brand {
+    justify-self: start;
+  }
+
+  .mobileLogout {
+    display: flex;
+    align-items: center;
+    justify-self: end;
   }
 
   .brandLogo {
@@ -209,6 +250,16 @@ withDefaults(
   .classBlock {
     order: 2;
     justify-content: center;
+  }
+
+  /* Hidden title must not leave a flex gap under the logo. */
+  .hideClassOnMobile .classBlock {
+    display: none;
+  }
+
+  /* Desktop/tablet logout stays in actions; hide duplicate on phone. */
+  .actions > :global([data-header-logout]) {
+    display: none !important;
   }
 
   /*
@@ -223,7 +274,8 @@ withDefaults(
     gap: 0;
     width: 100%;
     min-width: 0;
-    padding: 0.35rem 0.45rem 0.55rem;
+    /* Same inset on all sides so logo→plate gap matches logo→class gap. */
+    padding: 0.45rem;
     border: 0;
     border-radius: 1rem;
     background: color-mix(in srgb, #050505 72%, transparent);
@@ -284,8 +336,8 @@ withDefaults(
     order: 1;
     flex: none;
     width: 100%;
-    padding: 0.45rem 0.15rem 0.1rem;
-    margin-top: 0.2rem;
+    padding: 0.45rem 0.15rem 0;
+    margin-top: 0;
     border-top: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
   }
 
@@ -295,7 +347,7 @@ withDefaults(
     background: transparent;
     backdrop-filter: none;
     box-shadow: none;
-    padding: 0.45rem 0.2rem 0.15rem;
+    padding: 0.45rem 0.2rem 0;
   }
 
   .hasFilters .filtersPane > :global(*)::before {
@@ -313,22 +365,22 @@ withDefaults(
   }
 
   .hasFilters .headerInner {
-    padding-bottom: 0.25rem;
+    padding-bottom: var(--header-stack-gap);
   }
 }
 
 @media (min-width: 1100px) {
   .headerInner {
     align-items: center;
-    padding-block: 1.1rem;
-    gap: 0.85rem 1.5rem;
+    padding-block: 1rem;
+    gap: var(--header-stack-gap) 1.5rem;
   }
 
   .hasFilters .headerInner {
-    padding-bottom: 0.25rem;
+    padding-bottom: var(--header-stack-gap);
   }
 
-  .brand {
+  .brandRow {
     order: 1;
   }
 

@@ -3,99 +3,107 @@
     <form :class="[$style.form, embedded && $style.formEmbedded]" @submit.prevent="save">
       <UiSwitch v-model="enabled" label="Показывать на главной и страницах классов" />
 
-      <div :class="$style.block">
-        <span :class="$style.fieldTitle">Текст (Markdown)</span>
-        <ClientOnly>
-          <UiMarkdownEditor
-            id="guild-banner-body-editor"
-            v-model="body"
-            placeholder="Текст баннера в Markdown…"
-            height="220px"
-          />
-          <template #fallback>
-            <textarea
-              v-model="body"
-              :class="$style.textarea"
-              rows="6"
-              maxlength="4000"
-              placeholder="Текст баннера в Markdown…"
+      <div :class="$style.workspace">
+        <div :class="$style.editorCol">
+          <div :class="$style.block">
+            <span :class="$style.fieldTitle">Текст (Markdown)</span>
+            <ClientOnly>
+              <UiMarkdownEditor
+                id="guild-banner-body-editor"
+                v-model="body"
+                :preview="false"
+                placeholder="Текст баннера в Markdown…"
+                height="280px"
+              />
+              <template #fallback>
+                <textarea
+                  v-model="body"
+                  :class="$style.textarea"
+                  rows="6"
+                  maxlength="4000"
+                  placeholder="Текст баннера в Markdown…"
+                />
+              </template>
+            </ClientOnly>
+            <span :class="$style.hint">{{ body.length }} / 4000</span>
+          </div>
+
+          <div :class="$style.block">
+            <span :class="$style.fieldTitle">Иконка</span>
+            <div :class="$style.iconRow">
+              <label :class="$style.fileBtn">
+                Выбрать файл
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  :class="$style.fileInput"
+                  @change="onIconPick"
+                >
+              </label>
+              <UiButton
+                v-if="previewSrc || pendingClearIcon"
+                variant="ghost"
+                type="button"
+                size="sm"
+                @click="clearIcon"
+              >
+                Убрать
+              </UiButton>
+            </div>
+            <p v-if="iconError" :class="$style.error">{{ iconError }}</p>
+            <p :class="$style.hint">PNG / JPEG / WebP / GIF, до 128 КБ</p>
+          </div>
+
+          <div :class="$style.block">
+            <div :class="$style.linksHead">
+              <span :class="$style.fieldTitle">Ссылки</span>
+              <UiButton
+                variant="ghost"
+                type="button"
+                size="sm"
+                :disabled="links.length >= 10"
+                @click="addLink"
+              >
+                Добавить
+              </UiButton>
+            </div>
+            <p v-if="!links.length" :class="$style.muted">Можно сохранить без ссылок.</p>
+            <ul v-else :class="$style.linkList">
+              <li v-for="(link, i) in links" :key="i" :class="$style.linkRow">
+                <input
+                  v-model="link.label"
+                  type="text"
+                  :class="$style.input"
+                  maxlength="40"
+                  placeholder="Подпись"
+                  aria-label="Подпись ссылки"
+                >
+                <input
+                  v-model="link.url"
+                  type="url"
+                  :class="$style.input"
+                  placeholder="https://"
+                  aria-label="URL ссылки"
+                >
+                <UiButton variant="ghost" type="button" size="sm" @click="removeLink(i)">
+                  ×
+                </UiButton>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <aside :class="$style.previewCol" aria-label="Превью баннера">
+          <span :class="$style.fieldTitle">Превью</span>
+          <div :class="$style.previewStage">
+            <GuildRecruitBanner
+              :data="livePreviewData"
+              :icon-src="previewSrc"
+              force-visible
             />
-          </template>
-        </ClientOnly>
-        <span :class="$style.hint">{{ body.length }} / 4000</span>
-      </div>
-
-      <div :class="$style.block">
-        <span :class="$style.fieldTitle">Иконка</span>
-        <div :class="$style.iconRow">
-          <img
-            v-if="previewSrc"
-            :src="previewSrc"
-            alt=""
-            width="48"
-            height="48"
-            :class="$style.preview"
-          >
-          <span v-else :class="$style.muted">Нет иконки</span>
-          <label :class="$style.fileBtn">
-            Выбрать файл
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              :class="$style.fileInput"
-              @change="onIconPick"
-            >
-          </label>
-          <UiButton
-            v-if="previewSrc || pendingClearIcon"
-            variant="ghost"
-            type="button"
-            size="sm"
-            @click="clearIcon"
-          >
-            Убрать
-          </UiButton>
-        </div>
-        <p v-if="iconError" :class="$style.error">{{ iconError }}</p>
-        <p :class="$style.hint">PNG / JPEG / WebP / GIF, до 128 КБ</p>
-      </div>
-
-      <div :class="$style.block">
-        <div :class="$style.linksHead">
-          <span :class="$style.fieldTitle">Ссылки</span>
-          <UiButton
-            variant="ghost"
-            type="button"
-            size="sm"
-            :disabled="links.length >= 10"
-            @click="addLink"
-          >
-            Добавить
-          </UiButton>
-        </div>
-        <p v-if="!links.length" :class="$style.muted">Можно сохранить без ссылок.</p>
-        <ul v-else :class="$style.linkList">
-          <li v-for="(link, i) in links" :key="i" :class="$style.linkRow">
-            <input
-              v-model="link.label"
-              type="text"
-              :class="$style.input"
-              maxlength="40"
-              placeholder="Подпись"
-              aria-label="Подпись ссылки"
-            >
-            <input
-              v-model="link.url"
-              type="url"
-              :class="$style.input"
-              placeholder="https://"
-              aria-label="URL ссылки"
-            >
-            <UiButton variant="ghost" type="button" size="sm" @click="removeLink(i)">
-              ×
-            </UiButton>
-          </li>
-        </ul>
+          </div>
+          <p :class="$style.hint">Как на сайте — обновляется сразу, без сохранения</p>
+        </aside>
       </div>
 
       <p v-if="saveError" :class="$style.error">{{ saveError }}</p>
@@ -122,6 +130,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiModal, UiSwitch } from '@/shared/ui'
+import GuildRecruitBanner from './GuildRecruitBanner.vue'
 import type { GuildBannerLink, GuildBannerPublic } from '../model/types'
 
 const UiMarkdownEditor = defineAsyncComponent(
@@ -192,6 +201,16 @@ const previewSrc = computed(() => {
   if (hasIcon.value) return '/api/guild-banner/icon'
   return null
 })
+
+const livePreviewData = computed((): GuildBannerPublic => ({
+  enabled: true,
+  body: body.value,
+  has_icon: Boolean(previewSrc.value),
+  links: links.value
+    .filter((l) => l.label.trim() || l.url.trim())
+    .map((l) => ({ label: l.label.trim() || l.url.trim(), url: l.url.trim() })),
+  updated_at: updatedAt.value || new Date().toISOString(),
+}))
 
 function revokePreview() {
   if (localPreview.value) {
@@ -365,14 +384,43 @@ onBeforeUnmount(() => {
 
 .formEmbedded {
   padding: 0;
-  max-width: 48rem;
+  max-width: 72rem;
 }
 
-.label {
+.workspace {
   display: grid;
-  gap: 0.35rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.5rem;
+  }
+}
+
+.editorCol {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.previewCol {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: start;
+  min-width: 0;
+}
+
+.previewStage {
+  width: min(100%, calc(3 * 130px + 2 * 0.85rem));
+}
+
+@media (min-width: 768px) {
+  .previewStage {
+    width: calc(3 * 148px + 2 * 0.9rem);
+  }
 }
 
 .fieldTitle {
@@ -417,16 +465,6 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
-}
-
-.preview {
-  width: 3.25rem;
-  height: 3.25rem;
-  object-fit: cover;
-  border: 2px solid color-mix(in srgb, var(--color-gold) 50%, transparent);
-  border-radius: 50%;
-  background: var(--color-bg);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--color-gold) 28%, transparent);
 }
 
 .fileBtn {
