@@ -15,6 +15,13 @@
       "when": 1786282193067,
       "tag": "0001_many_quasar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786303796401,
+      "tag": "0002_special_kronos",
+      "breakpoints": true
     }
   ]
 }

@@ -3,17 +3,27 @@
     <form :class="[$style.form, embedded && $style.formEmbedded]" @submit.prevent="save">
       <UiSwitch v-model="enabled" label="Показывать на главной и страницах классов" />
 
-      <label :class="$style.label">
-        Текст
-        <textarea
-          v-model="body"
-          :class="$style.textarea"
-          rows="3"
-          maxlength="280"
-          placeholder="Короткий текст о наборе"
-        />
-        <span :class="$style.hint">{{ body.length }} / 280</span>
-      </label>
+      <div :class="$style.block">
+        <span :class="$style.fieldTitle">Текст (Markdown)</span>
+        <ClientOnly>
+          <UiMarkdownEditor
+            id="guild-banner-body-editor"
+            v-model="body"
+            placeholder="Текст баннера в Markdown…"
+            height="220px"
+          />
+          <template #fallback>
+            <textarea
+              v-model="body"
+              :class="$style.textarea"
+              rows="6"
+              maxlength="4000"
+              placeholder="Текст баннера в Markdown…"
+            />
+          </template>
+        </ClientOnly>
+        <span :class="$style.hint">{{ body.length }} / 4000</span>
+      </div>
 
       <div :class="$style.block">
         <span :class="$style.fieldTitle">Иконка</span>
@@ -110,9 +120,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { UiButton, UiModal, UiSwitch } from '@/shared/ui'
 import type { GuildBannerLink, GuildBannerPublic } from '../model/types'
+
+const UiMarkdownEditor = defineAsyncComponent(
+  () => import('@/shared/ui/UiMarkdownEditor.vue'),
+)
 
 type BannerAdmin = {
   enabled: boolean
@@ -351,7 +365,7 @@ onBeforeUnmount(() => {
 
 .formEmbedded {
   padding: 0;
-  max-width: 40rem;
+  max-width: 48rem;
 }
 
 .label {
@@ -406,12 +420,13 @@ onBeforeUnmount(() => {
 }
 
 .preview {
-  width: 3rem;
-  height: 3rem;
-  object-fit: contain;
-  border: 1px solid var(--color-border);
-  border-radius: 0.25rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--color-gold) 50%, transparent);
+  border-radius: 50%;
   background: var(--color-bg);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-gold) 28%, transparent);
 }
 
 .fileBtn {

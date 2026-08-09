@@ -44,7 +44,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - **Видео** — до 3 ссылок YouTube; название подтягивается с YouTube (oEmbed), постеры через same-origin `/api/youtube/thumb/…`; пока ролик без превью — «обрабатывается», раз в час Nitro task помечает ready и добирает заголовки у «Видео N»; через 48ч без превью слот снимается approved-заявкой от `cron`
 - **Забаф** — каталог бафов с иконками, группами и заметками (до 20 на пресет)
 - **Обратная связь** — кнопка в хедере (слева от макроса): анонимное сообщение админу в модалке; на странице класса привязывается к нему, с главной — общее (не публикуется на сайте)
-- **Набор в гильдию** — на главной баннер в сетке (~3 карточки); на `/class/*` — колонка слева от «Заметок»; правится в админке `/admin/banner`
+- **Набор в гильдию** — на главной баннер в сетке (~3 карточки); на `/class/*` — колонка слева от «Заметок»; текст баннера — Markdown (как заметки); правится в админке `/admin/banner`
 - **Макрос чата** — модалка в хедере: готовая строка + пошаговая настройка с скриншотами
 
 ### Краудсорс правок
@@ -158,7 +158,7 @@ SQL к БД: `docker compose exec db psql -h 127.0.0.1 -U postgres -d bdokeep` (
 - кристаллы / бафы (+ prune)
 - localize `/codex/` icon URLs
 
-Картинки классов: `public/classes/<slug>/{portrait-card-360.webp,icon.svg}` — © Pearl Abyss (см. `public/classes/README.md`).
+Картинки классов: `public/classes/<slug>/{portrait-card-360.webp,icon.svg}` (карточки 480×1152, 5/12) — © Pearl Abyss (см. `public/classes/README.md`).
 Портреты — opaque WebP на фоне `#07080c` (без alpha), уже пережаты под карточки главной.
 Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При первом seed (или после смены `033_localize_…`) migrate переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
 

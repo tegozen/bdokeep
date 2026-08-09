@@ -1,6 +1,8 @@
 import { createError } from 'h3'
+import { sanitizeMarkdown } from './sanitizeMarkdown'
 
-export const GUILD_BANNER_BODY_MAX = 280
+/** Markdown body (sanitized), aligned with compact banner UI. */
+export const GUILD_BANNER_BODY_MAX = 4000
 export const GUILD_BANNER_LINKS_MAX = 10
 export const GUILD_BANNER_LABEL_MAX = 40
 export const GUILD_BANNER_ICON_MAX_BYTES = 128 * 1024
@@ -61,7 +63,7 @@ export function parseGuildBannerLinks(raw: unknown): GuildBannerLink[] {
 }
 
 export function parseGuildBannerBody(raw: unknown): string {
-  const body = String(raw ?? '').trim()
+  const body = sanitizeMarkdown(String(raw ?? '').trim())
   if (body.length > GUILD_BANNER_BODY_MAX) {
     throw createError({
       statusCode: 400,

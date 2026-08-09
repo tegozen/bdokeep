@@ -1,9 +1,25 @@
 <template>
-  <div :class="$style.root" aria-hidden="true">
+  <div
+    :class="$style.root"
+    :style="{ '--spark-radius': radius }"
+    aria-hidden="true"
+  >
     <div :class="$style.aura" />
     <span v-for="n in 14" :key="n" :class="$style.spark" />
   </div>
 </template>
+
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    /** Match the highlighted card/frame corner radius. */
+    radius?: string
+  }>(),
+  {
+    radius: '0',
+  },
+)
+</script>
 
 <style module>
 .root {
@@ -18,7 +34,7 @@
 .aura {
   position: absolute;
   inset: 0;
-  border-radius: 0;
+  border-radius: var(--spark-radius, 0);
   box-shadow:
     0 0 0 1px rgba(255, 220, 140, 0.35),
     0 0 14px 2px rgba(212, 175, 98, 0.35),

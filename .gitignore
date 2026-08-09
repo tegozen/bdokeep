@@ -34,3 +34,6 @@ tmp-*.json
 
 # Drizzle: commit `drizzle/` + `drizzle/meta/` (SQL + journal + snapshots).
 # Do NOT gitignore them — migrate image applies that folder.
+
+.tmp-pw/
+

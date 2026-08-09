@@ -33,7 +33,10 @@
         :key="bdoClass.id"
         :class="$style.cardWrap"
       >
-        <BorderSparkler v-if="pendingByClass[bdoClass.slug]" />
+        <BorderSparkler
+          v-if="pendingByClass[bdoClass.slug]"
+          radius="0.65rem"
+        />
         <!-- Outside .card overflow so it can hang off the top-right corner. -->
         <span
           v-if="pendingByClass[bdoClass.slug]"
@@ -53,7 +56,7 @@
               :src="bdoClass.portrait_url"
               :alt="bdoClass.name_ru"
               width="360"
-              height="480"
+              height="864"
               loading="eager"
               :fetchpriority="index === lcpIndex ? 'high' : 'auto'"
               :decoding="index === lcpIndex ? 'sync' : 'async'"
@@ -176,14 +179,15 @@ const lcpIndex = computed(() => {
 <style module>
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.85rem;
+  align-items: stretch;
 }
 
 @media (min-width: 768px) {
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.85rem;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 0.9rem;
   }
 }
 
@@ -193,7 +197,8 @@ const lcpIndex = computed(() => {
 
 .cardWrap {
   position: relative;
-  align-self: start;
+  align-self: stretch;
+  height: 100%;
   /* Must stay visible so BorderSparkler can bleed past the card. */
   overflow: visible;
 }
@@ -201,8 +206,10 @@ const lcpIndex = computed(() => {
 .card {
   position: relative;
   display: block;
+  height: 100%;
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-gold-soft) 38%, transparent);
+  border-radius: 0.65rem;
   background: var(--color-bg-elevated);
   color: var(--color-ink);
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
@@ -225,7 +232,9 @@ const lcpIndex = computed(() => {
 
 .media {
   position: relative;
-  aspect-ratio: 3 / 4;
+  /* Tall enough that 3-col banner (292×218) matches card row height. */
+  aspect-ratio: 5 / 12;
+  height: 100%;
   overflow: hidden;
   background: var(--color-bg-deep);
 }

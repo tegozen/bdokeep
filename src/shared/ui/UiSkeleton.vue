@@ -48,7 +48,7 @@ withDefaults(
 }
 
 .card {
-  aspect-ratio: 3 / 4;
-  border-radius: 0.125rem;
+  aspect-ratio: 5 / 12;
+  border-radius: 0.65rem;
 }
 </style>

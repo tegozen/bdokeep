@@ -38,7 +38,7 @@ export const guildRecruitBanner = pgTable(
     check('guild_recruit_banner_id_check', sql`id`),
     check(
       'guild_recruit_banner_body_len',
-      sql`(char_length(body) >= 0) AND (char_length(body) <= 280)`,
+      sql`(char_length(body) >= 0) AND (char_length(body) <= 4000)`,
     ),
     check('guild_recruit_banner_links_array', sql`jsonb_typeof(links) = 'array'::text`),
   ],

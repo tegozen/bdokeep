@@ -1,0 +1,2 @@
+ALTER TABLE "guild_recruit_banner" DROP CONSTRAINT "guild_recruit_banner_body_len";--> statement-breakpoint
+ALTER TABLE "guild_recruit_banner" ADD CONSTRAINT "guild_recruit_banner_body_len" CHECK ((char_length(body) >= 0) AND (char_length(body) <= 4000));

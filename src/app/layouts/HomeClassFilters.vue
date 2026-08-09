@@ -48,14 +48,8 @@ const { tierMin, hideEmpty, tierOptions } = useHomeClassFilters()
   padding: 0.95rem 1.5rem;
   border: 0;
   border-radius: 1.35rem;
-  background-color: #0a0908;
-  background-image: url("/brand/filters-bg.png");
-  background-position: center;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  box-shadow:
-    inset 0 1px 0 rgba(196, 150, 90, 0.14),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+  background: transparent;
+  box-shadow: none;
 }
 
 /* Gradient rim: bright copper top-left → dark bottom-right. */
