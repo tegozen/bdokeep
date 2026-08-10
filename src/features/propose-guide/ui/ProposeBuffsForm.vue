@@ -9,6 +9,7 @@
     :form-error="formError"
     :is-superadmin="isSuperadmin"
     :request-close="requestClose"
+    size="xl"
     @submit="onSubmit"
   >
     <template #headerExtra>
