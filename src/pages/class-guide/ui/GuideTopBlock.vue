@@ -245,7 +245,6 @@ defineProps<{
   padding: 1rem 1.15rem;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .comboItem {
