@@ -12,9 +12,17 @@
             <span :class="$style.status">{{ statusLabel(item.status) }}</span>
           </div>
           <div :class="$style.metaDates">
-            <span>предложено {{ formatDate(item.created_at) }}</span>
-            <span v-if="item.reviewed_at">
-              · {{ item.status === 'rejected' ? 'отклонено' : 'одобрено' }}
+            <span :class="[$style.dateBadge, $style.dateProposed]">
+              предложено {{ formatDate(item.created_at) }}
+            </span>
+            <span
+              v-if="item.reviewed_at"
+              :class="[
+                $style.dateBadge,
+                item.status === 'rejected' ? $style.dateRejected : $style.dateApproved,
+              ]"
+            >
+              {{ item.status === 'rejected' ? 'отклонено' : 'одобрено' }}
               {{ formatDate(item.reviewed_at) }}
             </span>
           </div>
@@ -370,9 +378,38 @@ onMounted(async () => {
 }
 
 .metaDates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin-bottom: 0.75rem;
-  font-size: 0.82rem;
-  color: var(--color-muted);
+}
+
+.dateBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  padding: 0.2rem 0.55rem;
+}
+
+.dateProposed {
+  border-color: color-mix(in srgb, var(--color-gold) 45%, transparent);
+  background: var(--color-gold-dim);
+  color: var(--color-gold-soft);
+}
+
+.dateApproved {
+  border-color: color-mix(in srgb, #6a9a6a 55%, transparent);
+  background: color-mix(in srgb, #6a9a6a 16%, transparent);
+  color: #9bbb9b;
+}
+
+.dateRejected {
+  border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  color: var(--color-danger);
 }
 
 .badge {
