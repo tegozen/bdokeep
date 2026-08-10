@@ -159,7 +159,17 @@ const { online } = useOnlineStatus()
   padding-bottom: 0.5rem;
 }
 
+.bodyFull > :first-child {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 .formFull {
+  /* height:0 + flex:1 forces the form to the modal height so nested
+     panes (combo chain) become real scrollports instead of growing. */
+  flex: 1 1 0;
+  height: 0;
+  min-height: 0;
   overflow: hidden;
 }
 

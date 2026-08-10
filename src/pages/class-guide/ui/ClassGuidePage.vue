@@ -23,37 +23,39 @@
     </template>
 
     <template v-else>
-      <GuideTopBlock
-        :bundle="bundle"
-        :guild-banner="guildBanner"
-        :show-recruit-col="showRecruitCol"
-        :is-staff="isStaff"
-        :combo-kind="comboKind"
-        :spec-mode="specMode"
-        :section-subtitle="sectionSubtitle"
-        :summary-section="summarySection"
-        :combo-section="comboSection"
-        :active-summary="activeSummary"
-        :active-combos="activeCombos"
-        :morph-filled="morphFilled"
-        :drafts="topDrafts"
-      />
-      <GuideGearBlock
-        :bundle="bundle"
-        :fills="gearFills"
-        :active-buffs="activeBuffs"
-        :is-staff="isStaff"
-        :section-subtitle="sectionSubtitle"
-        :drafts="gearDrafts"
-      />
-      <GuideVideoBlock
-        :bundle="bundle"
-        :videos-section="videosSection"
-        :active-videos="activeVideos"
-        :section-subtitle="sectionSubtitle"
-        :is-staff="isStaff"
-        :drafts="videoDrafts"
-      />
+      <div :class="$style.stack">
+        <GuideTopBlock
+          :bundle="bundle"
+          :guild-banner="guildBanner"
+          :show-recruit-col="showRecruitCol"
+          :is-staff="isStaff"
+          :combo-kind="comboKind"
+          :spec-mode="specMode"
+          :section-subtitle="sectionSubtitle"
+          :summary-section="summarySection"
+          :combo-section="comboSection"
+          :active-summary="activeSummary"
+          :active-combos="activeCombos"
+          :morph-filled="morphFilled"
+          :drafts="topDrafts"
+        />
+        <GuideGearBlock
+          :bundle="bundle"
+          :fills="gearFills"
+          :active-buffs="activeBuffs"
+          :is-staff="isStaff"
+          :section-subtitle="sectionSubtitle"
+          :drafts="gearDrafts"
+        />
+        <GuideVideoBlock
+          :bundle="bundle"
+          :videos-section="videosSection"
+          :active-videos="activeVideos"
+          :section-subtitle="sectionSubtitle"
+          :is-staff="isStaff"
+          :drafts="videoDrafts"
+        />
+      </div>
     </template>
   </div>
 </template>
@@ -206,6 +208,12 @@ const videoDrafts = computed(
 .page {
   width: min(calc(100% - 2rem), 1920px);
   margin-inline: auto;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .error {

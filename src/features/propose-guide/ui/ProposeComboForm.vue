@@ -35,7 +35,7 @@
           <span>Цепочка · {{ skillCount }} скиллов · {{ comboPreviewCount }} комб</span>
           <span v-if="picked.length" :class="$style.dragHint">перетащите, чтобы поменять местами</span>
         </div>
-        <div :class="$style.chainPane">
+        <div ref="chainScrollEl" :class="$style.chainPane">
           <ComboEditorTiles
             :items="picked"
             :drag-from="dragFrom"
@@ -48,17 +48,17 @@
             @remove="removeAt"
             @update-divider="onUpdateDivider"
           />
-          <button type="button" :class="$style.dividerBtn" @click="addDivider">
-            + Добавить комбу
-          </button>
         </div>
+        <button type="button" :class="$style.dividerBtn" @click="addDivider">
+          + Добавить комбу
+        </button>
       </div>
     </div>
   </ProposeModalShell>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import {
   MAX_COMBO_STEPS,
   comboKindLabel,
@@ -106,6 +106,7 @@ const picked = ref<PickItem[]>([])
 const skills = ref<Skill[]>([])
 const catalogPending = ref(false)
 const catalogError = ref(false)
+const chainScrollEl = ref<HTMLElement | null>(null)
 let dividerSeq = 0
 const { alert } = useConfirm()
 
@@ -262,15 +263,37 @@ function addItem(item: { id: string; name_ru: string; icon_url: string | null })
   picked.value = list
 }
 
-function addDivider() {
+async function addDivider() {
+  const key = `d-${dividerSeq++}`
   const list = ensureLeadingDivider([...picked.value])
   list.push({
     kind: 'divider',
-    key: `d-${dividerSeq++}`,
+    key,
     notes: '',
   })
   picked.value = list
   formError.value = ''
+  await scrollChainPaneToBottom()
+}
+
+async function scrollChainPaneToBottom() {
+  const run = () => {
+    const pane = chainScrollEl.value
+    if (!pane) return
+    pane.scrollTop = pane.scrollHeight
+  }
+  await nextTick()
+  run()
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      run()
+      requestAnimationFrame(() => {
+        run()
+        resolve()
+      })
+    })
+  })
+  window.setTimeout(run, 50)
 }
 
 function removeAt(i: number) {
@@ -331,8 +354,9 @@ async function onSubmit() {
   display: grid;
   grid-template-columns: minmax(14rem, 0.62fr) minmax(18rem, 1.48fr);
   gap: 1rem;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
+  height: 100%;
 }
 
 .left,
@@ -342,6 +366,7 @@ async function onSubmit() {
   gap: 0.55rem;
   min-width: 0;
   min-height: 0;
+  height: 100%;
 }
 
 .left {
@@ -363,15 +388,12 @@ async function onSubmit() {
 }
 
 .chainPane {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.75rem;
+  flex: 1 1 0;
   min-height: 0;
-  overflow: auto;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-panel, var(--color-bg));
-  padding: 0.65rem 0.75rem;
+  height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .dividerBtn {
@@ -408,7 +430,10 @@ async function onSubmit() {
   }
 
   .chainPane {
-    overflow: visible;
+    height: auto;
+    max-height: min(40vh, 18rem);
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 </style>

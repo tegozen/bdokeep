@@ -1,15 +1,21 @@
 <template>
-  <div :class="$style.topBlock">
+  <div :class="$style.topWrap">
     <div
-      v-if="showRecruitCol"
-      :class="$style.recruitCol"
+      :class="[
+        $style.rowNotes,
+        showRecruitCol && $style.rowNotesWithBanner,
+      ]"
     >
-      <GuildRecruitBanner :data="guildBanner" />
-    </div>
-    <div :class="$style.comboMorphRow">
-      <div :class="$style.comboMorphCell">
+      <div
+        v-if="showRecruitCol"
+        :class="$style.banner"
+      >
+        <GuildRecruitBanner :data="guildBanner" />
+      </div>
+      <div :class="$style.notesClamp">
         <GuideSection
           flush
+          fill
           :title="`Заметки (${comboKindLabel(comboKind)})`"
           :subtitle="sectionSubtitle('summary')"
         >
@@ -39,8 +45,21 @@
           <ShowEmptyGuide v-else />
         </GuideSection>
       </div>
+    </div>
+    <div
+      v-if="isStaff && drafts.visible"
+      :class="$style.sectionDraft"
+    >
+      <PendingSectionDrafts
+        :proposals="drafts.summaryPending"
+        @changed="drafts.onChanged"
+        @optimistic-remove="drafts.onOptimisticRemove"
+        @optimistic-restore="drafts.onOptimisticRestore"
+      />
+    </div>
 
-      <div :class="$style.comboMorphCell">
+    <div :class="$style.rowCombo">
+      <div :class="$style.comboCol">
         <GuideSection
           flush
           title="Комба"
@@ -74,22 +93,37 @@
               :class="$style.comboItem"
             >
               <p v-if="combo.notes" :class="$style.comboNotes">{{ combo.notes }}</p>
-              <ComboChain
-                :steps="combo.steps"
-                :label="
-                  combo.notes ||
-                  (specMode === 'succession'
-                    ? `Комба наследия · ${comboKindLabel(comboKind)}`
-                    : `Комба пробуждения · ${comboKindLabel(comboKind)}`)
-                "
-              />
+              <div :class="$style.comboScroll">
+                <ComboChain
+                  :steps="combo.steps"
+                  :label="
+                    combo.notes ||
+                    (specMode === 'succession'
+                      ? `Комба наследия · ${comboKindLabel(comboKind)}`
+                      : `Комба пробуждения · ${comboKindLabel(comboKind)}`)
+                  "
+                />
+              </div>
             </div>
           </div>
-          <ShowEmptyGuide v-else />
+          <div v-else :class="$style.comboBlock">
+            <ShowEmptyGuide />
+          </div>
         </GuideSection>
+        <div
+          v-if="isStaff && drafts.visible"
+          :class="$style.sectionDraft"
+        >
+          <PendingSectionDrafts
+            :proposals="drafts.comboPending"
+            @changed="drafts.onChanged"
+            @optimistic-remove="drafts.onOptimisticRemove"
+            @optimistic-restore="drafts.onOptimisticRestore"
+          />
+        </div>
       </div>
 
-      <div :class="$style.comboMorphCell">
+      <div :class="$style.morphCol">
         <GuideSection
           flush
           title="Морфы"
@@ -113,26 +147,10 @@
             <MorphBoard :filled="morphFilled" />
           </div>
         </GuideSection>
-      </div>
-
-      <template v-if="isStaff && drafts.visible">
-        <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-          <PendingSectionDrafts
-            :proposals="drafts.summaryPending"
-            @changed="drafts.onChanged"
-            @optimistic-remove="drafts.onOptimisticRemove"
-            @optimistic-restore="drafts.onOptimisticRestore"
-          />
-        </div>
-        <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
-          <PendingSectionDrafts
-            :proposals="drafts.comboPending"
-            @changed="drafts.onChanged"
-            @optimistic-remove="drafts.onOptimisticRemove"
-            @optimistic-restore="drafts.onOptimisticRestore"
-          />
-        </div>
-        <div :class="[$style.comboMorphCell, $style.comboMorphDraft]">
+        <div
+          v-if="isStaff && drafts.visible"
+          :class="$style.sectionDraft"
+        >
           <PendingSectionDrafts
             :proposals="drafts.morphPending"
             @changed="drafts.onChanged"
@@ -140,7 +158,7 @@
             @optimistic-restore="drafts.onOptimisticRestore"
           />
         </div>
-      </template>
+      </div>
     </div>
   </div>
 </template>
@@ -184,9 +202,8 @@ defineProps<{
 .summary {
   min-width: 0;
   max-width: 100%;
-  min-height: 1.5rem;
-  /* Cap so long siege-role markdown scrolls inside the cell, not the page. */
-  max-height: min(28rem, 60vh);
+  min-height: 0;
+  flex: 1 1 auto;
   overflow: auto;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -215,9 +232,25 @@ defineProps<{
 }
 
 .comboBlock {
+  /* MorphBoard: 6 rows × 4.5rem + 1px border top/bottom */
+  --combo-work-h: calc(6 * 4.5rem + 2px);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: var(--combo-work-h);
+  max-height: var(--combo-work-h);
   border: 1px solid var(--color-border);
   background: var(--color-bg-panel);
   padding: 1rem 1.15rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.comboItem {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .comboItem + .comboItem {
@@ -232,56 +265,136 @@ defineProps<{
   color: var(--color-muted);
 }
 
-.topBlock {
+.comboScroll {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.topWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rowNotes {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .rowNotes {
+    gap: 0.9rem;
+  }
+}
+
+.rowCombo {
   display: flex;
   align-items: flex-start;
   gap: 1px;
-  margin-bottom: 2.5rem;
+  min-width: 0;
+  max-width: 100%;
   background: var(--color-border);
   border: 1px solid var(--color-border);
-  overflow: visible;
+  overflow: hidden;
 }
 
-.recruitCol {
+/* Same visual as home: bare frame, no panel chrome.
+   Fixed height = banner cardMatch width × frame aspect (292/218). */
+.rowNotesWithBanner {
+  --banner-w: calc(3 * 130px + 2 * 0.85rem);
+  --banner-h: calc(var(--banner-w) * 218 / 292);
+}
+
+@media (min-width: 768px) {
+  .rowNotesWithBanner {
+    --banner-w: calc(3 * 148px + 2 * 0.9rem);
+  }
+}
+
+.banner {
   flex: 0 0 auto;
-  align-self: stretch;
-  width: max-content;
+  align-self: flex-start;
+  width: var(--banner-w, auto);
+  height: var(--banner-h, auto);
   max-width: 100%;
-  min-width: 0;
-  padding: 0.85rem 1rem;
-  background: var(--color-bg);
+  line-height: 0;
 }
 
-.comboMorphRow {
+.rowNotesWithBanner .banner :deep(aside) {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  aspect-ratio: auto;
+}
+
+.notesClamp {
   flex: 1 1 auto;
   min-width: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1px;
-  margin: 0;
-  border: none;
-  background: var(--color-border);
-  overflow: visible;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
-.comboMorphCell {
+.rowNotesWithBanner .notesClamp {
+  height: var(--banner-h);
+  max-height: var(--banner-h);
+}
+
+/* Without banner, keep a reasonable scroll cap. */
+.rowNotes:not(.rowNotesWithBanner) .summary {
+  max-height: min(28rem, 60vh);
+}
+
+.comboCol,
+.morphCol {
   min-width: 0;
   padding: 0.85rem 1rem;
   background: var(--color-bg);
-  overflow: visible;
 }
 
-.comboMorphDraft {
+.comboCol {
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
+.comboCol > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Keep morph column ~same footprint as the banner / ~3 home cards. */
+.morphCol {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: min(100%, calc(3 * 148px + 2 * 0.9rem));
+  max-width: 100%;
+}
+
+.sectionDraft {
   display: flex;
   flex-direction: column;
-  /* Reserve draft chrome so catalog hydrate doesn't grow the page mid-scroll. */
   height: min(32rem, 70vh);
   min-height: min(32rem, 70vh);
   overflow: visible;
-  padding: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
 }
 
-.comboMorphDraft > * {
+.sectionDraft > * {
   flex: 1;
   min-height: 0;
   height: 100%;
@@ -293,13 +406,34 @@ defineProps<{
 }
 
 @media (max-width: 1100px) {
-  .topBlock {
+  .rowNotes,
+  .rowCombo {
     flex-direction: column;
   }
 
-  .comboMorphRow {
-    grid-template-columns: 1fr;
+  .banner,
+  .morphCol {
     width: 100%;
+  }
+
+  .rowNotesWithBanner .banner {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 292 / 218;
+  }
+
+  .rowNotesWithBanner .banner :deep(aside) {
+    height: auto !important;
+    aspect-ratio: 292 / 218;
+  }
+
+  .rowNotesWithBanner .notesClamp {
+    height: auto;
+    max-height: min(28rem, 60vh);
+  }
+
+  .rowNotesWithBanner .summary {
+    max-height: min(28rem, 60vh);
   }
 }
 </style>

@@ -321,7 +321,6 @@ defineProps<{
   /* crystals | relics | hardening (fit 5 slots) | buffs (rest) */
   grid-template-columns: auto auto auto minmax(14rem, 1fr);
   gap: 1px;
-  margin-bottom: 2.5rem;
   /* Gap lines = border color; cells cover with page bg so empties stay dark. */
   background: var(--color-border);
   border: 1px solid var(--color-border);

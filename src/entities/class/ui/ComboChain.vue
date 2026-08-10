@@ -36,15 +36,18 @@ defineProps<{
 .chain {
   margin: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
   gap: 0.35rem 0.2rem;
   list-style: none;
   padding: 0;
+  width: max-content;
+  max-width: none;
 }
 
 .step {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 0.2rem;
 }
