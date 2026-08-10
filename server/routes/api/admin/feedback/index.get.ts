@@ -10,17 +10,31 @@ export default defineEventHandler(async (event) => {
   const items = await withDbError(async () => {
     if (classSlug && /^[a-z0-9-]+$/.test(classSlug)) {
       return sql`
-        select id, class_id, class_slug, body, created_at
-        from guide_feedback
-        where class_slug = ${classSlug}
-        order by created_at desc
+        select
+          f.id,
+          f.class_id,
+          f.class_slug,
+          c.name_ru as class_name_ru,
+          f.body,
+          f.created_at
+        from guide_feedback f
+        left join classes c on c.id = f.class_id
+        where f.class_slug = ${classSlug}
+        order by f.created_at desc
         limit 200
       `
     }
     return sql`
-      select id, class_id, class_slug, body, created_at
-      from guide_feedback
-      order by created_at desc
+      select
+        f.id,
+        f.class_id,
+        f.class_slug,
+        c.name_ru as class_name_ru,
+        f.body,
+        f.created_at
+      from guide_feedback f
+      left join classes c on c.id = f.class_id
+      order by f.created_at desc
       limit 200
     `
   })
@@ -30,6 +44,7 @@ export default defineEventHandler(async (event) => {
       id: String(row.id),
       class_id: row.class_id != null ? String(row.class_id) : null,
       class_slug: row.class_slug != null ? String(row.class_slug) : null,
+      class_name_ru: row.class_name_ru != null ? String(row.class_name_ru) : null,
       body: String(row.body),
       created_at: row.created_at instanceof Date
         ? row.created_at.toISOString()

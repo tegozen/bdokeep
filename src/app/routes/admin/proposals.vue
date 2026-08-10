@@ -142,7 +142,7 @@ type Proposal = {
 const { isStaff, refresh, loseSession } = useSuperadmin()
 const { alert, confirm } = useConfirm()
 const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePendingSummary()
-const { status, classFilter } = useAdminProposalFilters()
+const { status, classFilter, sectionFilter } = useAdminProposalFilters()
 
 const loading = ref(false)
 const items = ref<Proposal[]>([])
@@ -194,6 +194,9 @@ async function load() {
     const query: Record<string, string> = { status: status.value }
     if (classFilter.value && /^[a-z0-9-]+$/.test(classFilter.value)) {
       query.class_slug = classFilter.value
+    }
+    if (sectionFilter.value) {
+      query.section = sectionFilter.value
     }
     const res = await $fetch<{ items: Proposal[] }>('/api/admin/proposals', { query })
     items.value = res.items ?? []
@@ -314,7 +317,7 @@ async function reject(id: string) {
   }
 }
 
-watch([status, classFilter], () => {
+watch([status, classFilter, sectionFilter], () => {
   if (isStaff.value) void load()
 })
 

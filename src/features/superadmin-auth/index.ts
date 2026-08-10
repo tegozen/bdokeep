@@ -16,6 +16,7 @@ export { usePendingSummary } from './lib/usePendingSummary'
 export {
   useAdminProposalFilters,
   ADMIN_PROPOSAL_STATUS_TABS,
+  ADMIN_PROPOSAL_SECTION_OPTIONS,
   type AdminProposalStatus,
 } from './lib/useAdminProposalFilters'
 export {

@@ -5,8 +5,7 @@
       :tabs="statusTabs"
       aria-label="Статус заявок"
     />
-    <label :class="$style.classFilter">
-      <span :class="$style.classLabel">Класс</span>
+    <div :class="$style.selects">
       <select
         v-model="classFilter"
         :class="[$style.select, classFilter ? $style.selectOn : null]"
@@ -21,7 +20,21 @@
           {{ c.name_ru }}
         </option>
       </select>
-    </label>
+      <select
+        v-model="sectionFilter"
+        :class="[$style.select, sectionFilter ? $style.selectOn : null]"
+        aria-label="Фильтр по разделу"
+      >
+        <option value="">Все разделы</option>
+        <option
+          v-for="s in sectionOptions"
+          :key="s.id"
+          :value="s.id"
+        >
+          {{ s.label }}
+        </option>
+      </select>
+    </div>
   </div>
 </template>
 
@@ -30,7 +43,8 @@ import { fetchPublishedClasses, type BdoClass } from '@/entities/class'
 import { useAdminProposalFilters } from '@/features/superadmin-auth'
 import UiPresetTabs from '@/shared/ui/UiPresetTabs.vue'
 
-const { status, classFilter, statusTabs } = useAdminProposalFilters()
+const { status, classFilter, sectionFilter, statusTabs, sectionOptions } =
+  useAdminProposalFilters()
 
 const { data: classes } = await useAsyncData(
   'admin-proposal-filter-classes',
@@ -88,19 +102,13 @@ const { data: classes } = await useAsyncData(
   z-index: 1;
 }
 
-.classFilter {
-  display: inline-flex;
+.selects {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.55rem 0.85rem;
   min-width: 0;
   margin-left: auto;
-  color: #c9b59a;
-  font-size: 0.9rem;
-}
-
-.classLabel {
-  flex: 0 0 auto;
-  white-space: nowrap;
 }
 
 .select {
@@ -155,15 +163,16 @@ const { data: classes } = await useAsyncData(
     font-size: 0.78rem;
   }
 
-  .classFilter {
+  .selects {
     width: 100%;
     margin-left: 0;
-    justify-content: space-between;
-    font-size: 0.88rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
   }
 
   .select {
-    flex: 1 1 auto;
+    width: 100%;
     max-width: none;
     min-width: 0;
   }

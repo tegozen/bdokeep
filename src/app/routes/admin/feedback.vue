@@ -6,7 +6,7 @@
         :class="[$style.chip, $style.chipOn]"
         @click="clearClassFilter"
       >
-        Класс: {{ classFilter }} ×
+        Класс: {{ classFilterLabel }} ×
       </button>
     </div>
 
@@ -21,7 +21,7 @@
             :to="`/class/${item.class_slug}`"
             :class="$style.classLink"
           >
-            {{ item.class_slug }}
+            {{ item.class_name_ru || item.class_slug }}
           </NuxtLink>
           <span v-else :class="$style.siteTag">Сайт</span>
           <span :class="$style.meta">{{ formatDate(item.created_at) }}</span>
@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useSuperadmin } from '@/features/superadmin-auth'
 import { formatRuDateTime, parseApiError, useConfirm } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
@@ -61,6 +61,7 @@ type FeedbackItem = {
   id: string
   class_id: string | null
   class_slug: string | null
+  class_name_ru?: string | null
   body: string
   created_at: string
 }
@@ -76,6 +77,13 @@ const acting = ref<string | null>(null)
 const classFilter = ref(
   typeof route.query.class === 'string' ? route.query.class.trim().toLowerCase() : '',
 )
+
+const classFilterLabel = computed(() => {
+  const slug = classFilter.value
+  if (!slug) return ''
+  const match = items.value.find((i) => i.class_slug === slug)
+  return match?.class_name_ru || slug
+})
 
 const formatDate = formatRuDateTime
 
@@ -118,7 +126,8 @@ async function load() {
 }
 
 async function remove(item: FeedbackItem) {
-  const scope = item.class_slug ? `по классу ${item.class_slug}` : 'с главной'
+  const className = item.class_name_ru || item.class_slug
+  const scope = className ? `по классу ${className}` : 'с главной'
   const ok = await confirm({
     title: 'Удалить сообщение?',
     message: `Сообщение ${scope} будет удалено.`,
