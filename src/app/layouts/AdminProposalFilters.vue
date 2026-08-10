@@ -5,22 +5,38 @@
       :tabs="statusTabs"
       aria-label="Статус заявок"
     />
-    <button
-      v-if="classFilter"
-      type="button"
-      :class="[$style.chip, $style.chipOn]"
-      @click="clearClassFilter"
-    >
-      Класс: {{ classFilter }} ×
-    </button>
+    <label :class="$style.classFilter">
+      <span :class="$style.classLabel">Класс</span>
+      <select
+        v-model="classFilter"
+        :class="[$style.select, classFilter ? $style.selectOn : null]"
+        aria-label="Фильтр по классу"
+      >
+        <option value="">Все классы</option>
+        <option
+          v-for="c in classes"
+          :key="c.slug"
+          :value="c.slug"
+        >
+          {{ c.name_ru }}
+        </option>
+      </select>
+    </label>
   </div>
 </template>
 
 <script setup lang="ts">
+import { fetchPublishedClasses, type BdoClass } from '@/entities/class'
 import { useAdminProposalFilters } from '@/features/superadmin-auth'
 import UiPresetTabs from '@/shared/ui/UiPresetTabs.vue'
 
-const { status, classFilter, clearClassFilter, statusTabs } = useAdminProposalFilters()
+const { status, classFilter, statusTabs } = useAdminProposalFilters()
+
+const { data: classes } = await useAsyncData(
+  'admin-proposal-filter-classes',
+  () => fetchPublishedClasses(),
+  { default: () => [] as BdoClass[] },
+)
 </script>
 
 <style module>
@@ -72,19 +88,50 @@ const { status, classFilter, clearClassFilter, statusTabs } = useAdminProposalFi
   z-index: 1;
 }
 
-.chip {
+.classFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  margin-left: auto;
+  color: #c9b59a;
+  font-size: 0.9rem;
+}
+
+.classLabel {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.select {
+  box-sizing: border-box;
+  min-width: 10.5rem;
+  max-width: min(16rem, 100%);
+  min-height: 2.1rem;
   border: 1px solid var(--color-border);
-  background: transparent;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, #050505 55%, transparent);
   color: var(--color-ink);
   cursor: pointer;
   font: inherit;
-  padding: 0.4rem 0.75rem;
+  font-size: 0.88rem;
+  padding: 0.3rem 1.75rem 0.3rem 0.65rem;
 }
 
-.chipOn {
+.select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-gold) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.selectOn {
   border-color: var(--color-border-strong);
   background: var(--color-gold-dim);
   color: var(--color-gold);
+}
+
+.select option {
+  background: #121212;
+  color: var(--color-ink);
 }
 
 @media (max-width: 640px) {
@@ -106,6 +153,19 @@ const { status, classFilter, clearClassFilter, statusTabs } = useAdminProposalFi
     min-width: 0;
     padding-inline: 0.35rem;
     font-size: 0.78rem;
+  }
+
+  .classFilter {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+    font-size: 0.88rem;
+  }
+
+  .select {
+    flex: 1 1 auto;
+    max-width: none;
+    min-width: 0;
   }
 }
 </style>
