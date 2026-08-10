@@ -67,7 +67,12 @@
               Применить на сайт
             </UiButton>
           </div>
-          <p v-if="item.review_note" :class="$style.muted">Заметка: {{ item.review_note }}</p>
+          <p
+            v-if="item.review_note && item.review_note !== 'повторно применено'"
+            :class="$style.muted"
+          >
+            Заметка: {{ item.review_note }}
+          </p>
         </li>
       </ul>
 
@@ -274,6 +279,7 @@ async function reapply(item: Proposal) {
         items.value.unshift(item)
       }
     }
+    await alert({ title: 'Готово', message: 'Повторно применено' })
   } catch (e: unknown) {
     await alert({
       title: 'Ошибка',

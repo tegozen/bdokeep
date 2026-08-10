@@ -15,12 +15,6 @@
   >
     <div :class="$style.workspace">
       <div :class="$style.left">
-        <p :class="$style.hint">
-          Комба {{ isSuccession ? 'наследия' : 'пробуждения' }} ·
-          {{ kindLabel }} — выберите скиллы по порядку.
-          Можно добавить несколько комб; у каждой — своя заметка.
-        </p>
-
         <CatalogPicker
           v-model:query="query"
           fill
@@ -67,10 +61,11 @@
 import { computed, ref } from 'vue'
 import {
   MAX_COMBO_STEPS,
-  MAX_COMBOS_PER_MODE,
   comboKindLabel,
+  collapseSkillsByRank,
   combosFromEditorItems,
   editorItemsFromCombos,
+  parseSkillRank,
   type ComboEditorItem,
   type ComboEditorSkill,
   type ComboKindId,
@@ -83,6 +78,7 @@ import {
 import { submitGuideProposal } from '../api/submitProposal'
 import { useProposeModal } from '../lib/useProposeModal'
 import { useReorderableList } from '../lib/useReorderableList'
+import { useConfirm } from '@/shared/lib'
 import CatalogPicker from './CatalogPicker.vue'
 import ComboEditorTiles from './ComboEditorTiles.vue'
 import ProposeModalShell from './ProposeModalShell.vue'
@@ -111,6 +107,7 @@ const skills = ref<Skill[]>([])
 const catalogPending = ref(false)
 const catalogError = ref(false)
 let dividerSeq = 0
+const { alert } = useConfirm()
 
 const isSuccession = computed(() => props.section === 'combo_succession')
 const kindLabel = computed(() => comboKindLabel(props.kind))
@@ -168,21 +165,19 @@ function hydrateFromInitial() {
   const byId = new Map(skills.value.map((s) => [s.id, s]))
   const next: PickItem[] = []
   let skillsInCombo = 0
-  let comboCount = 0
   for (const item of items) {
     if (item.kind === 'divider') {
-      if (comboCount >= MAX_COMBOS_PER_MODE) break
       skillsInCombo = 0
-      comboCount += 1
       next.push({ ...item, key: item.key || `d-${dividerSeq++}` })
       continue
     }
     if (skillsInCombo >= MAX_COMBO_STEPS) continue
     const skill = byId.get(item.id)
+    const rawName = skill?.name_ru || item.name_ru || 'Скилл'
     next.push({
       kind: 'skill',
       id: item.id,
-      name_ru: skill?.name_ru || item.name_ru || 'Скилл',
+      name_ru: parseSkillRank(rawName).base || rawName,
       icon_url: skill?.icon_url ?? item.icon_url ?? null,
     })
     skillsInCombo += 1
@@ -205,7 +200,10 @@ const {
   serialize: () =>
     JSON.stringify({
       kind: props.kind,
-      combo: combosFromEditorItems(picked.value).map((c) => c.skill_ids),
+      combo: combosFromEditorItems(picked.value).map((c) => ({
+        notes: c.notes,
+        skill_ids: c.skill_ids,
+      })),
     }),
   onOpen: async () => {
     catalogPending.value = true
@@ -232,10 +230,11 @@ defineExpose({ openModal })
 
 const filteredCatalog = computed(() => {
   const q = query.value.trim().toLowerCase()
-  return skills.value.filter((s) => {
+  const matched = skills.value.filter((s) => {
     if (!q) return true
     return s.name_ru.toLowerCase().includes(q)
   })
+  return collapseSkillsByRank(matched)
 })
 
 function addItem(item: { id: string; name_ru: string; icon_url: string | null }) {
@@ -249,17 +248,14 @@ function addItem(item: { id: string; name_ru: string; icon_url: string | null })
     formError.value = `Максимум ${maxPicked} шагов в одной комбе`
     return
   }
-  if (!trailingDivider && combos.length >= MAX_COMBOS_PER_MODE && currentLen === 0) {
-    formError.value = `Максимум ${MAX_COMBOS_PER_MODE} комб`
-    return
-  }
   formError.value = ''
+  const displayName = parseSkillRank(item.name_ru).base || item.name_ru
   list = [
     ...list,
     {
       kind: 'skill',
       id: item.id,
-      name_ru: item.name_ru,
+      name_ru: displayName,
       icon_url: item.icon_url,
     },
   ]
@@ -301,12 +297,15 @@ async function onSubmit() {
       formError.value = 'Добавьте хотя бы один скилл'
       return null
     }
-    if (combos.length > MAX_COMBOS_PER_MODE) {
-      formError.value = `Максимум ${MAX_COMBOS_PER_MODE} комб`
-      return null
-    }
     if (combos.some((c) => c.skill_ids.length > MAX_COMBO_STEPS)) {
       formError.value = `Максимум ${MAX_COMBO_STEPS} шагов в одной комбе`
+      return null
+    }
+    if (combos.some((c) => !c.notes.trim())) {
+      await alert({
+        title: 'Ошибка',
+        message: 'Укажите заметку для каждой комбы',
+      })
       return null
     }
     return submitGuideProposal({
@@ -316,7 +315,7 @@ async function onSubmit() {
         mode: isSuccession.value ? 'succession' : 'awakening',
         kind: props.kind,
         combos: combos.map((c) => ({
-          notes: c.notes || undefined,
+          notes: c.notes.trim(),
           skill_ids: c.skill_ids,
         })),
       },
@@ -330,7 +329,7 @@ async function onSubmit() {
 <style module>
 .workspace {
   display: grid;
-  grid-template-columns: minmax(16rem, 0.95fr) minmax(18rem, 1.15fr);
+  grid-template-columns: minmax(14rem, 0.62fr) minmax(18rem, 1.48fr);
   gap: 1rem;
   flex: 1;
   min-height: 0;
@@ -351,13 +350,6 @@ async function onSubmit() {
 
 .right {
   overflow: hidden;
-}
-
-.hint {
-  margin: 0;
-  flex-shrink: 0;
-  font-size: 0.92rem;
-  color: var(--color-muted);
 }
 
 .pickedHead {

@@ -58,6 +58,17 @@
         >
           <div :class="$style.dividerHead">
             <span :class="$style.dividerLabel">Комба</span>
+            <input
+              :value="item.notes"
+              type="text"
+              maxlength="500"
+              required
+              placeholder="Кратко, зачем эта комба"
+              aria-label="Заметка"
+              :class="$style.input"
+              @mousedown.stop
+              @input="emit('updateDivider', i, ($event.target as HTMLInputElement).value)"
+            >
             <button
               v-if="canRemoveDivider(i)"
               type="button"
@@ -69,18 +80,6 @@
               ✕
             </button>
           </div>
-          <label :class="$style.field">
-            <span :class="$style.fieldLabel">Заметка</span>
-            <input
-              :value="item.notes"
-              type="text"
-              maxlength="500"
-              placeholder="Кратко, зачем эта комба"
-              :class="$style.input"
-              @mousedown.stop
-              @input="emit('updateDivider', i, ($event.target as HTMLInputElement).value)"
-            >
-          </label>
         </div>
       </li>
 
@@ -241,7 +240,6 @@ function canRemoveDivider(index: number) {
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: 0.35rem;
   border: 1px dashed var(--color-border-strong);
   background: color-mix(in srgb, var(--color-gold-soft) 8%, var(--color-bg));
   cursor: grab;
@@ -256,30 +254,20 @@ function canRemoveDivider(index: number) {
 .dividerHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding-right: 1.5rem;
+  gap: 0.55rem;
 }
 
 .dividerLabel {
+  flex-shrink: 0;
   color: var(--color-gold-soft);
   font-size: 0.78rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.fieldLabel {
-  color: var(--color-muted);
-  font-size: 0.72rem;
-}
-
 .input {
+  flex: 1 1 auto;
+  min-width: 0;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-ink);
@@ -290,6 +278,11 @@ function canRemoveDivider(index: number) {
 
 .input:focus {
   outline: 1px solid var(--color-gold-soft);
+}
+
+.divider .tileRemove {
+  position: static;
+  flex-shrink: 0;
 }
 
 .emptySlot {

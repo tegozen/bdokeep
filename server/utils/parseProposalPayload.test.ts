@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { createError } from 'h3'
-import { CRYSTAL_PRESET_IDS, MAX_COMBOS_PER_MODE } from '../../domain/index.ts'
+import { CRYSTAL_PRESET_IDS } from '../../domain/index.ts'
 import type { Sql } from './db.ts'
 import { parseAndValidatePayload } from './parseProposalPayload.ts'
 import type { CatalogIdsExist } from './proposals/parse/types.ts'
@@ -72,19 +72,36 @@ describe('formatApplyRejectNote', () => {
 })
 
 describe('parseAndValidatePayload combo', () => {
-  it('accepts legacy skill_ids', async () => {
+  it('accepts legacy skill_ids with notes via combos', async () => {
     const out = await parseAndValidatePayload({
       sql: dummySql,
       classSlug: 'warrior',
       section: 'combo_awakening',
-      rawPayload: { skill_ids: [SKILL_A, SKILL_B] },
+      rawPayload: {
+        combos: [{ notes: 'burst', skill_ids: [SKILL_A, SKILL_B] }],
+      },
       catalogIdsExist: allowAll([SKILL_A, SKILL_B]),
     })
     assert.deepEqual(out.payload, {
       mode: 'awakening',
       kind: 'pvp',
-      combos: [{ title: '', notes: '', skill_ids: [SKILL_A, SKILL_B] }],
+      combos: [{ title: '', notes: 'burst', skill_ids: [SKILL_A, SKILL_B] }],
     })
+  })
+
+  it('rejects legacy skill_ids without notes', async () => {
+    await expectHttpError(
+      () =>
+        parseAndValidatePayload({
+          sql: dummySql,
+          classSlug: 'warrior',
+          section: 'combo_awakening',
+          rawPayload: { skill_ids: [SKILL_A, SKILL_B] },
+          catalogIdsExist: allowAll([SKILL_A, SKILL_B]),
+        }),
+      400,
+      'Укажите заметку для каждой комбы',
+    )
   })
 
   it('accepts kind pve', async () => {
@@ -92,10 +109,28 @@ describe('parseAndValidatePayload combo', () => {
       sql: dummySql,
       classSlug: 'warrior',
       section: 'combo_awakening',
-      rawPayload: { kind: 'pve', combos: [{ skill_ids: [SKILL_A] }] },
+      rawPayload: {
+        kind: 'pve',
+        combos: [{ notes: 'фарм', skill_ids: [SKILL_A] }],
+      },
       catalogIdsExist: allowAll([SKILL_A]),
     })
     assert.equal(out.payload.kind, 'pve')
+  })
+
+  it('rejects empty notes', async () => {
+    await expectHttpError(
+      () =>
+        parseAndValidatePayload({
+          sql: dummySql,
+          classSlug: 'warrior',
+          section: 'combo_awakening',
+          rawPayload: { combos: [{ notes: '  ', skill_ids: [SKILL_A] }] },
+          catalogIdsExist: allowAll([SKILL_A]),
+        }),
+      400,
+      'Укажите заметку для каждой комбы',
+    )
   })
 
   it('rejects invalid kind', async () => {
@@ -105,7 +140,7 @@ describe('parseAndValidatePayload combo', () => {
           sql: dummySql,
           classSlug: 'warrior',
           section: 'combo_awakening',
-          rawPayload: { kind: 't1', combos: [{ skill_ids: [SKILL_A] }] },
+          rawPayload: { kind: 't1', combos: [{ notes: 'x', skill_ids: [SKILL_A] }] },
           catalogIdsExist: allowAll([SKILL_A]),
         }),
       400,
@@ -128,22 +163,19 @@ describe('parseAndValidatePayload combo', () => {
     )
   })
 
-  it('rejects over MAX_COMBOS_PER_MODE', async () => {
-    const combos = Array.from({ length: MAX_COMBOS_PER_MODE + 1 }, () => ({
+  it('accepts many combos without a chain-count cap', async () => {
+    const combos = Array.from({ length: 12 }, (_, i) => ({
+      notes: `n${i}`,
       skill_ids: [SKILL_A],
     }))
-    await expectHttpError(
-      () =>
-        parseAndValidatePayload({
-          sql: dummySql,
-          classSlug: 'warrior',
-          section: 'combo_awakening',
-          rawPayload: { combos },
-          catalogIdsExist: allowAll([SKILL_A]),
-        }),
-      400,
-      `Максимум ${MAX_COMBOS_PER_MODE} комб`,
-    )
+    const out = await parseAndValidatePayload({
+      sql: dummySql,
+      classSlug: 'warrior',
+      section: 'combo_awakening',
+      rawPayload: { combos },
+      catalogIdsExist: allowAll([SKILL_A]),
+    })
+    assert.equal((out.payload.combos as unknown[]).length, 12)
   })
 
   it('skipUnknownCatalog drops unknown skills to empty replace', async () => {
@@ -151,7 +183,7 @@ describe('parseAndValidatePayload combo', () => {
       sql: dummySql,
       classSlug: 'warrior',
       section: 'combo_succession',
-      rawPayload: { combos: [{ skill_ids: [SKILL_A] }] },
+      rawPayload: { combos: [{ notes: 'x', skill_ids: [SKILL_A] }] },
       skipUnknownCatalog: true,
       catalogIdsExist: allowNone(),
     })

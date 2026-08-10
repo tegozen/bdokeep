@@ -3,7 +3,6 @@ import {
   MAX_COMBO_NOTES_LEN,
   MAX_COMBO_STEPS,
   MAX_COMBO_TITLE_LEN,
-  MAX_COMBOS_PER_MODE,
   UUID_RE,
   comboModeFromSection,
   isComboKindId,
@@ -31,12 +30,6 @@ export async function parseCombo(ctx: ParseSectionContext): Promise<ParsedPropos
   if (!rawCombos.length) {
     throw createError({ statusCode: 400, statusMessage: 'Выберите хотя бы один скилл' })
   }
-  if (rawCombos.length > MAX_COMBOS_PER_MODE) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: `Максимум ${MAX_COMBOS_PER_MODE} комб`,
-    })
-  }
 
   const allIds: string[] = []
   const staged: Array<{ title: string; notes: string; skill_ids: string[] }> = []
@@ -54,6 +47,12 @@ export async function parseCombo(ctx: ParseSectionContext): Promise<ParsedPropos
       throw createError({
         statusCode: 400,
         statusMessage: `Заметка комбы: максимум ${MAX_COMBO_NOTES_LEN} символов`,
+      })
+    }
+    if (!notes) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Укажите заметку для каждой комбы',
       })
     }
     const rawIds = entry.skill_ids

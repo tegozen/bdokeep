@@ -51,9 +51,6 @@
               >
             </label>
           </SuperadminAuth>
-          <p :class="$style.ugcNote">
-            Не копируйте чужие гайды целиком без разрешения автора.
-          </p>
         </div>
 
         <div :class="[$style.body, (full || fillBody) && $style.bodyFull]">
@@ -196,14 +193,6 @@ const { online } = useOnlineStatus()
   gap: 0.35rem;
   font-size: 0.88rem;
   color: var(--color-muted);
-}
-
-.ugcNote {
-  margin: 0;
-  font-size: 0.78rem;
-  line-height: 1.35;
-  color: var(--color-muted);
-  opacity: 0.9;
 }
 
 .input {
