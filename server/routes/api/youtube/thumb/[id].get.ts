@@ -3,7 +3,7 @@ const THUMB_MAX_HITS = 60
 
 export default defineEventHandler(async (event) => {
   const ip = clientIp(event)
-  const limit = checkRateLimit(`yt-thumb:${ip}`, THUMB_MAX_HITS, THUMB_WINDOW_MS)
+  const limit = await checkRateLimit(`yt-thumb:${ip}`, THUMB_MAX_HITS, THUMB_WINDOW_MS)
   if (!limit.allowed) {
     const wait = formatRetryAfterRu(limit.retryAfterMs)
     throw createError({

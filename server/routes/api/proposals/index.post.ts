@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
 
   const ip = clientIp(event)
   if (!asStaff) {
-    const limit = checkRateLimit(`proposal:${ip}`)
+    const limit = await checkRateLimit(`proposal:${ip}`)
     if (!limit.allowed) {
       const wait = formatRetryAfterRu(limit.retryAfterMs)
       throw createError({
@@ -109,7 +109,10 @@ export default defineEventHandler(async (event) => {
         status: String(inserted.status),
         author_label: inserted.author_label == null ? null : String(inserted.author_label),
       },
-      { reviewNote: `auto-approved (${session!.username})` },
+      {
+        reviewNote: `auto-approved (${session!.username})`,
+        rejectOnFailure: false,
+      },
     )
     return { ok: true, id: inserted.id, autoApproved: true }
   }

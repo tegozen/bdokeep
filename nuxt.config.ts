@@ -223,89 +223,25 @@ export default defineNuxtConfig({
           },
         },
         {
-          // Cookie gate: only serve/cache admin HTML while bdo_admin JWT exp is in the future.
+          // Admin shell/API: online only (no offline cache — avoids stale data and forged JWT exp).
           urlPattern: ({ request, url }) => {
             if (request.mode !== 'navigate') return false
             const p = url.pathname
-            if (
-              p !== '/admin' &&
-              p !== '/admin/' &&
-              !p.startsWith('/admin/proposals') &&
-              !p.startsWith('/admin/feedback') &&
-              !p.startsWith('/admin/users') &&
-              !p.startsWith('/admin/banner')
-            ) {
-              return false
-            }
-            const raw = request.headers.get('cookie') || ''
-            const m = raw.match(/(?:^|;\s*)bdo_admin=([^;]+)/)
-            if (!m) return false
-            let token = m[1]
-            try {
-              token = decodeURIComponent(token)
-            } catch {
-              /* keep raw */
-            }
-            const parts = token.split('.')
-            if (parts.length !== 3) return false
-            try {
-              const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-              const json = atob(b64)
-              const payload = JSON.parse(json) as { exp?: number }
-              const exp = Number(payload.exp)
-              return Number.isFinite(exp) && exp * 1000 > Date.now()
-            } catch {
-              return false
-            }
+            return (
+              p === '/admin' ||
+              p === '/admin/' ||
+              p.startsWith('/admin/proposals') ||
+              p.startsWith('/admin/feedback') ||
+              p.startsWith('/admin/users') ||
+              p.startsWith('/admin/banner')
+            )
           },
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'admin-pages',
-            networkTimeoutSeconds: 3,
-            expiration: { maxEntries: 10, maxAgeSeconds: 7 * 86400 },
-            cacheableResponse: { statuses: [200] },
-          },
+          handler: 'NetworkOnly',
         },
         {
-          urlPattern: ({ request, url }) => {
-            if (request.method !== 'GET') return false
-            const p = url.pathname
-            if (
-              p !== '/api/admin/proposals' &&
-              p !== '/api/admin/feedback' &&
-              p !== '/api/admin/guild-banner' &&
-              p !== '/api/admin/users'
-            ) {
-              return false
-            }
-            const raw = request.headers.get('cookie') || ''
-            const m = raw.match(/(?:^|;\s*)bdo_admin=([^;]+)/)
-            if (!m) return false
-            let token = m[1]
-            try {
-              token = decodeURIComponent(token)
-            } catch {
-              /* keep raw */
-            }
-            const parts = token.split('.')
-            if (parts.length !== 3) return false
-            try {
-              const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-              const json = atob(b64)
-              const payload = JSON.parse(json) as { exp?: number }
-              const exp = Number(payload.exp)
-              return Number.isFinite(exp) && exp * 1000 > Date.now()
-            } catch {
-              return false
-            }
-          },
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'admin-api',
-            networkTimeoutSeconds: 3,
-            expiration: { maxEntries: 20, maxAgeSeconds: 7 * 86400 },
-            cacheableResponse: { statuses: [200] },
-          },
+          urlPattern: ({ request, url }) =>
+            request.method === 'GET' && url.pathname.startsWith('/api/admin'),
+          handler: 'NetworkOnly',
         },
       ],
     },

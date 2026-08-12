@@ -7,7 +7,7 @@
     :trigger-label="triggerLabel"
     :submitting="submitting"
     :form-error="formError"
-    :is-superadmin="isSuperadmin"
+    :is-staff="isStaff"
     :request-close="requestClose"
     size="lg"
     fill-body
@@ -230,7 +230,7 @@ const {
   submitting,
   formError,
   requestClose,
-  isSuperadmin,
+  isStaff,
   openModal,
   runSubmit,
 } = useProposeModal({

@@ -16,6 +16,31 @@ const SESSION_STORAGE_META_KEY = 'bdo_admin_meta'
 
 let visibilityHooked = false
 let expiryTimer: ReturnType<typeof setTimeout> | null = null
+let refreshDebounce: ReturnType<typeof setTimeout> | null = null
+
+function fetchErrorStatus(err: unknown): number {
+  if (err && typeof err === 'object' && 'statusCode' in err) {
+    const code = Number((err as { statusCode?: number }).statusCode)
+    if (Number.isFinite(code)) return code
+  }
+  if (err && typeof err === 'object' && 'status' in err) {
+    const code = Number((err as { status?: number }).status)
+    if (Number.isFinite(code)) return code
+  }
+  return 0
+}
+
+/** True when server explicitly denied the session (not a transient network/5xx). */
+export function isExplicitAuthFailure(err: unknown): boolean {
+  const status = fetchErrorStatus(err)
+  return status === 401 || status === 403
+}
+
+function shouldRestoreOfflineSession(err: unknown): boolean {
+  const status = fetchErrorStatus(err)
+  if (status === 0) return true
+  return status >= 500
+}
 
 function clearExpiryTimer() {
   if (expiryTimer != null) {
@@ -119,6 +144,14 @@ export function useSuperadmin() {
     const at = expiresAt.value ?? readStoredExpiry()
     if (at != null && Date.now() >= at) {
       void loseSession()
+      return
+    }
+    if (document.visibilityState === 'visible') {
+      if (refreshDebounce != null) clearTimeout(refreshDebounce)
+      refreshDebounce = setTimeout(() => {
+        refreshDebounce = null
+        void refresh()
+      }, 300)
     }
   }
 
@@ -150,7 +183,11 @@ export function useSuperadmin() {
       } else {
         await loseSession()
       }
-    } catch {
+    } catch (err: unknown) {
+      if (!shouldRestoreOfflineSession(err)) {
+        await loseSession()
+        return
+      }
       const stored = expiresAt.value ?? readStoredExpiry()
       const meta =
         username.value && role.value

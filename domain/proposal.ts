@@ -199,6 +199,16 @@ export function classSummaryFieldFromGuide(
   return classSummaryField(comboKindFromPreset(preset), mode)
 }
 
+export type ComboSectionUpdateKey = `combo_${ComboKindId}_${GuideSpecMode}`
+
+/** section_updates key for combo blocks (per PvP/PvE × awakening/succession). */
+export function comboSectionUpdateKey(
+  kind: ComboKindId,
+  mode: GuideSpecMode,
+): ComboSectionUpdateKey {
+  return `combo_${kind}_${mode}`
+}
+
 export function summaryModeFromSection(section: ProposalSection): 'awakening' | 'succession' {
   return section === 'summary_succession' ? 'succession' : 'awakening'
 }

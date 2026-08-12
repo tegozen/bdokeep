@@ -20,7 +20,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Пустые секции явно помечены («Пока пусто»), а не выглядят сломанными
 - **Тир 1–5 ★** для сочетаний **ПВП/ПВЕ × Пробуждение/Наследие** (в хедере — по текущим табам; всё кроме пресета ПВЕ пишет в ПВП); видят все, ставит админ
 - На главной: фильтр по тиру / «Скрыть пустые»; у админов — «Показать предложения» (только классы с pending); заполненные классы сортируются от большего тира
-- У каждого раздела: «Обновлено ДД.ММ.ГГГГ · ник/админ»; точки у пресетов с данными в хедере
+- У каждого раздела: «Обновлено ДД.ММ.ГГГГ · ник/админ»; у комбы — отдельно для ПВП/ПВЕ × пробуждение/наследие; точки у пресетов с данными в хедере
 
 ### Режимы и пресеты
 
@@ -62,7 +62,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - JWT-вход по логину/паролю (httpOnly cookie `bdo_admin`); bootstrap-суперадмин `admin` + `ADMIN_PASSWORD`
 - Раздел `/admin` — навигация в хедере (слева от «Выйти»): заявки, ОС, баннер, пользователи (только суперадмин)
 - Роли: **admin** — заявки, ОС, баннер, тиры, auto-approve; **superadmin** — то же + управление пользователями
-- Очередь заявок `/admin/proposals` — фильтр по статусу, классу и разделу; одобрить / отклонить / **переприменить**; превью секции; правка summary перед approve
+- Очередь заявок `/admin/proposals` — фильтр по статусу, классу и разделу; одобрить / отклонить / **переприменить**; превью секции; правка summary перед approve; «Загрузить ещё» при >100 строк
 - Инбокс ОС `/admin/feedback` — список с превью Markdown и удаление
 - Баннер набора `/admin/banner` — текст, иконка, ссылки, вкл/выкл; справа live-превью карточки как на сайте (без сохранения)
 - Пользователи `/admin/users` (только суперадмин) — создать админа, сменить пароль, отключить/удалить
@@ -74,9 +74,10 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 ### PWA / оболочка / перф
 
 - Установка как приложение (`@vite-pwa/nuxt`); баннер при новой версии SW
-- Offline-чтение уже посещённых `/`, `/class/:slug`, `/admin/*` (HTML/API — NetworkFirst; иконки `/classes`/`/codex`/превью YT — CacheFirst)
+- Offline-чтение уже посещённых `/` и `/class/:slug` (HTML/API — NetworkFirst; иконки `/classes`/`/codex`/превью YT — CacheFirst)
+- Админка `/admin/*` и `/api/admin/*` — только online (без offline-кэша SW)
 - На главной офлайн видны только классы с закэшированным гайдом; «Предложить» и «Обратная связь» скрыты; тост при смене сети
-- Админ-кэш заявок/ОС сбрасывается при logout и истечении cookie `bdo_admin`
+- Админ-кэш заявок/ОС сбрасывается при logout, 401 и истечении cookie `bdo_admin`
 - Один CSS-бандл (stylesheet); gzip HTML/JSON в Nitro (`NITRO_COMPRESS=0`, если уже жмёт nginx)
 - Системные шрифты (`system-ui` / Segoe UI / Roboto) — без webfonts, без CLS от подмены гарнитуры
 - Портреты на главной: opaque WebP без alpha, LCP — `fetchpriority=high` + без lazy у первого ряда
@@ -85,7 +86,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 - Title/description и OG/Twitter на `/` и `/class/[slug]` (PvP и PvE); лёгкий JSON-LD (`WebSite` / `WebPage`)
 - `/sitemap.xml` — главная + опубликованные классы; `/robots.txt` — `Disallow: /admin` (админку в индекс не пускаем)
-- В production задайте `NUXT_PUBLIC_SITE_URL` (абсолютный origin без trailing slash) — canonical, OG и sitemap
+- В production обязателен `NUXT_PUBLIC_SITE_URL` (абсолютный origin без trailing slash) — canonical, OG и sitemap; Nitro не стартует без него
 
 ### Ops / безопасность
 
@@ -93,7 +94,8 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
 - Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
 - Same-origin / JWT cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
-- CSRF: same-origin на login/logout и `POST /api/proposals` / `POST /api/feedback`
+- CSRF: same-origin (Origin/Referer или `Sec-Fetch-Site`) на login/logout, `POST /api/proposals`, `POST /api/feedback` и все mutating `/api/admin/*`
+- Rate limit login/proposals/feedback — общий через Postgres (`rate_limit_hits`), fallback in-memory
 - CSP без CDN для JS/CSS и иконок каталога (см. `AGENTS.md`)
 - `.npmrc`: `min-release-age=7` + `engine-strict` — не ставить пакеты моложе 7 дней; Node должен совпадать с `engines` (npm ≥ 11.10)
 - `web`: `no-new-privileges` + `cap_drop: ALL`
@@ -177,6 +179,9 @@ gzip on;
 gzip_comp_level 5;
 gzip_types text/plain text/css text/html application/javascript application/json application/manifest+json image/svg+xml;
 gzip_vary on;
+
+# HTTPS only — включите после проверки TLS
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
 location / {
   proxy_pass http://127.0.0.1:3000;

@@ -28,5 +28,8 @@ export function assertSameOrigin(event: Parameters<typeof getRequestURL>[0]) {
     }
   }
 
+  const secFetchSite = getHeader(event, 'sec-fetch-site')
+  if (secFetchSite === 'same-origin' || secFetchSite === 'same-site') return
+
   throw createError({ statusCode: 403, statusMessage: 'Некорректный Origin' })
 }

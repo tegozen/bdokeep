@@ -1,4 +1,4 @@
-import { uiSectionFromProposal as mapProposalSection } from '@domain'
+import { uiSectionFromProposal as mapProposalSection, comboSectionUpdateKey } from '@domain'
 import type { SectionUpdateMeta } from '@/entities/class'
 import { formatRuDate } from '@/shared/lib/dates'
 
@@ -30,7 +30,22 @@ export function sectionUpdateKey(
 ): string {
   if (base === 'summary') return `summary_${kind}_${mode}`
   if (base === 'videos') return `videos_${mode}`
+  if (base === 'combo') return comboSectionUpdateKey(kind, mode)
   return base
+}
+
+/** Lookup section_updates with legacy fallback (pre-scoped combo used key "combo"). */
+export function sectionUpdateMeta(
+  updates: SectionUpdatesMap,
+  base: GuideUiSection,
+  mode: 'awakening' | 'succession' = 'awakening',
+  kind: 'pvp' | 'pve' = 'pvp',
+): SectionUpdateMeta | undefined {
+  const key = sectionUpdateKey(base, mode, kind)
+  const meta = updates[key]
+  if (meta) return meta
+  if (base === 'combo') return updates.combo
+  return undefined
 }
 
 export function displayAuthorLabel(raw: string | null | undefined): string | null {

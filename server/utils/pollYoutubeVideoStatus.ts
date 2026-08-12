@@ -146,6 +146,20 @@ export async function pollYoutubeVideoStatus(): Promise<PollYoutubeVideoStatusRe
       status: r.status === 'processing' ? 'processing' : 'ready',
     }))
 
+    const existingPending = await withDbError(async () => {
+      const rows = await sql`
+        select id from guide_proposals
+        where
+          class_id = ${first.class_id}
+          and section = ${section}
+          and status = 'pending'
+          and author_label = ${CRON_AUTHOR_LABEL}
+        limit 1
+      `
+      return rows[0] ?? null
+    })
+    if (existingPending) continue
+
     const inserted = await withDbError(async () => {
       const rows = await sql`
         insert into guide_proposals (

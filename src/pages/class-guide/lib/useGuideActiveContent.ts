@@ -8,7 +8,7 @@ import type { ClassGuideBundle } from '@/entities/class'
 import {
   formatSectionUpdated,
   parseSectionUpdates,
-  sectionUpdateKey,
+  sectionUpdateMeta,
   type GuideUiSection,
 } from './sectionUpdates'
 import { useGuidePreset } from './useGuidePreset'
@@ -25,8 +25,8 @@ export function useGuideActiveContent(bundle: Ref<ClassGuideBundle | null | unde
   )
 
   function sectionSubtitle(key: GuideUiSection) {
-    const metaKey = sectionUpdateKey(key, specMode.value, comboKind.value)
-    return formatSectionUpdated(sectionUpdates.value[metaKey])
+    const meta = sectionUpdateMeta(sectionUpdates.value, key, specMode.value, comboKind.value)
+    return formatSectionUpdated(meta)
   }
 
   const summarySection = computed(() =>

@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-bdokeep}
       BDOKEEP_APP_PASSWORD: ${BDOKEEP_APP_PASSWORD:?Set BDOKEEP_APP_PASSWORD in .env}
     volumes:
@@ -61,6 +61,7 @@ services:
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?Set ADMIN_SESSION_SECRET in .env}
       TRUST_PROXY: ${TRUST_PROXY:-0}
       NUXT_PUBLIC_SITE_URL: ${NUXT_PUBLIC_SITE_URL:-}
+      NITRO_COMPRESS: ${NITRO_COMPRESS:-}
     ports:
       - '${HOST_PORT:-3000}:3000'
     security_opt:

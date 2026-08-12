@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   assertSameOrigin(event)
 
   const ip = clientIp(event)
-  const limit = checkRateLimit(`login:${ip}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)
+  const limit = await checkRateLimit(`login:${ip}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)
   if (!limit.allowed) {
     const wait = formatRetryAfterRu(limit.retryAfterMs)
     throw createError({
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
   const usernameKey = normalizeUsername(username)
   if (usernameKey) {
-    const userLimit = checkRateLimit(`login-user:${usernameKey}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)
+    const userLimit = await checkRateLimit(`login-user:${usernameKey}`, LOGIN_MAX_HITS, LOGIN_WINDOW_MS)
     if (!userLimit.allowed) {
       const wait = formatRetryAfterRu(userLimit.retryAfterMs)
       throw createError({

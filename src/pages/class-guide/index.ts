@@ -14,6 +14,7 @@ export {
   formatSectionUpdated,
   parseSectionUpdates,
   sectionUpdateKey,
+  sectionUpdateMeta,
   uiSectionFromProposal,
   type GuideUiSection,
   type SectionUpdatesMap,

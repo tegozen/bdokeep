@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const ip = clientIp(event)
-  const limit = checkRateLimit(`feedback:${ip}`)
+  const limit = await checkRateLimit(`feedback:${ip}`)
   if (!limit.allowed) {
     const wait = formatRetryAfterRu(limit.retryAfterMs)
     throw createError({

@@ -7,7 +7,7 @@
     :trigger-label="triggerLabel"
     :submitting="submitting"
     :form-error="formError"
-    :is-superadmin="isSuperadmin"
+    :is-staff="isStaff"
     :request-close="requestClose"
     size="xl"
     @submit="onSubmit"
@@ -270,7 +270,7 @@ const {
   submitting,
   formError,
   requestClose,
-  isSuperadmin,
+  isStaff,
   openModal,
   runSubmit,
 } = useProposeModal({
@@ -306,7 +306,7 @@ const {
 
 defineExpose({ openModal })
 
-watch([isSuperadmin, catalogPending], async () => {
+watch([isStaff, catalogPending], async () => {
   if (!open.value) return
   await nextTick()
   syncBoardWidth()

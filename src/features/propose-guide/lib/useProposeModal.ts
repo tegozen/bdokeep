@@ -112,7 +112,7 @@ export function useProposeModal(opts: {
     submitting,
     formError,
     requestClose,
-    isSuperadmin: isStaff,
+    isStaff,
     close,
     openModal,
     runSubmit,

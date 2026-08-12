@@ -31,24 +31,32 @@ export function formatApplyRejectNote(err: unknown): string {
  */
 export async function applyPendingOrReject(
   proposal: ProposalRow,
-  opts?: { reviewNote?: string | null; allowEmptyVideos?: boolean },
+  opts?: {
+    reviewNote?: string | null
+    allowEmptyVideos?: boolean
+    /** When false, failed apply leaves the row pending (staff auto-approve). Default true. */
+    rejectOnFailure?: boolean
+  },
 ) {
+  const rejectOnFailure = opts?.rejectOnFailure !== false
   try {
     await applyProposal(proposal, opts)
   } catch (err) {
-    const note = formatApplyRejectNote(err)
-    try {
-      const sql = useDb()
-      await sql`
-        update guide_proposals
-        set
-          status = 'rejected',
-          reviewed_at = now(),
-          review_note = ${note}
-        where id = ${proposal.id} and status = 'pending'
-      `
-    } catch {
-      // Best-effort cleanup; surface the original apply error.
+    if (rejectOnFailure) {
+      const note = formatApplyRejectNote(err)
+      try {
+        const sql = useDb()
+        await sql`
+          update guide_proposals
+          set
+            status = 'rejected',
+            reviewed_at = now(),
+            review_note = ${note}
+          where id = ${proposal.id} and status = 'pending'
+        `
+      } catch {
+        // Best-effort cleanup; surface the original apply error.
+      }
     }
     throw err
   }

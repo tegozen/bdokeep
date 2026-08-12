@@ -84,6 +84,12 @@
         </li>
       </ul>
 
+    <div v-if="hasMore && items.length" :class="$style.loadMore">
+      <UiButton type="button" variant="secondary" :disabled="loadingMore" @click="loadMore">
+        {{ loadingMore ? 'Загрузка…' : 'Загрузить ещё' }}
+      </UiButton>
+    </div>
+
       <ReviewSummaryModal
         :open="!!editingId"
         :proposal-id="editingId"
@@ -153,6 +159,8 @@ const { refresh: refreshPendingSummary, adjust: adjustPendingSummary } = usePend
 const { status, classFilter, sectionFilter } = useAdminProposalFilters()
 
 const loading = ref(false)
+const loadingMore = ref(false)
+const hasMore = ref(false)
 const items = ref<Proposal[]>([])
 const acting = ref<string | null>(null)
 const editingId = ref<string | null>(null)
@@ -199,21 +207,26 @@ async function load() {
   if (!isStaff.value) return
   loading.value = true
   try {
-    const query: Record<string, string> = { status: status.value }
+    const query: Record<string, string> = { status: status.value, offset: '0' }
     if (classFilter.value && /^[a-z0-9-]+$/.test(classFilter.value)) {
       query.class_slug = classFilter.value
     }
     if (sectionFilter.value) {
       query.section = sectionFilter.value
     }
-    const res = await $fetch<{ items: Proposal[] }>('/api/admin/proposals', { query })
+    const res = await $fetch<{ items: Proposal[]; has_more?: boolean }>(
+      '/api/admin/proposals',
+      { query },
+    )
     items.value = res.items ?? []
+    hasMore.value = Boolean(res.has_more)
   } catch (e: unknown) {
     const code =
       e && typeof e === 'object' && 'statusCode' in e
         ? Number((e as { statusCode?: number }).statusCode)
         : 0
     items.value = []
+    hasMore.value = false
     if (code === 401) {
       await loseSession()
       return
@@ -221,6 +234,33 @@ async function load() {
     await alert({ title: 'Ошибка', message: parseApiError(e, 'Не удалось загрузить') })
   } finally {
     loading.value = false
+  }
+}
+
+async function loadMore() {
+  if (!isStaff.value || loadingMore.value || !hasMore.value) return
+  loadingMore.value = true
+  try {
+    const query: Record<string, string> = {
+      status: status.value,
+      offset: String(items.value.length),
+    }
+    if (classFilter.value && /^[a-z0-9-]+$/.test(classFilter.value)) {
+      query.class_slug = classFilter.value
+    }
+    if (sectionFilter.value) {
+      query.section = sectionFilter.value
+    }
+    const res = await $fetch<{ items: Proposal[]; has_more?: boolean }>(
+      '/api/admin/proposals',
+      { query },
+    )
+    items.value = [...items.value, ...(res.items ?? [])]
+    hasMore.value = Boolean(res.has_more)
+  } catch (e: unknown) {
+    await alert({ title: 'Ошибка', message: parseApiError(e, 'Не удалось загрузить') })
+  } finally {
+    loadingMore.value = false
   }
 }
 
@@ -359,6 +399,12 @@ onMounted(async () => {
   gap: 1rem;
   list-style: none;
   padding: 0;
+}
+
+.loadMore {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.25rem;
 }
 
 .card {

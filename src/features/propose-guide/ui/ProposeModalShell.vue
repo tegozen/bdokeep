@@ -64,7 +64,7 @@
             {{
               submitting
                 ? 'Отправка…'
-                : isSuperadmin
+                : isStaff
                   ? 'Опубликовать'
                   : 'Отправить'
             }}
@@ -90,7 +90,7 @@ withDefaults(
     triggerLabel?: string
     submitting: boolean
     formError: string
-    isSuperadmin: boolean
+    isStaff: boolean
     requestClose: () => void | Promise<void>
     full?: boolean
     /** Keep chrome/actions fixed; only inner catalogs scroll (xl boards). */

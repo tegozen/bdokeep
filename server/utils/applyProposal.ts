@@ -2,6 +2,9 @@ import { createError } from 'h3'
 import {
   PROPOSAL_SECTIONS,
   classSummaryField,
+  comboModeFromSection,
+  comboSectionUpdateKey,
+  isComboSection,
   isSummarySection,
   summaryModeFromSection,
   uiSectionFromProposal,
@@ -61,6 +64,10 @@ export async function applyProposal(
   )
   const payload = parsed.payload
   const verifiedVideos: ParsedGuideVideo[] | null = parsed.verifiedVideos
+
+  await assertNotDestructiveApply(sql, String(proposal.class_id), section, payload, {
+    allowEmptyVideos: Boolean(opts?.allowEmptyVideos),
+  })
 
   await withDbError(async () => {
     await sql.begin(async (tx) => {
@@ -138,6 +145,11 @@ export async function applyProposal(
         metaKey = classSummaryField(
           comboKindFromPayload(payload),
           summaryModeFromSection(section),
+        )
+      } else if (isComboSection(section)) {
+        metaKey = comboSectionUpdateKey(
+          comboKindFromPayload(payload),
+          comboModeFromSection(section),
         )
       }
       if (!metaKey) {

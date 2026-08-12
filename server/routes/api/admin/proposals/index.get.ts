@@ -15,6 +15,9 @@ export default defineEventHandler(async (event) => {
   const summary = query.summary === '1' || query.summary === 'true'
   const slugFilter = classSlug && /^[a-z0-9-]+$/.test(classSlug) ? classSlug : ''
   const sectionFilter = SECTION_SET.has(sectionRaw) ? sectionRaw : ''
+  const offsetRaw = typeof query.offset === 'string' ? Number.parseInt(query.offset, 10) : 0
+  const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0
+  const pageLimit = 100
 
   const sql = useDb()
 
@@ -65,9 +68,13 @@ export default defineEventHandler(async (event) => {
       ${classClause}
       ${sectionClause}
       ${orderClause}
-      limit 100
+      limit ${pageLimit + 1}
+      offset ${offset}
     `
   })
 
-  return { items }
+  const hasMore = items.length > pageLimit
+  const page = hasMore ? items.slice(0, pageLimit) : items
+
+  return { items: page, has_more: hasMore, offset, limit: pageLimit }
 })
