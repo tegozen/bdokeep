@@ -6,7 +6,7 @@
 Игровые изображения (портреты/иконки классов и каталог `/codex/`) © Pearl Abyss.
 This is unofficial content which contains copyrighted materials and IP from Pearl Abyss, and is not official/endorsed content.
 
-Исходники: [GitHub](https://github.com/tegozen/bdokeep) · [GitLab](https://gitlab.com/tegozen/bdokeep)
+Исходники: [GitHub](https://github.com/tegozen/bdokeep) · [GitLab](https://gitlab.com/tegozen/bdokeep) · [Codeberg](https://codeberg.org/tegozen/bdokeep)
 
 Стек: **Nuxt 4.5+** (FSD) + Postgres. API — Nitro. Один `docker-compose.yml`. Node ≥22.
 
