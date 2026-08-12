@@ -20,7 +20,7 @@
               decoding="async"
             >
           </NuxtLink>
-          <div v-if="brandEnd && $slots.trailing" :class="$style.mobileLogout">
+          <div v-if="brandEnd && $slots.trailing" :class="$style.mobileAuth">
             <slot name="trailing" />
           </div>
         </div>
@@ -51,7 +51,7 @@ withDefaults(
   defineProps<{
     /** Keep sticky row height stable (class guide pages with tabs). */
     stableHeight?: boolean
-    /** Mobile: logo left, logout right. Guest keeps logo centered. */
+    /** Mobile: logo left, Войти/Выйти right (auth in #trailing). */
     brandEnd?: boolean
     /** Drop #class from the mobile stack (e.g. admin title hidden). */
     hideClassOnMobile?: boolean
@@ -101,8 +101,8 @@ withDefaults(
   align-items: center;
 }
 
-/* Phone-only logout; desktop keeps logout in #actions. */
-.mobileLogout {
+/* Phone-only auth; desktop keeps Войти/Выйти in #actions. */
+.mobileAuth {
   display: none;
 }
 
@@ -223,7 +223,7 @@ withDefaults(
     justify-content: center;
   }
 
-  /* Auth phone: fixed two columns — logo | logout. */
+  /* Auth phone: fixed two columns — logo | Войти/Выйти. */
   .brandRowEnd {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -236,7 +236,7 @@ withDefaults(
     justify-self: start;
   }
 
-  .mobileLogout {
+  .mobileAuth {
     display: flex;
     align-items: center;
     justify-self: end;
@@ -257,8 +257,8 @@ withDefaults(
     display: none;
   }
 
-  /* Desktop/tablet logout stays in actions; hide duplicate on phone. */
-  .actions > :global([data-header-logout]) {
+  /* Desktop/tablet auth stays in actions; hide duplicate on phone. */
+  .actions > :global([data-header-auth]) {
     display: none !important;
   }
 

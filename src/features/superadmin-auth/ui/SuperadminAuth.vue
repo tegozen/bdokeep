@@ -1,34 +1,86 @@
 <template>
   <!-- Header nav: same UiButton cell as the other header actions. -->
-  <UiButton
-    v-if="headerNav && isStaff"
-    variant="ghost"
-    size="sm"
-    rounded
-    color="var(--color-gold-soft)"
-    icon-color="var(--color-gold-soft)"
-    hover-color="var(--color-gold)"
-    title="Выйти"
-    aria-label="Выйти"
-    data-header-logout
-    @click="onLogout"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
+  <template v-if="headerNav">
+    <UiButton
+      v-if="isStaff"
+      variant="ghost"
+      size="sm"
+      rounded
+      color="var(--color-gold-soft)"
+      icon-color="var(--color-gold-soft)"
+      hover-color="var(--color-gold)"
+      title="Выйти"
+      aria-label="Выйти"
+      data-header-auth
+      @click="onLogout"
     >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
-    Выйти
-  </UiButton>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+      Выйти
+    </UiButton>
+
+    <template v-else>
+      <UiButton
+        variant="ghost"
+        size="sm"
+        rounded
+        color="var(--color-gold-soft)"
+        icon-color="var(--color-gold-soft)"
+        hover-color="var(--color-gold)"
+        title="Войти"
+        aria-label="Войти"
+        data-header-auth
+        @click="openLogin = true"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          <polyline points="10 17 15 12 10 7" />
+          <line x1="15" y1="12" x2="3" y2="12" />
+        </svg>
+        Войти
+      </UiButton>
+
+      <UiModal
+        :open="openLogin"
+        title="Вход в админку"
+        aria-label="Вход администратора"
+        size="sm"
+        :z-index="90"
+        @close="closeLogin"
+      >
+        <div :class="$style.modalBody">
+          <LoginFields
+            v-model:username="username"
+            v-model:password="password"
+            :busy="busy"
+            :error="error"
+            @login="onLogin"
+          />
+        </div>
+      </UiModal>
+    </template>
+  </template>
 
   <div
     v-else
@@ -50,32 +102,7 @@
       </div>
 
       <template v-else>
-        <button
-          v-if="iconTrigger"
-          type="button"
-          :class="$style.iconTrigger"
-          aria-label="Войти как админ"
-          title="Войти как админ"
-          @click="openLogin = true"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-        </button>
         <UiButton
-          v-else
           type="button"
           :variant="compact ? 'ghost' : 'secondary'"
           :size="compact ? 'sm' : 'md'"
@@ -120,9 +147,7 @@ const props = withDefaults(
   defineProps<{
     compact?: boolean
     openLoginOnMount?: boolean
-    /** Muted lock icon instead of labeled button (footer entry). */
-    iconTrigger?: boolean
-    /** Logout control for the site header nav (UiButton). */
+    /** Login / logout control for the site header nav (UiButton). */
     headerNav?: boolean
     /** Navigate here after successful login. */
     afterLoginTo?: string
@@ -130,7 +155,6 @@ const props = withDefaults(
   {
     compact: false,
     openLoginOnMount: false,
-    iconTrigger: false,
     headerNav: false,
     afterLoginTo: '',
   },
@@ -242,29 +266,6 @@ async function onLogout() {
 
 .triggerWide {
   width: 100%;
-}
-
-.iconTrigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 140ms ease;
-}
-
-.iconTrigger:hover,
-.iconTrigger:focus-visible {
-  opacity: 0.85;
-  color: var(--color-gold-soft);
-  outline: none;
 }
 
 .linkish {

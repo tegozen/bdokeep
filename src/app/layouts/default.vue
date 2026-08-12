@@ -11,7 +11,7 @@
       </button>
     </div>
 
-    <SiteHeader :stable-height="!!headerClass" :brand-end="isStaff">
+    <SiteHeader :stable-height="!!headerClass" brand-end>
       <template v-if="headerClass" #class>
         <div :class="$style.classMeta">
           <ClassIcon
@@ -41,10 +41,41 @@
       <template #trailing>
         <component
           :is="SuperadminAuth"
-          v-if="isStaff && SuperadminAuth && authUiReady"
+          v-if="SuperadminAuth && authUiReady"
           compact
           header-nav
+          after-login-to="/admin"
+          :open-login-on-mount="authOpenLoginOnMount"
         />
+        <UiButton
+          v-else-if="!isStaff"
+          variant="ghost"
+          size="sm"
+          rounded
+          color="var(--color-gold-soft)"
+          icon-color="var(--color-gold-soft)"
+          hover-color="var(--color-gold)"
+          title="Войти"
+          aria-label="Войти"
+          data-header-auth
+          @click="openAuthLogin"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
+          Войти
+        </UiButton>
       </template>
       <template #actions="{ badgeClass }">
         <UiButton
@@ -130,13 +161,42 @@
             {{ pendingSummary.total }}
           </span>
         </UiButton>
-        <!-- Logged-in chrome stays in the header; login entry lives in the footer. -->
         <component
           :is="SuperadminAuth"
-          v-if="isStaff && SuperadminAuth && authUiReady"
+          v-if="SuperadminAuth && authUiReady"
           compact
           header-nav
+          after-login-to="/admin"
         />
+        <UiButton
+          v-else-if="!isStaff"
+          variant="ghost"
+          size="sm"
+          rounded
+          color="var(--color-gold-soft)"
+          icon-color="var(--color-gold-soft)"
+          hover-color="var(--color-gold)"
+          title="Войти"
+          aria-label="Войти"
+          data-header-auth
+          @click="openAuthLogin"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
+          Войти
+        </UiButton>
       </template>
     </SiteHeader>
 
@@ -144,40 +204,7 @@
       <slot />
     </main>
 
-    <SiteFooter>
-      <component
-        :is="SuperadminAuth"
-        v-if="!isStaff && SuperadminAuth && authUiReady"
-        compact
-        icon-trigger
-        after-login-to="/admin"
-        :open-login-on-mount="authOpenLoginOnMount"
-      />
-      <button
-        v-else-if="!isStaff && !authUiReady"
-        type="button"
-        :class="$style.authGate"
-        aria-label="Войти как админ"
-        title="Войти как админ"
-        @click="openAuthLogin"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <rect x="3" y="11" width="18" height="11" rx="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-      </button>
-    </SiteFooter>
+    <SiteFooter />
 
     <component :is="UiConfirm" v-if="UiConfirm" />
     <component
@@ -492,29 +519,5 @@ watch(isStaff, (ok) => {
 .main {
   flex: 1;
   padding: 2rem 0 3rem;
-}
-
-.authGate {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 140ms ease;
-}
-
-.authGate:hover,
-.authGate:focus-visible {
-  opacity: 0.85;
-  color: var(--color-gold-soft);
-  outline: none;
 }
 </style>
