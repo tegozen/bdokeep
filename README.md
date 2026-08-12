@@ -154,8 +154,9 @@ SQL к БД: `docker compose exec db psql -h 127.0.0.1 -U postgres -d bdokeep` (
 
 ## Данные и каталоги
 
-Схема — Drizzle (`db/schema` + `drizzle/`). Каталожные данные — [`db/seed/sql/`](db/seed/sql/):
+Схема — Drizzle (`db/schema` + `drizzle/`). Сиды — [`db/seed/sql/`](db/seed/sql/):
 
+- ростер классов (slug/имя/арт/`class_guides`; без контента гайдов)
 - скиллы / морф-overlays / addon effects
 - реликвии, лайтстоуны, наборы, закалка
 - кристаллы / бафы (+ prune)
@@ -165,7 +166,7 @@ SQL к БД: `docker compose exec db psql -h 127.0.0.1 -U postgres -d bdokeep` (
 Портреты — opaque WebP на фоне `#07080c` (без alpha), уже пережаты под карточки главной.
 Иконки каталога (скиллы/бафы/предметы): только локально в `public/codex/…` (в браузере пути `/codex/…`, без CDN-hotlink). CSP `img-src 'self'` это закрепляет. Деплой **обязан** включать `public/codex` (иначе `docker build` упадёт). При первом seed (или после смены `033_localize_…`) migrate переписывает старые `https://bdocodex.com/…` в БД на `/codex/…`. См. `public/codex/README.md`.
 
-На чистом сервере достаточно `docker compose up -d --build`: Drizzle baseline + seed каталогов и картинки уже в репо.
+На чистом сервере достаточно `docker compose up -d --build`: Drizzle baseline + seed (ростер классов + каталоги скиллов/бафов/…) и картинки уже в репо. Гайды (заметки/комба/…) на чистой БД пустые — это контент, не каталог.
 
 
 ## Nginx (внешний)

@@ -10,6 +10,7 @@ const sqlDir = path.join(root, 'db', 'seed', 'sql')
 
 /** Ordered catalog fixtures (same order as former migrate.sh refresh_catalog). */
 export const CATALOG_SEED_FILES = [
+  '001_seed_classes.sql',
   '002_seed_skills.sql',
   '015_seed_relics_lightstones.sql',
   '029_seed_hardening.sql',

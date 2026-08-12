@@ -63,6 +63,29 @@ async function ensureLegacyPolicyRoles(url: string) {
   }
 }
 
+/** Role must exist before drizzle CREATE POLICY … TO bdokeep_app on empty DBs. */
+async function ensureAppRoleExists(url: string) {
+  const password = process.env.BDOKEEP_APP_PASSWORD
+  if (!password) {
+    throw new Error('BDOKEEP_APP_PASSWORD must be set for bdokeep_app role')
+  }
+  const escaped = password.replace(/'/g, "''")
+  const sql = postgres(url, { max: 1, onnotice: () => {} })
+  try {
+    await sql.unsafe(`
+      do $$
+      begin
+        if not exists (select from pg_roles where rolname = 'bdokeep_app') then
+          create role bdokeep_app login password '${escaped}' nosuperuser nocreatedb nocreaterole;
+        end if;
+      end
+      $$;
+    `)
+  } finally {
+    await sql.end({ timeout: 5 })
+  }
+}
+
 /**
  * Existing volumes already have the pre-Drizzle schema (≈ migration 0000).
  * Stamp only that baseline hash so CREATE is not re-executed.
@@ -242,6 +265,7 @@ async function main() {
   console.log('migrate: waiting for postgres…')
   await waitForPostgres(url)
   await ensureLegacyPolicyRoles(url)
+  await ensureAppRoleExists(url)
   await ensureBaselineStamp(url)
   await runMigrate(url)
   await ensureAdminUsersTable(url)

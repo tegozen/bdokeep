@@ -201,7 +201,7 @@ CREATE TABLE "guild_recruit_banner" (
 	"icon_bytes" "bytea",
 	"links" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "guild_recruit_banner_id_check" CHECK (CHECK (id)),
+	CONSTRAINT "guild_recruit_banner_id_check" CHECK (id),
 	CONSTRAINT "guild_recruit_banner_body_len" CHECK ((char_length(body) >= 0) AND (char_length(body) <= 280)),
 	CONSTRAINT "guild_recruit_banner_links_array" CHECK (jsonb_typeof(links) = 'array'::text)
 );
@@ -287,30 +287,30 @@ ALTER TABLE "guide_morphs" ADD CONSTRAINT "guide_morphs_effect_id_2_fkey" FOREIG
 ALTER TABLE "guide_feedback" ADD CONSTRAINT "guide_feedback_class_id_fkey" FOREIGN KEY ("class_id") REFERENCES "public"."classes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guide_proposals" ADD CONSTRAINT "guide_proposals_class_id_fkey" FOREIGN KEY ("class_id") REFERENCES "public"."classes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "guide_combos" ADD CONSTRAINT "guide_combos_guide_id_fkey" FOREIGN KEY ("guide_id") REFERENCES "public"."class_guides"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "class_videos_class_idx" ON "class_videos" USING btree ("class_id" int4_ops,"sort_order" int4_ops);--> statement-breakpoint
-CREATE INDEX "class_videos_processing_idx" ON "class_videos" USING btree ("status_since" timestamptz_ops) WHERE (status = 'processing'::text);--> statement-breakpoint
-CREATE INDEX "guide_essence_guide_idx" ON "guide_essence" USING btree ("guide_id" int4_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_essence_guide_preset_idx" ON "guide_essence" USING btree ("guide_id" text_ops,"preset" int4_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "skill_addon_effects_sort_idx" ON "skill_addon_effects" USING btree ("sort_order" int4_ops,"name_ru" int4_ops);--> statement-breakpoint
-CREATE INDEX "classes_published_sort_idx" ON "classes" USING btree ("published" int4_ops,"sort_order" int4_ops);--> statement-breakpoint
-CREATE INDEX "guide_crystals_guide_idx" ON "guide_crystals" USING btree ("guide_id" int4_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_crystals_guide_preset_idx" ON "guide_crystals" USING btree ("guide_id" int4_ops,"preset" uuid_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "skills_class_slug_idx" ON "skills" USING btree ("class_slug" text_ops);--> statement-breakpoint
-CREATE INDEX "guide_combo_steps_combo_idx" ON "guide_combo_steps" USING btree ("combo_id" int4_ops,"sort_order" int4_ops);--> statement-breakpoint
-CREATE INDEX "guide_combo_steps_guide_idx" ON "guide_combo_steps" USING btree ("guide_id" uuid_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "items_type_idx" ON "items" USING btree ("item_type" enum_ops);--> statement-breakpoint
-CREATE INDEX "guide_relics_guide_idx" ON "guide_relics" USING btree ("guide_id" int4_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_relics_guide_preset_idx" ON "guide_relics" USING btree ("guide_id" int4_ops,"preset" uuid_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_buffs_guide_idx" ON "guide_buffs" USING btree ("guide_id" int4_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_buffs_guide_preset_idx" ON "guide_buffs" USING btree ("guide_id" int4_ops,"preset" uuid_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_lightstones_guide_idx" ON "guide_lightstones" USING btree ("guide_id" int4_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_lightstones_guide_preset_idx" ON "guide_lightstones" USING btree ("guide_id" int4_ops,"preset" uuid_ops,"sort_order" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_morphs_guide_preset_idx" ON "guide_morphs" USING btree ("guide_id" text_ops,"preset" uuid_ops,"slot_level" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_feedback_class_idx" ON "guide_feedback" USING btree ("class_slug" text_ops,"created_at" text_ops);--> statement-breakpoint
-CREATE INDEX "guide_feedback_created_idx" ON "guide_feedback" USING btree ("created_at" timestamptz_ops);--> statement-breakpoint
-CREATE INDEX "guide_proposals_class_idx" ON "guide_proposals" USING btree ("class_id" timestamptz_ops,"created_at" uuid_ops);--> statement-breakpoint
-CREATE INDEX "guide_proposals_status_idx" ON "guide_proposals" USING btree ("status" timestamptz_ops,"created_at" timestamptz_ops);--> statement-breakpoint
-CREATE INDEX "guide_combos_guide_mode_kind_idx" ON "guide_combos" USING btree ("guide_id" uuid_ops,"mode" int4_ops,"kind" int4_ops,"sort_order" uuid_ops);--> statement-breakpoint
+CREATE INDEX "class_videos_class_idx" ON "class_videos" USING btree ("class_id","sort_order");--> statement-breakpoint
+CREATE INDEX "class_videos_processing_idx" ON "class_videos" USING btree ("status_since") WHERE (status = 'processing'::text);--> statement-breakpoint
+CREATE INDEX "guide_essence_guide_idx" ON "guide_essence" USING btree ("guide_id","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_essence_guide_preset_idx" ON "guide_essence" USING btree ("guide_id","preset","sort_order");--> statement-breakpoint
+CREATE INDEX "skill_addon_effects_sort_idx" ON "skill_addon_effects" USING btree ("sort_order","name_ru");--> statement-breakpoint
+CREATE INDEX "classes_published_sort_idx" ON "classes" USING btree ("published","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_crystals_guide_idx" ON "guide_crystals" USING btree ("guide_id","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_crystals_guide_preset_idx" ON "guide_crystals" USING btree ("guide_id","preset","sort_order");--> statement-breakpoint
+CREATE INDEX "skills_class_slug_idx" ON "skills" USING btree ("class_slug");--> statement-breakpoint
+CREATE INDEX "guide_combo_steps_combo_idx" ON "guide_combo_steps" USING btree ("combo_id","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_combo_steps_guide_idx" ON "guide_combo_steps" USING btree ("guide_id","sort_order");--> statement-breakpoint
+CREATE INDEX "items_type_idx" ON "items" USING btree ("item_type");--> statement-breakpoint
+CREATE INDEX "guide_relics_guide_idx" ON "guide_relics" USING btree ("guide_id","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_relics_guide_preset_idx" ON "guide_relics" USING btree ("guide_id","preset","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_buffs_guide_idx" ON "guide_buffs" USING btree ("guide_id","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_buffs_guide_preset_idx" ON "guide_buffs" USING btree ("guide_id","preset","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_lightstones_guide_idx" ON "guide_lightstones" USING btree ("guide_id","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_lightstones_guide_preset_idx" ON "guide_lightstones" USING btree ("guide_id","preset","sort_order");--> statement-breakpoint
+CREATE INDEX "guide_morphs_guide_preset_idx" ON "guide_morphs" USING btree ("guide_id","preset","slot_level");--> statement-breakpoint
+CREATE INDEX "guide_feedback_class_idx" ON "guide_feedback" USING btree ("class_slug","created_at");--> statement-breakpoint
+CREATE INDEX "guide_feedback_created_idx" ON "guide_feedback" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "guide_proposals_class_idx" ON "guide_proposals" USING btree ("class_id","created_at");--> statement-breakpoint
+CREATE INDEX "guide_proposals_status_idx" ON "guide_proposals" USING btree ("status","created_at");--> statement-breakpoint
+CREATE INDEX "guide_combos_guide_mode_kind_idx" ON "guide_combos" USING btree ("guide_id","mode","kind","sort_order");--> statement-breakpoint
 CREATE POLICY "bdokeep_app_all" ON "class_videos" AS PERMISSIVE FOR ALL TO "bdokeep_app" USING (true) WITH CHECK (true);--> statement-breakpoint
 CREATE POLICY "Public read videos of published classes" ON "class_videos" AS PERMISSIVE FOR SELECT TO "anon", "authenticated";--> statement-breakpoint
 CREATE POLICY "bdokeep_app_all" ON "class_guides" AS PERMISSIVE FOR ALL TO "bdokeep_app" USING (true) WITH CHECK (true);--> statement-breakpoint

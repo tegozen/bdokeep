@@ -2144,7 +2144,7 @@
       "checkConstraints": {
         "guild_recruit_banner_id_check": {
           "name": "guild_recruit_banner_id_check",
-          "value": "CHECK (id)"
+          "value": "id"
         },
         "guild_recruit_banner_body_len": {
           "name": "guild_recruit_banner_body_len",
