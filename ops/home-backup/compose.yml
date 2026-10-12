@@ -1,0 +1,66 @@
+name: bdokeep-home-backup
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  vpn:
+    image: tailscale/tailscale:stable@sha256:c507f3a2a6ab1cabd8d809b98edeb41edbd5c3fb6ad9632ffd098b4c7d0b4065
+    restart: unless-stopped
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:?Set home TS_AUTHKEY}
+      TS_AUTH_ONCE: 'true'
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: 'true'
+      TS_HOSTNAME: bdokeep-home-backup
+      TS_EXTRA_ARGS: --advertise-tags=tag:bdokeep-backup
+      TS_SOCKS5_SERVER: 127.0.0.1:1055
+      TS_ENABLE_HEALTH_CHECK: 'true'
+      TS_LOCAL_ADDR_PORT: 127.0.0.1:9002
+    volumes:
+      - vpn_state:/var/lib/tailscale
+    mem_limit: 128m
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:9002/healthz']
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    logging: *logging
+  backup:
+    build: .
+    restart: unless-stopped
+    network_mode: service:vpn
+    depends_on:
+      vpn:
+        condition: service_healthy
+    environment:
+      BACKUP_DB_HOST: ${BACKUP_DB_HOST:?Set production Tailscale IPv4}
+      PGPASSWORD: ${BACKUP_DB_PASSWORD:?Set BACKUP_DB_PASSWORD}
+    volumes:
+      - backups:/backups
+    mem_limit: 256m
+    stop_grace_period: 30s
+    logging: *logging
+  restore-check:
+    profiles: [tools]
+    build: .
+    command: [verify]
+    network_mode: none
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: restore_check
+    volumes:
+      - backups:/backups:ro
+      # Anonymous scratch volume is removed by compose run --rm.
+      - /var/lib/postgresql/data
+    mem_limit: 512m
+    logging: *logging
+
+volumes:
+  backups:
+    name: bdokeep_home_backups
+  vpn_state:
+    name: bdokeep_home_vpn_state

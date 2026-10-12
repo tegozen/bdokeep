@@ -10,6 +10,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres'
 import { seedCatalogs } from './seed/index.ts'
+import { syncBackupRole } from './backup-role.ts'
 
 const root = path.resolve(import.meta.dirname, '..')
 const drizzleDir = path.join(root, 'drizzle')
@@ -271,6 +272,7 @@ async function main() {
   await ensureAdminUsersTable(url)
   await seedCatalogs()
   await syncAppRole(url)
+  await syncBackupRole(url)
   console.log('migrate: done')
 }
 

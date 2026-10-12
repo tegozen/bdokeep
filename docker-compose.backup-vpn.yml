@@ -1,0 +1,29 @@
+# Opt-in: docker compose -f docker-compose.yml -f docker-compose.backup-vpn.yml up -d --build
+services:
+  migrate:
+    environment:
+      BACKUP_DB_PASSWORD: ${BACKUP_DB_PASSWORD:?Set BACKUP_DB_PASSWORD}
+  backup-vpn:
+    build: ./ops/backup-vpn
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:?Set production TS_AUTHKEY}
+      TS_AUTH_ONCE: 'true'
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: 'true'
+      TS_HOSTNAME: bdokeep-prod-db
+      TS_EXTRA_ARGS: --advertise-tags=tag:bdokeep-db
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - backup_vpn_state:/var/lib/tailscale
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+volumes:
+  backup_vpn_state:

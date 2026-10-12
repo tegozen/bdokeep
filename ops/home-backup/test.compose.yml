@@ -1,0 +1,55 @@
+# Isolated fixture stack, with no production credentials or Tailscale login.
+name: bdokeep-backup-check
+services:
+  db:
+    image: postgres:16-alpine
+    command: [postgres, -p, '15432']
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: bdokeep
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=trust
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -p 15432 -d bdokeep']
+      interval: 1s
+      retries: 60
+    volumes:
+      - /var/lib/postgresql/data
+  role-test:
+    image: node:24-alpine
+    working_dir: /test
+    command: [sh, -ec, 'npm install --no-save postgres@3.4.9 && node role-test.mjs']
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../../db/backup-role.ts:/test/backup-role.ts:ro
+      - ./role-test.mjs:/test/role-test.mjs:ro
+  snapshot-test:
+    build: .
+    entrypoint: [python3, -u, /app/test_snapshot.py]
+    network_mode: service:db
+    environment:
+      PGPASSWORD: test-backup
+    depends_on:
+      role-test:
+        condition: service_completed_successfully
+    volumes:
+      - check_backups:/backups
+      - ./test_snapshot.py:/app/test_snapshot.py:ro
+    mem_limit: 256m
+  restore-check:
+    build: .
+    command: [verify]
+    network_mode: none
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: restore_check
+    depends_on:
+      snapshot-test:
+        condition: service_completed_successfully
+    volumes:
+      - check_backups:/backups:ro
+      - /var/lib/postgresql/data
+    mem_limit: 512m
+volumes:
+  check_backups:

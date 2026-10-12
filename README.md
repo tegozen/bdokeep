@@ -90,7 +90,8 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 ### Ops / безопасность
 
-- Три сервиса: `web` (сайт + API), `migrate` (Drizzle + seed), `db` (Postgres)
+- Домашние бэкапы PostgreSQL через VPN в Docker: раз в 72 часа, два последних дампа в постоянном volume; [настройка и восстановление](ops/home-backup/README.md)
+- Три основных сервиса: `web` (сайт + API), `migrate` (Drizzle + seed), `db` (Postgres); VPN для домашних бэкапов подключается отдельно
 - Отдельная роль `bdokeep_app` (не суперпользователь); authz в Nitro — `DATABASE_URL` = break-glass
 - Postgres без publish портов (только Docker-сеть `db:5432`); наружу — сайт
 - Same-origin / JWT cookie-сессия админа (`ADMIN_SESSION_SECRET` отдельно от пароля); слабые пароли в production запрещены
@@ -113,6 +114,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 | `drizzle/` | SQL-миграции схемы |
 | `db/seed/sql/` | Каталожные сиды (SQL fixtures + hash ledger) |
 | `db/migrate-entry.ts` | Entrypoint сервиса `migrate` |
+| `ops/home-backup/`, `ops/backup-vpn/` | Домашние бэкапы и опциональный продовый VPN |
 | `public/classes/`, `public/codex/` | Same-origin арт классов и иконки каталога |
 | `LICENSE`, `NOTICE`, `THIRD_PARTY.md` | MIT на код; игровой IP PA исключён; атрибуция deps |
 
@@ -123,6 +125,10 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 | `web` | сайт Nuxt + Nitro API | `HOST_PORT` (3000) |
 | `migrate` | Drizzle migrate + catalog seed при up | — |
 | `db` | Postgres | нет (внутренняя сеть) |
+| `backup-vpn` (опциональный override) | доступ к БД для домашних бэкапов | 5432 только внутри VPN |
+
+Дома запускается отдельный Compose (`vpn` + `backup`), с одноразовым
+`restore-check` для проверки восстановления. [Инструкция](ops/home-backup/README.md).
 
 ## Быстрый старт
 
