@@ -22,6 +22,9 @@
         </template>
       </UiPresetTabs>
     </div>
+    <NuxtLink v-if="slug" :to="`/class/${encodeURIComponent(slug)}/full`" :class="$style.fullGuideLink">
+      Все данные
+    </NuxtLink>
   </div>
 </template>
 
@@ -163,4 +166,17 @@ const guideNavPresets = computed(() => guidePresets.map((tab) => ({
     font-size: 0.78rem;
   }
 }
+</style>
+
+
+<style module>
+.fullGuideLink {
+  color: var(--color-gold);
+  text-decoration: none;
+  font-size: .8rem;
+  border: 1px solid var(--color-border);
+  padding: .55rem .7rem;
+  white-space: nowrap;
+}
+.fullGuideLink:hover { background: var(--color-gold-dim); }
 </style>

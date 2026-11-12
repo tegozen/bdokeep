@@ -328,7 +328,7 @@ const tierSaving = ref(false)
 const showHomeFilters = computed(() => route.path === '/')
 
 const classSlug = computed(() => {
-  const m = route.path.match(/^\/class\/([^/]+)\/?$/)
+  const m = route.path.match(/^\/class\/([^/]+)(?:\/|$)/)
   return m?.[1] ? decodeURIComponent(m[1]) : ''
 })
 
