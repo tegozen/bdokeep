@@ -42,7 +42,7 @@
           {{ pendingByClass[bdoClass.slug] }}
         </span>
         <NuxtLink
-          :to="`/class/${bdoClass.slug}`"
+          :to="`/class/${bdoClass.slug}/awakening/t1`"
           :prefetch="false"
           :class="[$style.card, !bdoClass.has_content && $style.cardEmpty]"
         >

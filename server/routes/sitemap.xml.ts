@@ -60,7 +60,6 @@ export default defineEventHandler(async (event) => {
   `)
   const paths = [
     '/',
-    ...classes.map((c) => `/class/${c.slug}`),
     ...classes.filter((c) => c.has_content).map((c) => `/class/${c.slug}/full`),
     ...states.map((s) => `/class/${s.slug}/${s.mode}/${s.preset}`),
   ]

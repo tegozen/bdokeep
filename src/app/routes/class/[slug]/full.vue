@@ -3,7 +3,7 @@
     <header>
       <h1>{{ bundle.class.name_ru }} — полные опубликованные данные BDO Keep</h1>
       <p>Класс: {{ bundle.class.slug }} · Updated: {{ bundle.guide?.updated_at || 'не указано' }}</p>
-      <NuxtLink :to="`/class/${slug}`">Обычная страница класса</NuxtLink>
+      <NuxtLink :to="`/class/${slug}/awakening/t1`">Обычная страница класса</NuxtLink>
     </header>
     <nav aria-label="Индексируемые пресеты">
       <template v-for="mode in modes" :key="mode">

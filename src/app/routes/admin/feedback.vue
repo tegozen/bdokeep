@@ -18,7 +18,7 @@
         <div :class="$style.cardHead">
           <NuxtLink
             v-if="item.class_slug"
-            :to="`/class/${item.class_slug}`"
+            :to="`/class/${item.class_slug}/awakening/t1`"
             :class="$style.classLink"
           >
             {{ item.class_name_ru || item.class_slug }}
