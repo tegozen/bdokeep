@@ -8,7 +8,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 
 Исходники: [GitHub](https://github.com/tegozen/bdokeep) · [GitLab](https://gitlab.com/tegozen/bdokeep) · [Codeberg](https://codeberg.org/tegozen/bdokeep)
 
-Стек: **Nuxt 4.5+** (FSD) + Postgres. API — Nitro. Один `docker-compose.yml`. Node ≥22.
+Стек: **Nuxt 4.6+** (FSD) + Postgres. API — Nitro. Один `docker-compose.yml`. Node ≥22.
 
 ## Фишки
 
@@ -89,6 +89,11 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - На страницах пресетов сервер выводит обычные таблицы и списки: порядок комб, ID навыков и эффектов, точные слоты и ID предметов, ссылки на видео. Они доступны без клиентского JavaScript и предназначены для пользователей и индексаторов
 - `/sitemap.xml` — главная, опубликованные классы, полные страницы и только содержательные сочетания специализации/пресета; `/robots.txt` — `Disallow: /admin` (админку в индекс не пускаем)
 - В production обязателен `NUXT_PUBLIC_SITE_URL` (абсолютный origin без trailing slash) — canonical, OG и sitemap; Nitro не стартует без него
+
+### Зависимости и безопасность
+
+- Обновлены прямые npm-зависимости до актуальных совместимых версий (в том числе Nuxt, Vue, Drizzle, Postgres, h3 и markdown editor); lock-файл воспроизводимый, production Docker-сборка проверена
+- `npm audit` после обновления: **0 critical / 0 high**, остаются предупреждения low/moderate в цепочках Nuxt, PWA и Drizzle Kit; см. `ops/dependency-security.md`. Не запускать `npm audit fix --force` автоматически: он предлагает несовместимые даунгрейды
 
 ### Ops / безопасность
 
