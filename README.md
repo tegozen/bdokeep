@@ -85,7 +85,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 ### SEO
 
 - Title/description и OG/Twitter на `/`, `/class/[slug]` и отдельных SSR-адресах `/class/[slug]/[mode]/[preset]`; лёгкий JSON-LD (`WebSite` / `WebPage`)
-- Табы специализаций и пресетов — настоящие ссылки на URL с собственными canonical. `/class/[slug]/full` — полное читаемое HTML-представление всех пресетов
+- Табы специализаций и пресетов — настоящие ссылки на URL с собственными canonical; пустые сочетания получают robots noindex. `/class/[slug]/full` — полное читаемое HTML-представление всех пресетов
 - На страницах пресетов сервер выводит обычные таблицы и списки: порядок комб, ID навыков и эффектов, точные слоты и ID предметов, ссылки на видео. Они доступны без клиентского JavaScript и предназначены для пользователей и индексаторов
 - `/sitemap.xml` — главная, опубликованные классы, полные страницы и только содержательные сочетания специализации/пресета; `/robots.txt` — `Disallow: /admin` (админку в индекс не пускаем)
 - В production обязателен `NUXT_PUBLIC_SITE_URL` (абсолютный origin без trailing slash) — canonical, OG и sitemap; Nitro не стартует без него
@@ -93,7 +93,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 ### Зависимости и безопасность
 
 - Обновлены прямые npm-зависимости до актуальных совместимых версий (в том числе Nuxt, Vue, Drizzle, Postgres, h3 и markdown editor); lock-файл воспроизводимый, production Docker-сборка проверена
-- `npm audit` после обновления: **0 critical / 0 high**, остаются предупреждения low/moderate в цепочках Nuxt, PWA и Drizzle Kit; см. `ops/dependency-security.md`. Не запускать `npm audit fix --force` автоматически: он предлагает несовместимые даунгрейды
+- `npm audit` после обновления: **0 critical / 0 high**, остаются 14 предупреждений low/moderate в цепочках Nuxt, PWA и Drizzle Kit; см. `ops/dependency-security.md`. Не запускать `npm audit fix --force` автоматически: он предлагает несовместимые даунгрейды
 
 ### Ops / безопасность
 
