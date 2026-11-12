@@ -87,7 +87,7 @@ This is unofficial content which contains copyrighted materials and IP from Pear
 - Title/description и OG/Twitter на `/`, `/class/[slug]` и отдельных SSR-адресах `/class/[slug]/[mode]/[preset]`; лёгкий JSON-LD (`WebSite` / `WebPage`)
 - Табы специализаций и пресетов — настоящие ссылки на URL с собственными canonical. `/class/[slug]/full` — полное читаемое HTML-представление всех пресетов
 - На страницах пресетов сервер выводит обычные таблицы и списки: порядок комб, ID навыков и эффектов, точные слоты и ID предметов, ссылки на видео. Они доступны без клиентского JavaScript и предназначены для пользователей и индексаторов
-- `/sitemap.xml` — главная + опубликованные классы; `/robots.txt` — `Disallow: /admin` (админку в индекс не пускаем)
+- `/sitemap.xml` — главная, опубликованные классы, полные страницы и только содержательные сочетания специализации/пресета; `/robots.txt` — `Disallow: /admin` (админку в индекс не пускаем)
 - В production обязателен `NUXT_PUBLIC_SITE_URL` (абсолютный origin без trailing slash) — canonical, OG и sitemap; Nitro не стартует без него
 
 ### Ops / безопасность
