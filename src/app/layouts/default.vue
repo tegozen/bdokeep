@@ -244,11 +244,9 @@ import { ClassIcon, ClassTierStars } from '@/entities/class'
 import { usePendingSummary, useSuperadmin } from '@/features/superadmin-auth'
 import {
   computePresetFill,
-  emptyPresetFill,
   useGuidePreset,
   useGuideSpecMode,
   useHeaderClass,
-  useHeaderPresetFill,
 } from '@/pages/class-guide'
 import { parseApiError, useConfirm, useOnlineStatus } from '@/shared/lib'
 import { UiButton } from '@/shared/ui'
@@ -319,7 +317,6 @@ const pwa = computed(() => useNuxtApp().$pwa as PwaClient | undefined)
 const headerClass = useHeaderClass()
 const specMode = useGuideSpecMode()
 const guidePreset = useGuidePreset()
-const presetFill = useHeaderPresetFill()
 const { isStaff } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
 const authUiReady = ref(false)
@@ -345,6 +342,10 @@ const { data: classBundle } = await useAsyncData(
   },
 )
 
+// Fill indicators (gold dots) derive from the class data, not from shared
+// mutable state. Switching SSR preset routes must not clear their visibility.
+const presetFill = computed(() => computePresetFill(classBundle.value))
+
 watch(
   [classSlug, classBundle],
   ([slug, bundle]) => {
@@ -352,8 +353,6 @@ watch(
       // Clear class metadata and preset markers only when leaving class routes.
       if (!route.path.startsWith('/class/')) {
         headerClass.value = null
-        // Preset dots live in the layout header — must clear with class header.
-        presetFill.value = emptyPresetFill()
       }
       return
     }
@@ -367,12 +366,8 @@ watch(
         tier_pve_awakening: bundle.class.tier_pve_awakening ?? null,
         tier_pve_succession: bundle.class.tier_pve_succession ?? null,
       }
-      // Layout owns preset markers across navigations: unmounting a guide page
-      // must never reset the markers for the next preset.
-      presetFill.value = computePresetFill(bundle)
     } else {
       headerClass.value = null
-      presetFill.value = emptyPresetFill()
     }
   },
   { immediate: true },
