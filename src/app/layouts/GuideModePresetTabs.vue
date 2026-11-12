@@ -122,6 +122,26 @@ const guideNavPresets = computed(() => guidePresets.map((tab) => ({
 
 .presets {
   margin-left: auto;
+  min-width: 0;
+}
+
+.fullGuideLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-height: 2rem;
+  flex-shrink: 0;
+  padding: .45rem .75rem;
+  color: var(--color-gold);
+  font-size: .8rem;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, #000 35%, transparent);
+}
+.fullGuideLink:hover {
+  background: var(--color-gold-dim);
 }
 
 .presetDot {
@@ -134,6 +154,9 @@ const guideNavPresets = computed(() => guidePresets.map((tab) => ({
 }
 
 @media (max-width: 640px) {
+  .fullGuideLink {
+    align-self: flex-end;
+  }
   .modeFilters {
     flex-direction: column;
     align-items: stretch;
@@ -166,17 +189,4 @@ const guideNavPresets = computed(() => guidePresets.map((tab) => ({
     font-size: 0.78rem;
   }
 }
-</style>
-
-
-<style module>
-.fullGuideLink {
-  color: var(--color-gold);
-  text-decoration: none;
-  font-size: .8rem;
-  border: 1px solid var(--color-border);
-  padding: .55rem .7rem;
-  white-space: nowrap;
-}
-.fullGuideLink:hover { background: var(--color-gold-dim); }
 </style>
