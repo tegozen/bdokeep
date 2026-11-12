@@ -349,7 +349,7 @@ watch(
   [classSlug, classBundle],
   ([slug, bundle]) => {
     if (!slug) {
-      // Leaving class routes — page onBeforeUnmount also clears; keep in sync on nav.
+      // Clear class metadata and preset markers only when leaving class routes.
       if (!route.path.startsWith('/class/')) {
         headerClass.value = null
         // Preset dots live in the layout header — must clear with class header.
@@ -367,8 +367,8 @@ watch(
         tier_pve_awakening: bundle.class.tier_pve_awakening ?? null,
         tier_pve_succession: bundle.class.tier_pve_succession ?? null,
       }
-      // Set before layout render (SSR). Page also syncs; layout must win first paint
-      // or header dots hydrate against empty HTML while payload has fills.
+      // Layout owns preset markers across navigations: unmounting a guide page
+      // must never reset the markers for the next preset.
       presetFill.value = computePresetFill(bundle)
     } else {
       headerClass.value = null

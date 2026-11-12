@@ -74,7 +74,6 @@ import { useClassPendingDrafts } from '../lib/useClassPendingDrafts'
 import { useGuideActiveContent } from '../lib/useGuideActiveContent'
 import { useGuideBoardFills } from '../lib/useGuideBoardFills'
 import { useGuildRecruitBanner } from '../lib/useGuildRecruitBanner'
-import { useHeaderPresetFillSync } from '../lib/useHeaderPresetFillSync'
 import GuideGearBlock from './GuideGearBlock.vue'
 import GuideTopBlock from './GuideTopBlock.vue'
 import GuideVideoBlock from './GuideVideoBlock.vue'
@@ -93,7 +92,6 @@ const props = defineProps<{
 const { guildBanner, showRecruitCol } = await useGuildRecruitBanner()
 
 const bundleRef = computed(() => props.bundle)
-useHeaderPresetFillSync(bundleRef)
 
 const {
   specMode,
