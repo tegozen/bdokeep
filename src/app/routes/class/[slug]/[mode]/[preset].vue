@@ -16,7 +16,8 @@
 
 <script setup lang="ts">
 import { fetchClassGuideBySlug } from '@/entities/class'
-import { CRYSTAL_PRESETS } from '@/entities/catalog'
+import { CRYSTAL_PRESETS, morphPresetFrom } from '@/entities/catalog'
+import { classSummaryFieldFromGuide, comboKindFromPreset } from '@domain'
 import { ClassGuidePage, useHeaderClass, useGuidePreset, useGuideSpecMode } from '@/pages/class-guide'
 import SeoGuideDetail from '@/pages/class-guide/ui/SeoGuideDetail.vue'
 import { absoluteUrl, SITE_OG_IMAGE_PATH } from '@/shared/lib'
@@ -59,7 +60,22 @@ const name = computed(() => bundle.value?.class.name_ru || slug.value)
 const label = computed(() => presets.find(p=>p.id===preset.value)?.label || preset.value)
 const title = computed(() => `${name.value} — ${mode.value==='awakening'?'Пробуждение':'Наследие'} ${label.value} — гайд BDO Keep`)
 const description = computed(() => `Полные данные BDO ${name.value}: ${mode.value}, ${label.value}. Комбы, морфы, кристаллы, слоты, реликвии, закалки и видео.`)
+
+const isMeaningful = computed(() => {
+  const b = bundle.value
+  if (!b) return false
+  const summaryField = classSummaryFieldFromGuide(preset.value, mode.value)
+  const hasNotes = Boolean(b.guide?.[summaryField]?.trim())
+  const hasCombo = b.combos.some(c => c.mode === mode.value && (c.kind || 'pvp') === comboKindFromPreset(preset.value))
+  const hasMorph = b.morphs.some(m => m.preset === morphPresetFrom(mode.value,preset.value))
+  const hasGear = [b.crystals,b.relics,b.lightstones,b.hardening,b.buffs]
+    .some(rows => rows.some(row => (row.preset || 't1') === preset.value))
+  const hasVideo = b.videos.some(v => (v.mode || 'awakening') === mode.value)
+  return hasNotes || hasCombo || hasMorph || hasGear || hasVideo
+})
+
 useSeoMeta({
+  robots:()=>isMeaningful.value?'index,follow':'noindex,follow',
   title:()=>title.value,description:()=>description.value,
   ogTitle:()=>title.value,ogDescription:()=>description.value,
   ogUrl:()=>canonical.value||undefined,ogType:'article',

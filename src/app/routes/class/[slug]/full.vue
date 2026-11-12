@@ -33,7 +33,16 @@ const presets = CRYSTAL_PRESETS
 const config = useRuntimeConfig()
 const canonical = computed(() => absoluteUrl(`/class/${slug.value}/full`, String(config.public.siteUrl||'')))
 const title = computed(() => `${bundle.value?.class.name_ru||slug.value} — все специализации и пресеты | BDO Keep`)
-useSeoMeta({title:()=>title.value,description:()=>`Полный справочник по всем опубликованным пресетам ${bundle.value?.class.name_ru||slug.value}: навыки, морфы, инкрустация, реликвии, закалки, бафы и видео.`,ogUrl:()=>canonical.value||undefined,ogTitle:()=>title.value})
+const fullHasContent = computed(() => {
+  const b = bundle.value
+  if (!b) return false
+  const g = b.guide
+  const hasNotes = Boolean(g && [g.summary_pvp_awakening, g.summary_pvp_succession,
+    g.summary_pve_awakening, g.summary_pve_succession].some(s => s?.trim()))
+  return hasNotes || Boolean(b.combos.length || b.crystals.length || b.relics.length ||
+    b.lightstones.length || b.hardening.length || b.morphs.length || b.buffs.length || b.videos.length)
+})
+useSeoMeta({robots:()=>fullHasContent.value?'index,follow':'noindex,follow',title:()=>title.value,description:()=>`Полный справочник по всем опубликованным пресетам ${bundle.value?.class.name_ru||slug.value}: навыки, морфы, инкрустация, реликвии, закалки, бафы и видео.`,ogUrl:()=>canonical.value||undefined,ogTitle:()=>title.value})
 useHead({link:()=>canonical.value?[{rel:'canonical',href:canonical.value}]:[]})
 </script>
 <style scoped>
