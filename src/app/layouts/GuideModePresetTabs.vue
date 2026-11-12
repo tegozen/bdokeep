@@ -1,14 +1,16 @@
 <template>
   <div :class="$style.modeFilters">
     <UiPresetTabs
-      v-model="specMode"
+      :model-value="activeMode"
       :tabs="specNavTabs"
+      @update:model-value="specMode = $event"
       aria-label="Пробуждение или наследие"
     />
     <div :class="$style.presets">
       <UiPresetTabs
-        v-model="guidePreset"
+        :model-value="activePreset"
         :tabs="guideNavPresets"
+        @update:model-value="guidePreset = $event"
         aria-label="Пресет гайда"
       >
         <template #tab="{ tab }">
@@ -50,6 +52,15 @@ const guidePreset = useGuidePreset()
 const guidePresets = CRYSTAL_PRESETS
 const route = useRoute()
 const slug = computed(() => typeof route.params.slug === 'string' ? route.params.slug : '')
+// The URL, not previous shared useState, controls the highlighted link.
+// The reactive route also updates immediately during client-side navigation.
+const activeMode = computed<GuideSpecMode>(() =>
+  route.params.mode === 'succession' ? 'succession'
+    : route.params.mode === 'awakening' ? 'awakening' : specMode.value,
+)
+const activePreset = computed(() =>
+  guidePresets.find((p) => p.id === route.params.preset)?.id ?? guidePreset.value,
+)
 const linkTo = (mode: GuideSpecMode, preset: string) =>
   slug.value ? `/class/${encodeURIComponent(slug.value)}/${mode}/${preset}` : undefined
 
@@ -59,11 +70,11 @@ const specTabs: ReadonlyArray<{ id: GuideSpecMode; label: string }> = [
 ]
 const specNavTabs = computed(() => specTabs.map((tab) => ({
   ...tab,
-  href: linkTo(tab.id, guidePreset.value),
+  href: linkTo(tab.id, activePreset.value),
 })))
 const guideNavPresets = computed(() => guidePresets.map((tab) => ({
   ...tab,
-  href: linkTo(specMode.value, tab.id),
+  href: linkTo(activeMode.value, tab.id),
 })))
 </script>
 

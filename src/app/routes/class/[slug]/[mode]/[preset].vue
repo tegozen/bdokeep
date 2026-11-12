@@ -12,7 +12,7 @@
 import { fetchClassGuideBySlug } from '@/entities/class'
 import { CRYSTAL_PRESETS, morphPresetFrom } from '@/entities/catalog'
 import { classSummaryFieldFromGuide, comboKindFromPreset } from '@domain'
-import { ClassGuidePage, useGuidePreset, useGuideSpecMode } from '@/pages/class-guide'
+import { ClassGuidePage } from '@/pages/class-guide'
 import SeoGuideDetail from '@/pages/class-guide/ui/SeoGuideDetail.vue'
 import { absoluteUrl, SITE_OG_IMAGE_PATH } from '@/shared/lib'
 
@@ -27,9 +27,6 @@ if (!modes.some((m) => m === rawMode.value) || !presets.some((p) => p.id === raw
 }
 const mode = computed(() => rawMode.value as 'awakening' | 'succession')
 const preset = computed(() => rawPreset.value as 't1' | 't2' | 'besp' | 'sub' | 'pve')
-const specState = useGuideSpecMode()
-const presetState = useGuidePreset()
-watch([mode,preset], ([m,p]) => { specState.value = m; presetState.value = p }, { immediate:true, flush:'sync' })
 const {data:bundle,pending,error} = await useAsyncData(
   () => `class-indexed-${slug.value}`,
   () => fetchClassGuideBySlug(slug.value),

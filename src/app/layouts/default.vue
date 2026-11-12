@@ -317,6 +317,17 @@ const pwa = computed(() => useNuxtApp().$pwa as PwaClient | undefined)
 const headerClass = useHeaderClass()
 const specMode = useGuideSpecMode()
 const guidePreset = useGuidePreset()
+// Sync guide section content and tier metadata from the route before the page
+// renders. Child pages should not compete with the persistent layout for state.
+watch(
+  () => [route.params.mode, route.params.preset] as const,
+  ([mode, preset]) => {
+    if (mode === 'awakening' || mode === 'succession') specMode.value = mode
+    if (preset === 't1' || preset === 't2' || preset === 'besp' ||
+        preset === 'sub' || preset === 'pve') guidePreset.value = preset
+  },
+  { immediate: true, flush: 'sync' },
+)
 const { isStaff } = useSuperadmin()
 const { summary: pendingSummary, refresh: refreshPending } = usePendingSummary()
 const authUiReady = ref(false)
