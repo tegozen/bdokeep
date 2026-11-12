@@ -9,6 +9,7 @@ export type SkillAddonEffect = {
 
 export type Buff = {
   id: string
+  codex_id?: string | null
   name_ru: string
   icon_url: string | null
   description: string | null
@@ -16,6 +17,7 @@ export type Buff = {
 
 export type Item = {
   id: string
+  codex_id?: string | null
   name_ru: string
   icon_url: string | null
   item_type: string

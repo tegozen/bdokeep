@@ -52,6 +52,7 @@ export type ClassVideo = {
 
 export type Skill = {
   id: string
+  codex_id?: string | null
   name_ru: string
   icon_url: string | null
   class_slug: string | null

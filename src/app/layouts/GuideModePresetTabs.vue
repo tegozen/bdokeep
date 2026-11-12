@@ -2,13 +2,13 @@
   <div :class="$style.modeFilters">
     <UiPresetTabs
       v-model="specMode"
-      :tabs="specTabs"
+      :tabs="specNavTabs"
       aria-label="Пробуждение или наследие"
     />
     <div :class="$style.presets">
       <UiPresetTabs
         v-model="guidePreset"
-        :tabs="guidePresets"
+        :tabs="guideNavPresets"
         aria-label="Пресет гайда"
       >
         <template #tab="{ tab }">
@@ -48,11 +48,23 @@ withDefaults(
 const specMode = useGuideSpecMode()
 const guidePreset = useGuidePreset()
 const guidePresets = CRYSTAL_PRESETS
+const route = useRoute()
+const slug = computed(() => typeof route.params.slug === 'string' ? route.params.slug : '')
+const linkTo = (mode: GuideSpecMode, preset: string) =>
+  slug.value ? `/class/${encodeURIComponent(slug.value)}/${mode}/${preset}` : undefined
 
 const specTabs: ReadonlyArray<{ id: GuideSpecMode; label: string }> = [
   { id: 'awakening', label: 'Пробуждение' },
   { id: 'succession', label: 'Наследие' },
 ]
+const specNavTabs = computed(() => specTabs.map((tab) => ({
+  ...tab,
+  href: linkTo(tab.id, guidePreset.value),
+})))
+const guideNavPresets = computed(() => guidePresets.map((tab) => ({
+  ...tab,
+  href: linkTo(specMode.value, tab.id),
+})))
 </script>
 
 <style module>

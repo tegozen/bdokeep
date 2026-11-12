@@ -161,6 +161,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
         gcs.sort_order as step_sort_order,
         case when s.id is null then null else json_build_object(
           'id', s.id,
+          'codex_id', s.codex_id,
           'name_ru', s.name_ru,
           'icon_url', s.icon_url,
           'class_slug', s.class_slug
@@ -181,6 +182,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
         gb.sort_order,
         case when b.id is null then null else json_build_object(
           'id', b.id,
+          'codex_id', b.codex_id,
           'name_ru', b.name_ru,
           'icon_url', b.icon_url,
           'description', b.description
@@ -199,6 +201,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
         gr.sort_order,
         case when i.id is null then null else json_build_object(
           'id', i.id,
+          'codex_id', i.codex_id,
           'name_ru', i.name_ru,
           'icon_url', i.icon_url,
           'item_type', i.item_type
@@ -217,6 +220,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
         gl.sort_order,
         case when i.id is null then null else json_build_object(
           'id', i.id,
+          'codex_id', i.codex_id,
           'name_ru', i.name_ru,
           'icon_url', i.icon_url,
           'item_type', i.item_type
@@ -235,6 +239,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
         gc.sort_order,
         case when i.id is null then null else json_build_object(
           'id', i.id,
+          'codex_id', i.codex_id,
           'name_ru', i.name_ru,
           'icon_url', i.icon_url,
           'item_type', i.item_type
@@ -253,6 +258,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
         ge.sort_order,
         case when i.id is null then null else json_build_object(
           'id', i.id,
+          'codex_id', i.codex_id,
           'name_ru', i.name_ru,
           'icon_url', i.icon_url,
           'item_type', i.item_type
@@ -270,6 +276,7 @@ export async function fetchGuideBundleBySlug(sql: Sql, slug: string) {
         gm.sort_order,
         case when s.id is null then null else json_build_object(
           'id', s.id,
+          'codex_id', s.codex_id,
           'name_ru', s.name_ru,
           'icon_url', s.icon_url,
           'class_slug', s.class_slug,

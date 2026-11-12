@@ -1,9 +1,16 @@
 <template>
+  <NuxtPage v-if="hasNestedRoute" />
+  <template v-else>
+  <div v-if="bundle" class="class-index-links">
+    <NuxtLink :to="`/class/${slug}/awakening/t1`">Пробуждение T1 — отдельная страница</NuxtLink>
+    <NuxtLink :to="`/class/${slug}/full`">Все опубликованные данные класса</NuxtLink>
+  </div>
   <ClassGuidePage
     :bundle="bundle"
     :pending="pending"
     :error="!!error"
   />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -18,6 +25,7 @@ import {
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
+const hasNestedRoute = computed(() => route.path.startsWith(`/class/${slug.value}/`))
 const headerClass = useHeaderClass()
 
 const { data: bundle, pending, error } = await useAsyncData(
@@ -119,3 +127,7 @@ useHead({
   },
 })
 </script>
+<style scoped>
+.class-index-links {width:min(calc(100% - 2rem),1920px);margin:0 auto .6rem;display:flex;flex-wrap:wrap;gap:1rem;font-size:.82rem;}
+.class-index-links a {color:var(--color-gold);text-decoration:underline;}
+</style>

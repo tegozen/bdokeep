@@ -8,19 +8,29 @@
     role="tablist"
     :aria-label="ariaLabel"
   >
-    <button
-      v-for="tab in tabs"
-      :key="String(tab.id)"
-      type="button"
-      role="tab"
-      :aria-selected="modelValue === tab.id"
-      :aria-disabled="disabled || tab.disabled"
-      :disabled="disabled || tab.disabled"
-      :class="[$style.tab, modelValue === tab.id && $style.tabOn]"
-      @click="onSelect(tab.id)"
-    >
-      <slot name="tab" :tab="tab">{{ tab.label }}</slot>
-    </button>
+    <template v-for="tab in tabs" :key="String(tab.id)">
+      <NuxtLink
+        v-if="tab.href && !disabled && !tab.disabled"
+        :to="tab.href"
+        role="tab"
+        :aria-selected="modelValue === tab.id"
+        :class="[$style.tab, modelValue === tab.id && $style.tabOn]"
+      >
+        <slot name="tab" :tab="tab">{{ tab.label }}</slot>
+      </NuxtLink>
+      <button
+        v-else
+        type="button"
+        role="tab"
+        :aria-selected="modelValue === tab.id"
+        :aria-disabled="disabled || tab.disabled"
+        :disabled="disabled || tab.disabled"
+        :class="[$style.tab, modelValue === tab.id && $style.tabOn]"
+        @click="onSelect(tab.id)"
+      >
+        <slot name="tab" :tab="tab">{{ tab.label }}</slot>
+      </button>
+    </template>
   </div>
 </template>
 
@@ -29,6 +39,7 @@ export type UiPresetTab<T extends string | number = string> = {
   id: T
   label: string
   disabled?: boolean
+  href?: string
 }
 
 const props = withDefaults(
@@ -89,6 +100,7 @@ function onSelect(id: T) {
 }
 
 .tab {
+  text-decoration: none;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
